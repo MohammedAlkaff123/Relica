@@ -4,7 +4,7 @@ This is the story and performance draft for the directors to review. Mohammed ch
 
 Every real-world claim marked **(verify)** must be confirmed by Abdullatif on a NASA page before it stays in the game.
 
-**Mohammed's approved direction (14 Nov):** simple Modern Standard Arabic; the Factory opening establishes an innocent, trusting Moon rover through playful wheel discovery and a worker's silent, reassuring gesture; the Moon rover waits with quiet hope; Ingenuity is a fighter who repeatedly recovers and pushes beyond expectations until the final landing takes away her ability to fly. The two revised Viking replies are also approved. The full Opportunity staging, Pioneer ending and shot timings below remain proposed for review.
+**Mohammed's approved direction (14 Nov):** simple Modern Standard Arabic; the Factory opening establishes an innocent, trusting Moon rover through playful wheel discovery and a worker's silent, reassuring gesture; the Moon rover waits with quiet hope; Ingenuity is a fighter who repeatedly recovers and pushes beyond expectations until the final landing takes away her ability to fly. The two revised Viking replies are also approved. Pioneer’s endurance, a Jupiter photo task, discreet fiction framing and the final service tributes are also approved directions. The full Opportunity staging and detailed shot timings remain proposed for review.
 
 ## 1. The vision
 
@@ -20,7 +20,7 @@ We do not tell the player facts about these machines. We let the player be one: 
 
 1. Machines and humans never talk to each other. Humans have no faces and no voices.
 2. Machines speak rarely and in short lines. If a look can say it, cut the line.
-3. The machines' conversations use imagined radio voices. Frame Viking's call as imagined when it begins, and identify Pioneer's listening scene on its chapter card. The end card also distinguishes fiction from mission history; none of these exchanges is a recorded transmission.
+3. The machines' conversations use imagined radio voices. Frame Viking's call as imagined when it begins, and identify Pioneer's listening scene with a readable corner label. The end card also distinguishes fiction from mission history; none of these exchanges is a recorded transmission.
 4. The places, dates, mission totals and photos are real. Player controls, compressed time and staged recoveries are storytelling devices; they must not be presented as recorded mission events.
 
 ### Three motifs that hold the game together
@@ -111,22 +111,28 @@ Jezero crater, 2021 to 2024.
 
 Sources: [NASA/JPL first-flight report](https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/) and [NASA accident investigation](https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/). See also `content/facts.json` → `missions.ingenuity_first_flight`, `ingenuity_planned`, `ingenuity_total`, `ingenuity_last_flight`.
 
-### Epilogue: Pioneer 10 (1:15 target; proposed)
+### Epilogue: Pioneer 10 (1:35 target)
 
-**His character:** a quiet listener. The finale lets the player recognize every machine again and feel the pride in what each accomplished. It does not restore their ability to work or imply a working radio link today.
+**Approved direction:** Pioneer is a fighter too: a patient explorer who kept working far beyond expectations. Let the player do a piece of his real job before meeting the quiet listener. His endurance is shown as useful work over passing years, not invented repeated equipment failures. The inter-machine listening remains welcome fiction, marked discreetly in the corner: **“Imagined conversation / حوار متخيّل”**. Keep that label readable, away from subtitles, and retain the end-card note. Exact staging and timings remain a production proposal.
 
 | Time | Beat | Player | Hero emotion | Call |
 |---|---|---|---|---|
-| 0:00 | A dish in the dark. One slow blink. The chapter card states launch in 1972, last signal in 2003, and an imagined listening scene | Enter through the card and two short lines | sleepy | chapter `epilogue`, dialogue `ep_drift` |
-| 0:15 | Turn toward the Sun, now a distant bright point. Familiar tones gently emerge as the player finds the direction of home | A and D; hold still | curious | mission `epilogue` |
-| 0:30 | Remember the Moon rover, Viking, Opportunity and Ingenuity where their stories ended. One voice at a time says "I'm still here." Leave room around each voice | hold still, then scene control | happy | dialogue `ep_voices`, shot `where_they_are` aligned to its four lines |
-| 0:46 | Back to Pioneer. "I hear you. All of you." A quiet pause | none | happy, content | dialogue `ep_last` once |
-| 0:52 | Pull back slowly. No additional voice or task completion sound | none | sleepy, peaceful | shot `ending` (15 s) |
-| 1:07 | "Abandoned, but not forgotten." The fiction/history note shares the card. After the player continues, show the real photo collection and credits | Enter at the player's pace | | `card.ending()`, memory wall, credits |
+| 0:00 | A clearly dated memory: Jupiter, December 1973. Pioneer approaches the giant planet, ready to do his job | Enter through the short card | curious | chapter `epilogue_photo` |
+| 0:05 | Frame Jupiter, capture an image, then turn toward the Earth marker and send it home. A scan fills the image; a quiet confirmation acknowledges useful work | A/D aim; Space captures only when aligned; hold Earth alignment for 2 seconds to send | curious → happy | mission `epilogue_photo` |
+| 0:28 | Years pass. The planned 21-month mission becomes decades of service. The last signal is dated 2003. Transition clearly into the imagined reunion | none | determined → sleepy | compressed time passage, chapter `epilogue`, dialogue `ep_drift` |
+| 0:36 | Turn toward the distant Sun. Familiar tones emerge as the player finds the direction of home | A and D; hold still | curious | mission `epilogue`; corner fiction label begins |
+| 0:46 | Remember the Moon rover, Viking, Opportunity and Ingenuity where their stories ended. One voice at a time says “I'm still here” | hold still, then scene control | happy | `ep_voices`, `where_they_are` aligned to its four lines |
+| 1:02 | Back to Pioneer. “I hear you. All of you.” A quiet pause | none | happy, content | `ep_last` once |
+| 1:08 | Pull back slowly. No additional voice or task completion sound | none | sleepy, peaceful | shot `ending` (15 s) |
+| 1:23 | “Abandoned, but not forgotten.” Continue to real photos with a tribute beneath each machine's image, then credits | Enter at the player's pace | | ending card, tribute/photo wall, credits |
 
-**Delivery:** the four voices remain sequential, never a loud chorus. Use the same subtle voice signatures the player already knows. The 16-second reunion is a nominal four seconds per machine; stay with a speaker until its line finishes if reading takes longer. Pioneer has one final answer. Keep the ending card before the optional photo browsing so every player reaches the emotional conclusion first. These pacing and order changes are proposals; chapter and camera integration remains pending.
+**Photo task implementation:** added after Set A merged at `9542f7529249512711758e568f74b8ea89671d7e`. The epilogue calls `_pioneerPhoto.js`, uses the new `epilogue_photo` mission, then switches to the existing listening tasks without changing their indexes. A live viewfinder captures a thumbnail from the game renderer; it is labelled as a game image and kept separate from NASA memories. Within a forgiving aiming cone, Space captures once; outside it the prompt helps the player reframe and no task completes. Only a captured image can be sent. Hold Earth alignment for two continuous seconds, then confirm transmission once. Restart clears capture/send state; leaving the chapter cancels pending work. Keep this in the 1973 memory, before the later listening scene. Do not represent it as a new photograph taken after loss of contact, or point the imaging instrument at the Sun. The input, aiming, scan and transmission delay are simplified gameplay, not an instrument simulator. A simple banded Jupiter is included. Moayad and Abdulkarim can refine its visual presentation during their look review.
 
-**Accuracy:** NASA records Pioneer 10's launch in 1972 and its last received signal on 23 January 2003. Turning the dish and hearing the other machines is an imagined interactive scene, not evidence that the spacecraft can receive or transmit today. Source: [NASA Pioneer 10 mission](https://science.nasa.gov/mission/pioneer-10/).
+**Delivery:** the four voices remain sequential, never a loud chorus. Use the voice signatures already heard. Stay with each speaker until the line finishes. Pioneer has one final answer. Keep the ending card before optional photo browsing. The scene's accepted fictional framing does not need another explanatory speech.
+
+**Service tributes:** the final photo wall always includes one verified tribute for each of the five machines, even in a chapter-select demonstration. These are distinct from collected memories. Preserve each image's original caption and NASA credit. Use planned versus achieved figures where supported: Pioneer 21 months / over 30 years; Ingenuity up to 5 / 72 flights; Opportunity 90 sols / over 14 Earth years and 45.16 km; Viking 90 days / over six years. Honor Apollo 17's rover with its 35.7 km of service without inventing a lifespan comparison. English and Arabic copies and source links live beside each image in `content/memories.json`.
+
+**Accuracy:** Pioneer received commands from Earth and returned images and science data; it was not a relay for this cast. Its 21-month planned mission lasted over 30 years: the final telemetry arrived in April 2002, and the last signal on 23 January 2003. The imaging task evokes its real Jupiter work; the later conversations are imagined. Sources: [NASA Pioneer 10](https://science.nasa.gov/mission/pioneer-10/) and [NASA's 2001 contact report](https://science.nasa.gov/missions/pioneer/nasa-establishes-contact-with-famed-pioneer-10-spacecraft/).
 
 ## 3. Dialogue: intent for every line
 
@@ -294,7 +300,7 @@ After this shot, restore Space for the attempt to lift. Play `ch3_crash` with th
 |---|---|---|---|---|
 | 1 | 0–3 | The camera lies on the sand beside Ingenuity, at eye level | Still. Both look at the same horizon | Company |
 | 2 | 3–6 | Tilt up together into the night sky | Sway alive | |
-| 3 | 6–12 | One faint point that moves against the stars | The longest zoom in the game, 50° → 5°. Sway fades to nothing | Awe |
+| 3 | 6–12 | One faint point that moves against the stars | The longest zoom in the game, 50° → 5°. Sway fades to nothing, then dissolve into the clearly labelled December 1973 Jupiter memory. This is a flashback, not chronological travel from 2024 | Awe |
 
 ### `ending` (15 s)
 
@@ -373,10 +379,15 @@ Each mission is built on one fun mechanic, and that mechanic is also the lesson.
 | Scout the road: mark 3 dangers | Fly over a sand trap, a boulder field and a cliff edge, and press E above each to mark it. The big rover's route bends around every mark | Why a helicopter was useful to a rover |
 | Land with battery to spare | Reach the pad before the bar empties | Flights were short because the battery was small **(verify)** |
 
-### Epilogue: "Listen"
+### Epilogue: "Photograph Jupiter", then "Listen"
+
+The first three tasks occur in the dated 1973 memory (`epilogue_photo`); the final two belong to the later imagined scene (`epilogue`).
 
 | Task | How it plays |
 |---|---|
+| Frame Jupiter | A/D brings the planet inside a forgiving capture frame |
+| Capture the image | Space captures once when aligned; a scan fills the image |
+| Send the image to Earth | After capture, hold alignment with the Earth marker for two seconds |
 | Find the Sun | Turn the dish with A and D |
 | Hold still and listen | Keep the dish pointed toward the Sun while the imagined voices arrive |
 
@@ -413,6 +424,6 @@ Short moments that make the player care, placed where the game would otherwise g
 | `flights_montage` | Chapter 3, the counter passing 5 | 6 s | Four quick flights in different light, the counter jumping each cut | Planned and done |
 | `where_they_are` | Epilogue, during the voices | 16 s nominal | One machine per line: the Moon rover, Viking, Opportunity in Perseverance Valley, Ingenuity on the sand. Four seconds each as a starting point; hold longer for a line if needed. These are imagined views of their final settings, not live footage | We remember each one before Pioneer answers |
 
-Count these inserts once, inside the chapter budgets: `earth_goodbye` is the Factory hand gesture already described at 0:25, `moon_pat` belongs to the repair, and `where_they_are` belongs to the epilogue voices. The five chapter targets total 11:00; the three transitions add 0:32, for 11:32 nominal. Aim for a measured 12–13 minute first playthrough, allowing reading time. Photo-wall and credits browsing are untimed. Shorten repetitive travel if the measured run exceeds the target; preserve the recoveries, unanswered pause and closing voices.
+Count these inserts once, inside the chapter budgets: `earth_goodbye` is the Factory hand gesture already described at 0:25, `moon_pat` belongs to the repair, and `where_they_are` belongs to the epilogue voices. The five chapter targets total 11:20; the three transitions add 0:32, for 11:52 nominal. Aim for a measured 12–13 minute first playthrough, allowing reading time. Photo-wall and credits browsing are untimed. Shorten repetitive travel if the measured run exceeds the target; preserve the recoveries, unanswered pause and closing voices.
 
 If production time runs short, simplify camera moves for `mars_tracks` and reuse one setup for `mars_day`. Keep the Factory hand gesture, the repair response, the visible 5 → 72 achievement and the final four voices; those carry the reviewed story. `flights_montage` can use a fixed view and counter, but must not erase Ingenuity's accomplishments. Exact camera choices remain with Moayad.

@@ -93,5 +93,27 @@
       "en": "Last signal to Earth: 23 January 2003. An imagined listening scene.",
       "ar": "آخر إشارة إلى الأرض: ٢٣ يناير ٢٠٠٣. مشهد إنصات متخيّل."
     }
+  },
+  "epilogue_photo": {
+    "title": {
+      "en": "One More Discovery",
+      "ar": "اكتشاف آخر"
+    },
+    "mission": {
+      "en": "Pioneer 10",
+      "ar": "بايونير ١٠"
+    },
+    "place": {
+      "en": "Jupiter flyby",
+      "ar": "التحليق قرب المشتري"
+    },
+    "dates": {
+      "en": "December 1973",
+      "ar": "ديسمبر ١٩٧٣"
+    },
+    "sub": {
+      "en": "Planned mission: 21 months",
+      "ar": "مدة المهمة المقررة: ٢١ شهرًا"
+    }
   }
 }

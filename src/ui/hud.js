@@ -128,6 +128,15 @@ export function createHud(root, facts) {
       legend.classList.toggle('hidden', !unverified);
       panel.classList.remove('hidden');
     },
+    // A mission memory can show its date and purpose without borrowing another location's environment.
+    setContext(name, location) {
+      title.textContent = name;
+      place.textContent = location;
+      rows.textContent = '';
+      stats.clear();
+      legend.classList.add('hidden');
+      panel.classList.remove('hidden');
+    },
     setStat(label, value) {
       let s = stats.get(label);
       if (!s || !s.value) {

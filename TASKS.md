@@ -106,8 +106,8 @@ The rover sits on a stand. W spins the wheels and A/D steers them, but it does n
 *Done when:* the crash feels like the player's loss, not a cutscene.
 
 **A-9 Epilogue.**
-A/D turns the probe. A small bright Sun sits somewhere in the star field. Lined up within 5 degrees for 2 seconds triggers the voices, then the ending.
-*Done when:* the game reaches the photo wall and the credits with no E key.
+First run `epilogue_photo`: a dated December 1973 Jupiter memory. A/D frames Jupiter, Space captures once when aligned, then two seconds of Earth alignment sends the captured image. Show a scan and one confirmation. Reset the capture/send state on restart and cancel on chapter exit. Advance through the passing years, then switch to the existing `epilogue` mission: find the Sun and hold still for the imagined voices. Show a readable corner label, “Imagined conversation / حوار متخيّل”, during that scene. Finish with the ending card, the photo wall with service tributes, and credits. See STORY.md for exact acceptance behavior. The photo phase is implemented in `src/chapters/_pioneerPhoto.js` and called by the epilogue; the captured thumbnail is explicitly a game image. Ziad owns its ongoing gameplay integration.
+*Done when:* capturing outside the aiming cone does not advance, an uncaptured image cannot be sent, each task completes once, restart works, and the ending is reachable without E-skipping.
 
 ### To milestones 3 and 4 (hours 11–21)
 
@@ -163,6 +163,8 @@ In `character.js`, load `public/models/<id>.glb` if it exists and put it in plac
 **B-6 Props.** New file `src/world/props.js` with `createProp(name)`:
 Lunar Module in two parts (`descent`, `ascent`) so the top can lift off; one astronaut with a mirror visor and no flag or logo, used twice; airbag bundle; lander petals; `perseverance` as a simple grey silhouette; science-stop marker; flight ring; rock set; the pebble patch.
 *Done when:* Ziad has replaced every box prop.
+
+**Astronaut animation follow-up (Abdulkarim, with Ziad and Moayad):** the current model is documented as “Arms out. Not rigged” in `public/models/README.md`. Add a rig or named limb pivots, a relaxed idle and usable walk, seated ride, collect/kneel, repair/pat and boarding poses or clips. Preserve the mirror visor and silent performance. Abdulkarim owns the asset and an update/play interface; Ziad selects actions from chapter events and advances animation each frame; Moayad directs the repair, farewell and boarding shots. Confirm both astronaut instances animate independently, feet stay grounded, the seated pose fits the rover, and no transition exposes a T-pose. This is assigned work, not an animation fix claimed in this PR.
 
 **B-7 Mars.** Wide flat plains with fine ripples for chapter 2, a crater rim to reach, and a different area with cliffs on the horizon for Jezero in chapter 3. A sun disc in the sky that the storm can dim.
 

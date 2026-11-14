@@ -3,6 +3,9 @@
 //   heightAt('moon', x, z)        ground height in metres at any point
 //   cratersOf('moon')             [{ x, z, r, depth, name? }] so chapters can put things on or around them
 //   mesasOf('jezero')             [{ x, z, r, height }] the flat-topped hills
+//   placesOf('jezero')            [{ name, x, z, r }] named spots: 'sand' (smooth rippled sand for the
+//                                 last flight), and the three dangers to mark from the air:
+//                                 'sandTrap', 'boulders', 'cliff'
 //
 // Worlds: 'moon', 'mars' (Meridiani plains, chapter 2), 'jezero' (chapter 3). Anything else is flat.
 // On 'mars', cratersOf gives two named places: 'start' (the small crater Opportunity lands in)
@@ -75,6 +78,14 @@ const WORLDS = {
     seed: 2021, hills: 1.2, hillSize: 120, rough: 0.15, roughSize: 16,
     wall: { from: 120, to: 190, steps: 3, stepHeight: 10 },
     mesas: [{ x: 70, z: 95, r: 18, height: 9 }, { x: -95, z: 40, r: 14, height: 7 }, { x: -30, z: -110, r: 22, height: 11 }],
+    // ripples: smooth sand with ripples this tall. clear: no rocks here. dip: a soft hollow this deep.
+    // boulders: how many big rocks world.js puts here. drop: a gully this deep on the far side.
+    places: [
+      { name: 'sand', x: -45, z: 55, r: 26, ripples: 0.16, clear: true },
+      { name: 'sandTrap', x: 48, z: 18, r: 12, ripples: 0.1, dip: 0.7, clear: true },
+      { name: 'boulders', x: 8, z: 100, r: 17, boulders: 30 },
+      { name: 'cliff', x: 86, z: -32, r: 16, drop: 6 },
+    ],
   },
 };
 
@@ -110,6 +121,10 @@ export function cratersOf(world) {
 
 export function mesasOf(world) {
   return WORLDS[world]?.mesas ?? [];
+}
+
+export function placesOf(world) {
+  return WORLDS[world]?.places ?? [];
 }
 
 // A bowl with a raised rim. d is the distance from the centre, in crater radii.
@@ -150,6 +165,24 @@ export function heightAt(world, x, z) {
     for (const m of spec.mesas) {
       const d = Math.hypot(x - m.x, z - m.z) / m.r;
       if (d < 1) h += m.height * (1 - smoothstep(0.7, 1, d)); // flat top, steep sides
+    }
+  }
+  if (spec.places) {
+    for (const p of spec.places) {
+      const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
+      if (d > p.r * 1.3) continue;
+      const inside = 1 - smoothstep(p.r * 0.75, p.r, d);
+      if (p.ripples) {
+        // Flatten what was there, then lay even ripples over it: nothing for the eye to hold on to.
+        h = h * (1 - inside * 0.8) + Math.sin(((dx * 0.8 + dz * 0.6) / 8) * Math.PI * 2) * p.ripples * inside;
+      }
+      if (p.dip) h -= p.dip * inside;
+      if (p.drop) {
+        // `along` runs away from the start, `across` runs sideways. The ground falls away just
+        // past the place and comes back up further on: the near side is the cliff edge.
+        const len = Math.hypot(p.x, p.z), along = (dx * p.x + dz * p.z) / len, across = Math.abs(dx * p.z - dz * p.x) / len;
+        h -= p.drop * smoothstep(0, 3, along) * (1 - smoothstep(p.r * 0.75, p.r * 1.2, along)) * (1 - smoothstep(p.r * 0.7, p.r, across));
+      }
     }
   }
   for (const c of cratersOf(world)) {

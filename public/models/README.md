@@ -8,12 +8,12 @@ These belong in the **References** field of the upload form.
 | File | NASA source model | Triangles (NASA → ours) | Parts |
 |---|---|---|---|
 | `opportunity.glb` | Mars Exploration Rover - Opportunity (MER-B) | 3,845 → 3,754 | `body`, `head`, `antenna`, `wheel_FL` `wheel_ML` `wheel_RL` `wheel_FR` `wheel_MR` `wheel_RR` |
-| `ingenuity.glb` | Ingenuity Mars Helicopter | 9,124 → 4,796 | `body`, `blade_top` (with child `blade_tip`), `blade_bottom`, markers `head` `antenna` |
+| `ingenuity.glb` | Ingenuity Mars Helicopter | 9,124 → 4,791 | `body`, `blade_top` (with children `blade_tip_1` `blade_tip_2`), `blade_bottom` (with `blade_tip_3` `blade_tip_4`), markers `head` `antenna` |
 | `pioneer.glb` | Pioneer 10 | 8,189 → 4,805 | `body`, markers `head` `antenna` |
 | `viking.glb` | Viking Lander | 99,526 → 4,793 | `body`, markers `head` `antenna` |
 | `lunarModule.glb` | Apollo Lunar Module | 97,588 → 4,733 | `descent`, `ascent` |
 | `astronaut.glb` | Astronaut | 6,381 → 2,996 | `body`, `visor` |
-| `perseverance.glb` | Mars 2020 Perseverance Rover | 199,521 → 4,472 | `body` |
+| `perseverance.glb` | Mars 2020 Perseverance Rover | 199,521 → 4,475 | `body`, `head` (turns about the mast) |
 
 ## The Moon rover is ours
 
@@ -38,6 +38,9 @@ Done by the script in `tools/models/`:
 - Split into named parts. A part's origin is where it should turn: a wheel's axle, the base of the mast, the rotor shaft.
 - The astronaut has a dark visor and a plain white suit. Perseverance is one grey, because it is only a background shape.
 - The two flag panels on the Lunar Module are deleted.
+- Pioneer is turned half a turn: in NASA's file the dish opens toward -Z.
+- Perseverance's camera mast is folded down in NASA's file. We lift the head 0.75 m onto a plain pole so it reads as a rover with a head.
+- Ingenuity's four blade tips are separate parts, because NASA found all four blades damaged after the last landing.
 
 ## Where the origin is
 
@@ -55,4 +58,4 @@ Done by the script in `tools/models/`:
 | `pioneer.glb` | 4.52 × 8.25 × 2.54 | Real size. The long boom points down |
 | `lunarModule.glb` | 8.98 × 7.00 × 8.97 | |
 | `astronaut.glb` | 1.72 × 1.85 × 0.69 | Arms out. Not rigged |
-| `perseverance.glb` | 2.70 × 1.85 × 3.11 | Real size |
+| `perseverance.glb` | 2.70 × 2.16 × 3.11 | Real size, with the head raised |

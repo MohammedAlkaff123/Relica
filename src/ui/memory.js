@@ -27,6 +27,41 @@ export async function createMemory(root, prompt) {
   const src = (p) => `public/nasa/${p.group}/${p.nasa_id}.jpg`;
   const titleOf = (p) => overrides[p.nasa_id]?.title ?? p.title;
   const credit = (p) => `${p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`;
+  const tributeIds = Object.keys(overrides).filter((id) => overrides[id]?.tribute && photos.has(id));
+
+  function bilingual(parent, text, className = 'desc') {
+    if (!text) return;
+    const en = el('div', className, parent, text.en ?? '');
+    en.lang = 'en';
+    const ar = el('div', `${className} ar`, parent, text.ar ?? '');
+    ar.lang = 'ar';
+    ar.dir = 'rtl';
+  }
+
+  function wallPhoto(grid, id) {
+    const p = photos.get(id);
+    if (!p) return;
+    const o = overrides[id] ?? {};
+    const fig = el('figure', '', grid);
+    photo(el('div', 'thumb', fig), p);
+    const caption = el('figcaption', '', fig);
+    el('strong', '', caption, titleOf(p));
+    el('div', 'meta', caption, credit(p));
+    bilingual(caption, o.caption);
+    if (o.tribute) {
+      bilingual(caption, o.tribute, 'service desc');
+      const sources = el('div', 'sources', caption);
+      for (const [i, url] of (o.tribute.sources ?? []).entries()) {
+        const link = el('a', '', sources, `NASA source ${i + 1}`);
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        // Reading a source must not also count as the global click/Enter to leave the wall.
+        link.addEventListener('pointerdown', (event) => event.stopPropagation());
+        link.addEventListener('keydown', (event) => { if (event.key === 'Enter') event.stopPropagation(); });
+      }
+    }
+  }
 
   // Puts the photo in its frame with the crop from memories.json.
   function photo(parent, p) {
@@ -45,6 +80,7 @@ export async function createMemory(root, prompt) {
   async function open(build) {
     const me = ++shown;
     box.textContent = '';
+    box.classList.remove('memory-wall');
     build();
     box.classList.remove('hidden');
     await prompt.wait();
@@ -78,14 +114,22 @@ export async function createMemory(root, prompt) {
     },
     async wall() {
       await open(() => {
-        const grid = el('div', 'wall', box);
-        for (const id of collected) {
-          const p = photos.get(id);
-          const fig = el('figure', '', grid);
-          photo(el('div', 'thumb', fig), p);
-          el('figcaption', '', fig, `${titleOf(p)} · NASA/${p.center}`);
+        box.classList.add('memory-wall');
+        if (tributeIds.length) {
+          const heading = el('div', 'wall-heading', box);
+          el('h2', '', heading, 'In honor of their service');
+          bilingual(heading, { ar: 'تقديرًا لما قدّمته هذه الآلات' });
+          const grid = el('div', 'wall', box);
+          for (const id of tributeIds) wallPhoto(grid, id);
         }
-        if (!collected.length) el('div', 'hint', grid, 'No memories collected yet');
+        // Tributes honor the whole cast, including in chapter-select demos. They do not unlock memories.
+        const otherMemories = collected.filter((id) => !tributeIds.includes(id));
+        if (otherMemories.length) {
+          el('h3', 'wall-heading', box, 'Your collected memories');
+          const grid = el('div', 'wall', box);
+          for (const id of otherMemories) wallPhoto(grid, id);
+        }
+        if (!tributeIds.length && !collected.length) el('div', 'hint', box, 'No memories collected yet');
         // Everything the player discovered on the way (hud.discover), under the photos.
         if (found.length) {
           const list = el('div', 'discovered', box);
@@ -93,6 +137,7 @@ export async function createMemory(root, prompt) {
           const ol = el('ol', '', list);
           for (const d of found) el('li', '', ol, d.en);
         }
+        el('div', 'wall-heading wall-continue', box, 'Enter to continue · اضغط Enter للمتابعة');
       });
     },
     hide() { box.classList.add('hidden'); },

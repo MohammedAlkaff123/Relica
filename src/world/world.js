@@ -9,7 +9,7 @@
 // The ground shape (hills, craters) comes from terrain.js. Here: the mesh, rocks, sky, sun,
 // the factory room and the stars. Dust and the storm are in effects.js.
 import * as THREE from 'three';
-import { heightAt, TERRAIN_SIZE, TERRAIN_CELLS } from './terrain.js';
+import { heightAt, placesOf, TERRAIN_SIZE, TERRAIN_CELLS } from './terrain.js';
 import { createProp } from './props.js';
 
 const LOOK = {
@@ -138,6 +138,7 @@ export function buildWorld(name, scene) {
     group.add(sunDisc);
   }
 
+  const places = placesOf(name);
   let ground = null; // the ground's material, so the storm can change its colour
   if (look.ground !== null) {
     // The ground takes its shape from heightAt, the same function the physics reads.
@@ -146,8 +147,40 @@ export function buildWorld(name, scene) {
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(name, pos.getX(i), pos.getZ(i)));
     geo.computeVertexNormals();
-    ground = new THREE.MeshStandardMaterial({ color: look.ground, flatShading: true, roughness: 1 });
+    // Smooth sand is painted paler on the ground itself, so the patches can be found from the air.
+    // The paint multiplies the ground colour, so the storm still darkens it with everything else.
+    const base = new THREE.Color(look.ground), pale = base.clone().lerp(new THREE.Color(0xe2b98a), 0.45);
+    const paint = [pale.r / base.r, pale.g / base.g, pale.b / base.b];
+    const col = new Float32Array(pos.count * 3).fill(1);
+    for (const p of places) {
+      if (!p.ripples) continue;
+      for (let i = 0; i < pos.count; i++) {
+        const d = Math.hypot(pos.getX(i) - p.x, pos.getZ(i) - p.z);
+        if (d < p.r * 0.92) col.set(paint, i * 3);
+      }
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    ground = new THREE.MeshStandardMaterial({ color: look.ground, flatShading: true, roughness: 1, vertexColors: true });
     group.add(new THREE.Mesh(geo, ground));
+  }
+
+  for (const p of places) {
+    if (p.boulders) {
+      // A field of big rocks, all sharing one shape and one material.
+      const geo = new THREE.IcosahedronGeometry(1, 0);
+      const mat = new THREE.MeshStandardMaterial({ color: look.rock, flatShading: true, roughness: 1 });
+      const field = new THREE.InstancedMesh(geo, mat, p.boulders);
+      const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), at = new THREE.Vector3();
+      for (let i = 0; i < p.boulders; i++) {
+        const a = rand() * Math.PI * 2, d = Math.sqrt(rand()) * p.r, size = 0.9 + rand() * 1.6;
+        const x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d;
+        q.setFromEuler(new THREE.Euler(rand() * 0.6, rand() * Math.PI * 2, rand() * 0.6));
+        m.compose(at.set(x, heightAt(name, x, z) + size * 0.3, z), q, s.set(size, size * (0.6 + rand() * 0.4), size));
+        field.setMatrixAt(i, m);
+      }
+      field.name = 'place:' + p.name;
+      group.add(field);
+    }
   }
 
   if (look.rocks) {
@@ -156,6 +189,7 @@ export function buildWorld(name, scene) {
     for (let i = 0; i < look.rocks; i++) {
       const x = (rand() - 0.5) * 300, z = (rand() - 0.5) * 300;
       if (Math.hypot(x, z) < 10) continue; // keep the start area clear
+      if (places.some((p) => p.clear && Math.hypot(x - p.x, z - p.z) < p.r)) continue; // and the smooth sand
       const rock = new THREE.Mesh(geo, mat);
       const s = 0.3 + rand() * 1.4;
       rock.scale.set(s, s * 0.6, s);

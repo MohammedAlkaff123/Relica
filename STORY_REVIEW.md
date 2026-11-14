@@ -1,6 +1,6 @@
 # RELICA: final story review draft
 
-Prepared for Mohammed and Moayad, 14 November 2026. This is a reviewable story/content proposal. It does not mark DIR-1 or the camera tasks complete, and it does not claim the proposed performances are implemented.
+Prepared for Mohammed and Moayad, 14 November 2026. This story/content draft includes an implemented photo-wall tribute display. It does not mark DIR-1 or the camera tasks complete. The Jupiter capture/send sequence and corner fiction label are implemented. Astronaut animation remains assigned work for Abdulkarim, Ziad and Moayad.
 
 ## Review status
 
@@ -11,7 +11,7 @@ Prepared for Mohammed and Moayad, 14 November 2026. This is a reviewable story/c
 | Moon | Joy of carrying the crew, repair echoes care, hopeful waiting | Align the three farewell lines with the ascent, unanswered pause and final wide hold |
 | Opportunity | Viking's two revised replies | Patient exploration, a renewed desire to discover, then a gradual storm ending with searching eyes |
 | Ingenuity | Fighter; repeated recoveries; 5 planned, 72 flown; final loss of flight; pride afterward | Align the aftermath shot and dialogue triggers; keep recovery and milestone moments when simplifying production |
-| Pioneer | Existing setting, four returning voices, closing motto | Explicitly imagined listening, sequential voices, one short answer, silence, ending card before optional photos |
+| Pioneer | Fighter through endurance; Jupiter photo task; imagined listening with a discreet label; service tributes | Exact shot timing, sequential voices, short answer and final order |
 
 The two Viking replies retain the approved wording:
 
@@ -43,8 +43,8 @@ Keep the final phrase distinct in each performance: hopeful waiting on the Moon,
 | Storm → Jezero | 0:10 | Travel and year change |
 | Ingenuity | 2:30 | Three playable flights and recoveries, montage, flight 72, failed lift and farewell |
 | Mars → space | 0:12 | Look up and leave Mars |
-| Pioneer | 1:15 | Orientation, four voices, reply, pullback and ending card |
-| **Nominal total** | **11:32** | Short inserts are counted once, inside the chapter targets |
+| Pioneer | 1:35 | Jupiter photo task, passing years, orientation, four voices, reply, pullback and ending card |
+| **Nominal total** | **11:52** | Short inserts are counted once, inside the chapter targets |
 
 Aim for a measured 12–13 minute first playthrough. These are editing targets, not measured runtime. The current dialogue UI waits for Enter by default; its automatic hold also depends on line length and voice duration. No fixed cut should truncate a line. In particular, the Viking call and four-voice reunion need a real playback check. Reduce repetitive travel if necessary; photo-wall and credits browsing remain untimed.
 
@@ -55,11 +55,11 @@ Aim for a measured 12–13 minute first playthrough. These are editing targets, 
 - **Opportunity:** last communication in June 2018; mission declared ended in February 2019. The final setting is Perseverance Valley, separate from the earlier Orion viewpoint. The continuous fading drive is dramatic compression. [NASA Opportunity](https://science.nasa.gov/mission/mer-opportunity/)
 - **Ingenuity:** NASA records 72 flights and describes poor tracking over featureless sand ripples as the likely start of the final accident sequence. The final flight was a vertical test; damage affected all four blades. Earlier dips and the attempt to lift afterward are invented character/gameplay moments. [NASA investigation](https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/)
 
-Existing source records in `content/facts.json` remain unchanged. This pass does not certify every environmental value or every legacy source link. The proposed ending card explicitly separates imagined voices/playable scenes from the mission history and photos.
+New source records cover Pioneer’s planned duration and Earth communications, Viking’s service and Apollo 17’s driving distance; other existing fact records remain unchanged. This pass does not certify every environmental value or every legacy source link. The proposed ending card explicitly separates imagined voices/playable scenes from the mission history and photos.
 
 ## Concrete integration work
 
-The observations below are from Set A PR #2 at `cb36148e9407106280882e19f36e922105c4c3d3`, not a claim about a later build. Source links are pinned to that revision. The story/content PR leaves Set A and camera code untouched.
+The observations below are from Set A PR #2 at `cb36148e9407106280882e19f36e922105c4c3d3`, not a claim about a later build. Source links are pinned to that revision. The following table records that earlier inspection. This revision also implements the Jupiter task and end-card/photo-wall order in the epilogue; other chapter and cinematic changes remain outstanding.
 
 | Priority | Area and current observation | Required behavior | Owner |
 |---|---|---|---|
@@ -84,3 +84,13 @@ The current dialogue API supports `play(id, { auto })`, but not a per-line stage
 6. Confirm the fiction labels and real photo captions remain readable. Record actual runtime and any failed checks in TESTLOG.md after playing; this document is not a passed playtest.
 
 For the directors' next review: accept or adjust the patient-explorer staging, the Pioneer reply and final order, and the proposed shot timing. The already-approved Viking wording and Ingenuity fighter direction are preserved.
+
+## Pioneer and service tribute update
+
+The directors accepted Pioneer as another fighter, the fictional listening connection and a modest fiction label, and requested a photo task and a tribute under each machine's end photo. The dated 1973 Jupiter task is now specified in STORY.md, TASKS.md A-9 and the new `epilogue_photo` mission/card. After Set A was merged into main at `9542f7529249512711758e568f74b8ea89671d7e`, the new phase was implemented in `_pioneerPhoto.js` and the epilogue. It captures an actual game-rendered thumbnail, scans it, requires two continuous seconds of Earth alignment, then advances through the decades to the listening scene. The image is explicitly labelled as game imagery. A small corner fiction label appears during the conversation, and the ending card now precedes the tribute wall and credits. Existing listening task indexes and all dialogue are preserved.
+
+The final wall now displays five bilingual tributes with NASA source links, plus other collected memories. It does not pretend skipped photos were collected. Pioneer's caption uses **21 months planned / over 30 years**, not “listened to other machines for 30 years”. Ingenuity uses **up to 5 planned / 72 completed**. Viking uses **90 days / over six years**, Opportunity **90 sols / over 14 Earth years and 45.16 km**, and Apollo 17's rover **35.7 km** without an unsupported longevity claim. Photo PIA10738 shows Viking 1's own footpad and surroundings; its existing repository image was visually checked. Every tribute retains the photo description and credit.
+
+Astronaut animation belongs to Abdulkarim (model/rig/clips), with Ziad triggering and updating actions and Moayad directing performances. The current model README explicitly says “Arms out. Not rigged”; hand markers alone are not an animation rig. TASKS.md B-6 now records the required poses and checks. No astronaut asset was changed in this pass.
+
+Verification for this revision: a targeted browser run checked rejected out-of-frame capture, keyboard aiming, actual image preview, capture-before-send, restart, interrupted send alignment, progression through listening to credits, and removal of temporary UI on chapter exit. The tribute wall was checked at 1280×800 and 390×844, including Arabic direction, source links, scrolling, image loading and unchanged collection state. This is a Pioneer/UI test, not a full-game playtest or a measured first-player runtime. Both-astronaut animation and authored camera performances remain acceptance targets.
