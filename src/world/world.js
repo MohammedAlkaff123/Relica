@@ -3,10 +3,10 @@
 //   const env = buildWorld('moon', scene)   factory | moon | mars | space
 //   env.dispose()
 //
-// Placeholder look: flat ground, a few low-poly rocks, a sky colour, one sun.
-// TODO Set B: craters and hills (and tell Set A so the physics ground matches),
-// wheel dust, the Mars dust storm, the factory room, Jezero, a proper star field.
+// The ground shape (hills, craters) comes from terrain.js. Here: the mesh, rocks, sky and sun.
+// TODO Set B: wheel dust, the Mars dust storm, the factory room, Jezero, a proper star field.
 import * as THREE from 'three';
+import { heightAt, TERRAIN_SIZE, TERRAIN_CELLS } from './terrain.js';
 
 const LOOK = {
   factory: { sky: 0xdfe5ec, ground: 0xc6ccd5, fog: [30, 140], sun: 2.0, ambient: 1.6, rocks: 0 },
@@ -36,11 +36,11 @@ export function buildWorld(name, scene) {
   group.add(sun, new THREE.HemisphereLight(0xffffff, look.ground ?? 0x222233, look.ambient));
 
   if (look.ground !== null) {
-    const geo = new THREE.PlaneGeometry(400, 400, 60, 60);
+    // The ground takes its shape from heightAt, the same function the physics reads.
+    const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_CELLS, TERRAIN_CELLS);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
-    // Small dips only, never above y = 0, because the physics ground is flat at y = 0.
-    for (let i = 0; i < pos.count; i++) pos.setY(i, -rand() * 0.12);
+    for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(name, pos.getX(i), pos.getZ(i)));
     geo.computeVertexNormals();
     group.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: look.ground, flatShading: true, roughness: 1 })));
   }
@@ -54,7 +54,7 @@ export function buildWorld(name, scene) {
       const rock = new THREE.Mesh(geo, mat);
       const s = 0.3 + rand() * 1.4;
       rock.scale.set(s, s * 0.6, s);
-      rock.position.set(x, s * 0.15, z);
+      rock.position.set(x, heightAt(name, x, z) + s * 0.15, z);
       rock.rotation.y = rand() * Math.PI;
       group.add(rock);
     }
