@@ -1,6 +1,6 @@
 # Models
 
-Every file here except `lrv.glb` is adapted from NASA's open 3D models:
+Every file here except `lrv.glb` (see below) is adapted from NASA's open 3D models:
 <https://github.com/nasa/NASA-3D-Resources> (also at <https://science.nasa.gov/3d-resources/>).
 NASA states these are free and without copyright, and asks to be acknowledged as the source.
 These belong in the **References** field of the upload form.
@@ -14,6 +14,17 @@ These belong in the **References** field of the upload form.
 | `lunarModule.glb` | Apollo Lunar Module | 97,588 → 4,733 | `descent`, `ascent` |
 | `astronaut.glb` | Astronaut | 6,381 → 2,996 | `body`, `visor` |
 | `perseverance.glb` | Mars 2020 Perseverance Rover | 199,521 → 4,472 | `body` |
+
+## The Moon rover is ours
+
+NASA publishes no 3D model of the Lunar Roving Vehicle, so `lrv.glb` is built by us from boxes,
+cylinders and a dish, shaped after the pack photos in `public/nasa/apollo_lunar_roving_vehicle/`.
+The script is `tools/models/build_lrv.mjs`: change a number there and run it again.
+
+- 1,062 triangles, 46 KB, 1.66 × 1.78 × 2.67 m. The lowest point is the bottom of the physics box.
+- Parts: `body`, `wheel_FL` `wheel_FR` `wheel_RL` `wheel_RR` (each turns about its axle),
+  `head` (the TV camera on its post: the eyes go here), `antenna` (the umbrella dish on its mast: the mouth),
+  and `fender_RR`, the right rear fender, separate because it is the one that breaks in chapter 1.
 
 ## What we changed
 

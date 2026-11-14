@@ -7,3 +7,7 @@ Turns NASA's GLB models into the game models in `public/models/`.
 3. `node clean.mjs all` (or one name). It writes to `public/models/`. Rename `lunar_module.glb` to `lunarModule.glb` afterwards.
 
 Each model's rules (parts, scale, colours, triangle budget) are in the `MODELS` table at the top of `clean.mjs`.
+
+## The Moon rover
+
+`node build_lrv.mjs` writes `public/models/lrv.glb`. It needs only `@gltf-transform/core`. The whole rover is described in that one file: sizes at the top, then each part.
