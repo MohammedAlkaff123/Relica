@@ -63,6 +63,7 @@ const MODELS = {
 
   pioneer: {
     budget: 4800, cast: [1.0, 0.6, 1.0],
+    rotate: (x, y, z) => [-x, y, -z], // in the source the dish opens toward -Z; turn it to face +Z
     prepare(tris) {
       for (const t of tris) t.part = 'body';
       const dish = bounds(tris.filter((t) => t.node === 'AO_dish'));

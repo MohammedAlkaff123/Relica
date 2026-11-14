@@ -28,9 +28,17 @@ export const CAST = {
   lrv:         { name: 'Lunar Rover', ar: 'العربة القمرية', color: 0xd9d4c7, size: [1.6, 0.6, 2.4], wheels: true },
   opportunity: { name: 'Opportunity', ar: 'أوبورتيونيتي',  color: 0xcbb48a, size: [1.4, 0.6, 1.7], wheels: true, mast: true },
   viking:      { name: 'Viking 1',    ar: 'فايكنغ ١',       color: 0xb8b3a6, size: [1.8, 0.7, 1.8], beard: true },
-  ingenuity:   { name: 'Ingenuity',   ar: 'إنجينويتي',      color: 0x9fa7b0, size: [0.5, 0.5, 0.5], rotor: true },
-  pioneer:     { name: 'Pioneer 10',  ar: 'بايونير ١٠',     color: 0xd8d1bd, size: [1.0, 0.6, 1.0], dish: true, modelScale: 0.4 }, // the model is real size: a 2.74 m dish
+  ingenuity:   { name: 'Ingenuity',   ar: 'إنجينويتي',      color: 0x9fa7b0, size: [0.5, 0.5, 0.5], rotor: true,
+                 face: { offset: [0, 0.04, 0] }, antennaScale: 0.2 },
+  pioneer:     { name: 'Pioneer 10',  ar: 'بايونير ١٠',     color: 0xd8d1bd, size: [1.0, 0.6, 1.0], dish: true, modelScale: 0.4, // the model is real size: a 2.74 m dish
+                 // One small sensor eye, set into the dish beside the feed, and a very slow blink.
+                 face: { eyes: 1, offset: [-0.2, 0.17, -0.07], scale: 0.6, blink: [7, 12], blinkTime: 0.5 }, antennaScale: 0.15 },
 };
+
+// Optional per character, in CAST:
+//   face: { eyes: 1 or 2, offset: [x, y, z] from the model's `head` marker, scale,
+//           blink: [shortest, longest] seconds between blinks, blinkTime: seconds a blink lasts }
+//   antennaScale: size of our own antenna rod when the model has only an `antenna` marker
 
 // open: how open the eyes are. slant: outer corners down (sad) or up (happy).
 // antenna: forward (+) or drooping back (-). nod: head up (+) or down (-).
@@ -125,7 +133,7 @@ export function createCharacter(id) {
   const lids = [];
   const pupils = [];
   const lidColor = new THREE.Color(spec.color).multiplyScalar(0.7);
-  for (const side of [-1, 1]) {
+  for (const side of spec.face?.eyes === 1 ? [0] : [-1, 1]) {
     const eye = new THREE.Group();
     eye.position.x = side * 0.22;
     const white = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), flat(0xf6f4ee));
@@ -209,7 +217,9 @@ export function createCharacter(id) {
   let want = EMOTIONS.curious;
   let talking = false;
   let time = 0;
-  let blinkIn = 2 + Math.random() * 3;
+  const [blinkMin, blinkMax] = spec.face?.blink ?? [2.5, 6.5];
+  const blinkTime = spec.face?.blinkTime ?? 0.12;
+  let blinkIn = blinkMin * 0.8 + Math.random() * 3;
   let blink = 0;
 
   // Swap the boxes for the real model and move the face onto it.
@@ -227,6 +237,8 @@ export function createCharacter(id) {
       if (box.isEmpty()) {
         // A marker with no shape: the face sits at that point on the body.
         face.position.copy(at);
+        if (spec.face?.offset) face.position.add(new THREE.Vector3(...spec.face.offset));
+        if (spec.face?.scale) face.scale.setScalar(spec.face.scale);
       } else {
         // A real head (Opportunity's mast): the eyes go on the front of its top bar and turn with it.
         const k = model.scale.x;
@@ -246,7 +258,7 @@ export function createCharacter(id) {
       box.setFromObject(ant);
       antenna.position.copy(at);
       if (box.isEmpty()) {
-        antenna.scale.setScalar(0.4); // a marker: keep a short rod of our own on that spot
+        antenna.scale.setScalar(spec.antennaScale ?? 0.4); // a marker: keep a short rod of our own on that spot
       } else {
         // A real antenna: it replaces our rod, and droops and perks up with the emotions.
         antenna.scale.setScalar(1);
@@ -314,12 +326,15 @@ export function createCharacter(id) {
       for (const key of Object.keys(now)) now[key] += (want[key] - now[key]) * s;
 
       blinkIn -= dt;
-      if (blinkIn <= 0) { blink = 0.12; blinkIn = 2.5 + Math.random() * 4; }
+      if (blinkIn <= 0) { blink = blinkTime; blinkIn = blinkMin + Math.random() * (blinkMax - blinkMin); }
       blink = Math.max(0, blink - dt);
       const open = blink > 0 ? 0 : now.open;
 
+      // An open lid is a thin line along the top of the eye; closing, it grows down over it.
+      const shut = Math.max(0.14, 1 - Math.min(1, open));
       for (const { lid, side } of lids) {
-        lid.position.y = 0.02 + open * 0.3;
+        lid.scale.y = shut;
+        lid.position.y = 0.17 - 0.16 * shut;
         lid.rotation.z = -side * now.slant;
       }
       // Looking: the neck turns as far as it can, the pupils cover what is left.
