@@ -82,7 +82,11 @@ async function boot() {
     fps = { box, frames: 0, worst: 0, last: performance.now(), prev: performance.now() };
   }
 
-  game.start((dt) => {
+  // ?test runs the self-test (src/core/selftest.js). &speed=4 runs the game 4 times faster for it.
+  const speed = Math.max(1, Math.min(8, Number(new URLSearchParams(location.search).get('speed')) || 1));
+  ctx.clock = 0; // game seconds since the page opened
+
+  game.start((frameDt) => {
     if (fps) {
       const now = performance.now();
       fps.frames++;
@@ -93,6 +97,11 @@ async function boot() {
         fps.frames = 0; fps.worst = 0; fps.last = now;
       }
     }
+    for (let step = 0; step < speed; step++) tick(frameDt);
+  });
+
+  function tick(dt) {
+    ctx.clock += dt;
     if (input.pressed('Backquote')) tweak.toggle();
     if (input.pressed('Escape')) cinematics.cancel(); // skip a cutscene
     for (let i = 0; i < list.length; i++) {
@@ -108,7 +117,7 @@ async function boot() {
     followCam.update(dt);
     cinematics.update(dt);
     input.endFrame();
-  });
+  }
 
   // ?chapter=3 (same numbers as the keys) or ?chapter=mars starts there. &jump=storm also works.
   const params = new URLSearchParams(location.search);
@@ -118,6 +127,7 @@ async function boot() {
   chapters.go(first, { jump: params.get('jump') ?? undefined });
   window.relica = ctx; // handy in the browser console
   ctx.chapters = chapters;
+  if (params.has('test')) import('./core/selftest.js').then((t) => t.runSelfTest(ctx)).catch((err) => console.error('self-test failed to load', err));
 }
 
 boot().catch((err) => {

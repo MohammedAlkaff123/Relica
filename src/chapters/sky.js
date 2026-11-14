@@ -15,13 +15,13 @@
 //   dialogue ch3_scout, ch3_crash, ch3_goodbye (Set C)   shots heli_drop, first_shadow, flights_montage,
 //   last_flight (Moayad)   props perseverance, ring, heightBand, sandTrap, boulders, cliffEdge, flag,
 //   hero.breakBlade() (Set B)
-//   facts.json "missions" (Set C): the numbers in MISSION below are the plan's, not yet verified.
+//   Numbers come from facts.json "missions" (Set C, verified); the dates below match those facts.
 import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
-import { mission } from './_mission.js';
+import { mission, factNumber } from './_mission.js';
 
-// From PLAN.md section 12. Replace with facts.missions.ingenuity once Set C has verified them.
-const MISSION = { planned: 5, total: 72, firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
+// Dates as short labels, each matching a verified fact: ingenuity_first_flight, ingenuity_total.
+const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
 
 const START = [-80, -80];
 const ROVER_START = [START[0], START[1] - 7];
@@ -45,19 +45,24 @@ export default makeChapter({
 
   async script(s, ctx, opts) {
     const heli = s.controller;
+    const MISSION = {
+      planned: factNumber(ctx, 'ingenuity_planned', 5),
+      total: factNumber(ctx, 'ingenuity_total', 72),
+    };
     const rover = s.prop('perseverance', START[0], START[1], 0);
+    // The rotor sound follows the blades.
+    ctx.audio.loop?.('rotor', true);
+    s.onDispose(() => ctx.audio.loop?.('rotor', false));
+    s.every(() => ctx.audio.loopLevel?.('rotor', Math.min(1, s.hero.rotorSpeed / 40)));
     let pad = makePad(s, START[0], START[1]);
     let flight = 1;
     const showFlight = () => s.counter('flight', Math.floor(flight), MISSION.planned);
-    ctx.hud.setStat('date', MISSION.firstFlight);
-    const m = s.mission = mission(ctx, 'Be the eyes', [
-      'First flight: hold 3 metres for 3 seconds',
-      'Scout the road: mark 3 dangers',
-      'Land with battery to spare',
-    ]);
+    ctx.hud.setStat('date', DATES.firstFlight);
+    // Tasks (content/missions.json "sky"): 0 hold 3 m, 1 mark 3 dangers, 2 battery to spare.
+    const m = s.mission = mission(ctx, 'sky');
 
     if (opts.jump !== 'flight72') {
-      await s.card('The Mars Sky', `Jezero crater · planned: ${MISSION.planned} flights`);
+      await s.do(ctx.card.chapter('sky'));
       // A tiny machine drops from under the big rover, which backs away.
       heli.place(START[0], START[1], 0, 0.6);
       s.hero.setEmotion('scared');
@@ -117,7 +122,7 @@ export default makeChapter({
           d.marked = true;
           s.prop('flag', d.at[0], d.at[1]);
           route.avoid(d.at);
-          s.sound('mark');
+          s.sound('park');
           m.progress(1, ++marked, 3);
         }
         pad.dispose();
@@ -136,7 +141,7 @@ export default makeChapter({
       const spin = s.until((dt) => { flight = Math.min(MISSION.total - 1, flight + dt * 25); showFlight(); return flight >= MISSION.total - 1; });
       if (!(await s.shot('flights_montage'))) await s.fade(true, 0.8);
       await spin;
-      m.discover('ingenuity_72_flights');
+      m.discover('ingenuity_72');
       flight = MISSION.total - 1;
       showFlight();
       route.dispose();
@@ -150,7 +155,7 @@ export default makeChapter({
     rover.position.set(-14, s.ground(-14, -6), -6);
     flight = MISSION.total;
     showFlight();
-    ctx.hud.setStat('date', MISSION.lastFlight);
+    ctx.hud.setStat('date', DATES.lastFlight);
     heli.battery = 1;
     await s.fade(false, 0.8);
     s.hero.setEmotion('happy');
@@ -173,6 +178,7 @@ export default makeChapter({
     heli.broken = true;
     s.hero.breakBlade?.();
     s.sound('crash');
+    s.sound('crack');
     s.hero.setEmotion('sad');
     await s.shot('last_flight');
     await s.say('ch3_crash');

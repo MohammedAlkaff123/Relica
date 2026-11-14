@@ -13,7 +13,7 @@
 //
 // Waiting on others (works without them, see _props.js):
 //   dialogue ch1_dust, ch1_fixed (Set C)   shots moon_arrival, moon_liftoff (Moayad)
-//   props lunarModule, astronaut, env.dust (Set B)   audio.play('fender_snap' | 'music_free') (Set C)
+//   props lunarModule, astronaut, sampleBox, env.dust (Set B)
 import { makeChapter } from './_stage.js';
 import { mission } from './_mission.js';
 
@@ -44,7 +44,7 @@ async function climbOff(stage, crew) {
 // Park at a stop: wait for the rover to stop inside the circle, beep if it is neat, count the stop.
 async function park(s, ctx, [x, z], text, n) {
   const { neat } = await s.goTo(x, z, text, { radius: 6, park: true });
-  if (neat) { s.sound('neat_park', 'lrv'); s.hero.setEmotion('happy'); }
+  if (neat) { s.sound('park'); s.hero.setEmotion('happy'); }
   s.mission.progress(0, n, 3);
 }
 
@@ -76,16 +76,14 @@ export default makeChapter({
     ctx.hud.setStat('date', 'Dec 1972');
     s.driven = 0;
     s.air = { now: 0, best: 0 };
-    s.mission = mission(ctx, 'Carry the crew', [
-      'Take the crew to 3 science stops',
-      'Bring back 3 sample boxes',
-      'Longest jump (bonus)',
-      'Drive blind to stop 2',
-    ]);
+    // Tasks (content/missions.json "moon"): 0 science stops, 1 sample boxes, 2 drive blind. Bonus: longest jump.
+    s.mission = mission(ctx, 'moon');
+    // The self-test (src/core/selftest.js) drives the rover on its own here, with no story events.
+    if (opts.jump === 'selftest') { s.unlockControls(); return; }
 
     if (opts.jump !== 'fender') {
       s.hero.setEmotion('sleepy');
-      await s.card('The Moon', 'Taurus–Littrow valley · December 1972');
+      await s.do(ctx.card.chapter('moon'));
 
       // Unfold: the rover opens out of its folded shape.
       s.hero.object.scale.set(1, 0.35, 0.5);
@@ -130,19 +128,19 @@ export default makeChapter({
     s.unlockControls();
     const stop2 = park(s, ctx, STOP2, 'Drive on to science stop 2', 2);
     await s.until(() => Math.hypot(s.hero.object.position.x - STOP1[0], s.hero.object.position.z - STOP1[1]) > 10);
-    s.sound('fender_snap');
+    s.sound('crack');
     s.dust.shower(true, s.hero);
     s.controller.speedScale = 0.45;
     s.hero.setEmotion('scared');
     s.objectives.setText('Drive blind: follow the beeping marker');
-    s.mission.discover('moon_dust');
+    s.mission.discover('moon_no_air');
     // The marker beeps faster the closer the rover gets.
     let beepIn = 0;
     const stopBeeping = s.every((dt) => {
       const p = s.hero.object.position;
       beepIn -= dt;
       if (beepIn <= 0) {
-        s.sound('marker_beep', 'lrv');
+        s.sound('park'); // a short beep; a dedicated marker sound can replace it
         beepIn = 0.25 + Math.min(1.5, Math.hypot(p.x - STOP2[0], p.z - STOP2[1]) / 30);
       }
     });
@@ -150,7 +148,7 @@ export default makeChapter({
     s.hero.setEmotion('sad');
     await stop2;
     stopBeeping();
-    s.mission.done(3);
+    s.mission.done(2);
 
     // Stop 2: the crew tapes maps over the wheel (real).
     s.lockControls();
@@ -163,7 +161,7 @@ export default makeChapter({
     s.dust.shower(false);
     s.controller.speedScale = 1;
     await s.photo('as17-137-20979');
-    s.mission.discover('fender_repair');
+    s.mission.discover('fender_maps');
     await s.shot('moon_pat');
     s.hero.setEmotion('happy');
     await s.say('ch1_fixed');
@@ -171,7 +169,8 @@ export default makeChapter({
     addSampleBox(s, 2);
 
     // The long free drive: the happiest moment in the game.
-    s.sound('music_free');
+    ctx.audio.music?.('drive');
+    s.onDispose(() => ctx.audio.music?.(null));
     s.controller.speedScale = 1.35;
     s.unlockControls();
     await park(s, ctx, STOP3, 'Free drive to the last science stop', 3);
@@ -202,7 +201,7 @@ export default makeChapter({
     s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
     s.hero.setEmotion('sad');
     await Promise.all([s.shot('moon_liftoff'), s.wait(6)]);
-    s.mission.discover('rover_camera');
+    s.mission.discover('rover_filmed');
     await s.say('ch1_left_behind');
     await s.wait(2);
     await s.shot('moon_to_mars');
@@ -214,10 +213,10 @@ export default makeChapter({
     if (s.air && s.controller) {
       if (!s.controller.grounded) s.air.now += dt;
       else if (s.air.now > 0) {
+        if (s.air.now > 0.5) s.sound('land');
         if (s.air.now > 0.5 && s.air.now > s.air.best) {
           s.air.best = s.air.now;
-          s.mission.bonus('Longest jump', s.air.best.toFixed(1) + ' s');
-          if (s.air.best >= 2) s.mission.done(2);
+          s.mission.bonus(s.air.best.toFixed(1) + ' s');
           if (s.air.best >= 1.2) s.mission.discover('moon_gravity');
         }
         s.air.now = 0;

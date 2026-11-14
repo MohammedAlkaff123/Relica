@@ -1,49 +1,45 @@
-// Mission task list for a chapter (STORY.md section 8). Owner: Set A.
+// Mission task list and discovery cards for a chapter (STORY.md section 8). Owner: Set A.
 //
-//   const m = mission(ctx, 'Carry the crew', ['Take the crew to 3 science stops', ...])
-//   m.progress(0, 1, 3)        "1 / 3" on task 0
-//   m.done(0)                  tick task 0 (once)
-//   m.bonus('Longest jump', '2.4 s')
-//   m.discover('moon_gravity') discovery card (STORY.md section 8)
+//   const m = mission(ctx, 'moon')   title and tasks come from content/missions.json (Set C)
+//   m.progress(0, 1, 3)              counts toward task 0; ticks it at 3 / 3
+//   m.done(0)                        ticks task 0 (once)
+//   m.bonus('2.4 s')                 the bonus line (the longest jump)
+//   m.discover('moon_gravity')       discovery card from content/discoveries.json
 //
-// Uses Set C's HUD when it exists (TASKS.md C-13, C-14):
-//   hud.setMission(title, [tasks]), hud.completeTask(index), hud.setBonus(label, value), hud.discover(id)
-// Until then the tasks show as extra rows on the environment panel, and discoveries only go to the console.
-export function mission(ctx, title, tasks) {
+// Task numbers follow the order in content/missions.json. If Set C changes that order, change the
+// numbers in the chapter file too.
+export function mission(ctx, id) {
   const hud = ctx.hud;
-  const real = typeof hud.setMission === 'function';
   const ticked = new Set();
   const found = new Set();
-  if (real) hud.setMission(title, tasks);
-  else {
-    hud.setStat('mission', title);
-    tasks.forEach((t) => hud.setStat(t, '·'));
-  }
+  hud.setMission(id);
 
   const m = {
     progress(i, n, of) {
-      if (ticked.has(i)) return;
-      if (real && hud.setTaskProgress) hud.setTaskProgress(i, n, of);
-      else if (!real) hud.setStat(tasks[i], `${n} / ${of}`);
       if (n >= of) m.done(i);
     },
     done(i) {
       if (ticked.has(i)) return;
       ticked.add(i);
-      if (real) hud.completeTask(i);
-      else { hud.setStat(tasks[i], '✓'); if (ctx.audio.play) ctx.audio.play('tick'); }
+      hud.completeTask(i);
     },
     isDone: (i) => ticked.has(i),
-    bonus(label, value) {
-      if (hud.setBonus) hud.setBonus(label, value);
-      else hud.setStat(label, value);
+    bonus(value) { hud.setBonus(value); },
+    discover(card) {
+      if (found.has(card)) return;
+      found.add(card);
+      hud.discover(card);
     },
-    discover(id) {
-      if (found.has(id)) return;
-      found.add(id);
-      if (hud.discover) hud.discover(id);
-      else console.info(`discovery card "${id}" (waiting on hud.discover from Set C)`);
-    },
+    found,
   };
   return m;
+}
+
+// A verified number from content/facts.json "missions" (Set C), e.g. factNumber(ctx, 'opportunity_planned', 90).
+// Uses the fallback (and says so in the console) if the fact is missing or not yet verified.
+export function factNumber(ctx, key, fallback) {
+  const f = ctx.facts.missions?.[key];
+  if (!f?.verified) { console.warn(`fact "${key}" is not verified in facts.json, using ${fallback}`); return fallback; }
+  const n = String(f.value).replace(/,/g, '').match(/\d+(\.\d+)?/);
+  return n ? Number(n[0]) : fallback;
 }

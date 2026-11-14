@@ -86,6 +86,15 @@ export function removeBody(body) {
   world.removeRigidBody(body);
 }
 
+// Height of the solid (fixed) ground under (x, z), measured by a ray from above. null if nothing is hit.
+// Used by the self-test to check that the physics ground matches heightAt.
+export function groundRay(x, z) {
+  if (!world) return null;
+  const ray = new RAPIER.Ray({ x, y: 200, z }, { x: 0, y: -1, z: 0 });
+  const hit = world.castRay(ray, 400, true, undefined, undefined, undefined, undefined, (c) => c.parent()?.isFixed());
+  return hit ? 200 - (hit.toi ?? hit.timeOfImpact) : null;
+}
+
 // The tilt quaternion of a body made by addBox (identity if none).
 export function tiltOf(body) {
   return body?.userData?.tilt ?? null;

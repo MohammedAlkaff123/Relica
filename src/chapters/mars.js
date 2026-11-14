@@ -16,17 +16,16 @@
 //   dialogue ch2_pebbles, ch2_sol90, ch2_orion, ch2_storm (Set C)   shots mars_landing, mars_day,
 //   mars_tracks, viking_wakes (Moayad)   props airbags, whirlwind, env.storm (Set B)
 //   hud.setBattery, hud.setCounter, hud.setMission (Set C)
-//   facts.json "missions" (Set C): the numbers in MISSION below are the plan's, not yet verified.
+//   Numbers come from facts.json "missions" (Set C, verified); the dates below match those facts.
 import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { makeProp } from './_props.js';
-import { mission } from './_mission.js';
+import { mission, factNumber } from './_mission.js';
 import { createCharacter } from '../characters/character.js';
 
-// From PLAN.md section 12. Replace with facts.missions.opportunity once Set C has verified them.
-const MISSION = { planned: 90, orionSol: 4712, orionDate: 'Apr 2017', landed: 'Jan 2004', stormDate: 'Jun 2018' };
-// The counter jumps used by the three time skips (story pacing, not facts).
-const SKIP = [120, 2400, MISSION.orionSol];
+// Dates as short labels. Each matches a verified fact: opportunity_landing, opportunity_sol_4712,
+// opportunity_last_contact.
+const DATES = { landed: 'Jan 2004', orion: 'Apr 2017', storm: 'Jun 2018' };
 
 const CRATER = [0, 0];
 const PEBBLES = [16, 26];
@@ -45,24 +44,26 @@ export default makeChapter({
   start: [0, 0, 0],
 
   async script(s, ctx, opts) {
+    const MISSION = {
+      planned: factNumber(ctx, 'opportunity_planned', 90),
+      orionSol: factNumber(ctx, 'opportunity_sol_4712', 4712),
+    };
+    // The counter jumps used by the three time skips (story pacing, not facts), ending on the real sol.
+    const SKIP = [120, 2400, MISSION.orionSol];
     s.sol = 1;
     s.power = { on: false, level: 1, clean: 1, shown: -1, lowest: 1 };
     s.water = 0;
-    ctx.hud.setStat('date', MISSION.landed);
-    const m = s.mission = mission(ctx, 'Follow the water', [
-      'Climb out of the crater',
-      'Find 3 signs of water',
-      'Keep the battery alive',
-      'Reach the rim',
-    ]);
+    ctx.hud.setStat('date', DATES.landed);
+    // Tasks (content/missions.json "mars"): 0 crater, 1 water signs, 2 battery, 3 rim.
+    const m = s.mission = mission(ctx, 'mars');
     const showSol = () => {
       s.counter('sol', s.sol, MISSION.planned);
-      if (s.sol > MISSION.planned) m.discover('opportunity_90_sols');
+      if (s.sol > MISSION.planned) m.discover('opportunity_90');
     };
     const waterSign = () => { s.water++; m.progress(1, s.water, 3); };
 
     if (!opts.jump) {
-      await s.card('Mars', `Meridiani Planum · planned mission: ${MISSION.planned} sols`);
+      await s.do(ctx.card.chapter('mars'));
       await landing(s, ctx);
       s.hero.setEmotion('curious');
       showSol();
@@ -104,14 +105,14 @@ export default makeChapter({
       waterSign();
       s.lockControls();
       await timeSkip(s, SKIP[2], showSol);
-      ctx.hud.setStat('date', MISSION.orionDate);
+      ctx.hud.setStat('date', DATES.orion);
       await s.photo('PIA21708');
       await s.say('ch2_orion');
     } else {
       s.controller.place(VIEW[0], VIEW[1], 0.6);
       s.sol = SKIP[2];
       showSol();
-      ctx.hud.setStat('date', MISSION.orionDate);
+      ctx.hud.setStat('date', DATES.orion);
       s.power.on = true;
       await s.wait(0.1);
     }
@@ -123,7 +124,9 @@ export default makeChapter({
     }
 
     // The 2018 dust storm. Nothing tells the player to let go of W.
-    ctx.hud.setStat('date', MISSION.stormDate);
+    ctx.hud.setStat('date', DATES.storm);
+    ctx.audio.music?.('storm');
+    s.onDispose(() => { ctx.audio.music?.(null); ctx.audio.setWind?.(0); });
     s.power.on = false;
     s.devils?.forEach((d) => { d.visible = false; });
     s.unlockControls();
@@ -132,6 +135,7 @@ export default makeChapter({
     await s.until((dt) => {
       level = Math.min(1, level + dt / 25);
       s.storm.setLevel(level);
+      ctx.audio.setWind?.(level);
       s.power.level = Math.min(s.power.level, 1 - level);
       s.controller.speedScale = Math.max(0, 1 - level * 1.1);
       if (level > 0.6) s.hero.setEmotion('sleepy');
@@ -139,6 +143,7 @@ export default makeChapter({
       return level >= 1;
     });
     await s.wait(5); // 30 s in all
+    s.sound('powerdown');
     s.lockControls();
     await s.wait(2);
     await s.shot('storm_to_jezero');
@@ -207,8 +212,8 @@ function updateWhirlwinds(dt, s) {
     if (Math.hypot(p.x - d.position.x, p.z - d.position.z) < 3.2) {
       s.power.clean = 1;
       s.power.level = Math.min(1, s.power.level + 0.3);
-      s.mission.discover('wind_cleaned_panels');
-      s.sound('whirlwind');
+      s.mission.discover('wind_cleaning');
+      s.sound('park'); // a rising beep: power back
       d.visible = false;
     }
   }
@@ -226,10 +231,12 @@ async function landing(s, ctx) {
   ctx.followCam.setTarget(anchor, 1.6);
   s.hero.setEmotion('scared');
   const shot = s.shot('mars_landing'); // plays over the bounce if it exists
-  let still = 0, t = 0;
+  let still = 0, t = 0, lastVy = 0;
   await s.until((dt) => {
     t += dt;
     const p = ball.translation(), v = ball.linvel();
+    if (lastVy < -1.5 && v.y > 0.5) s.sound('bounce');
+    lastVy = v.y;
     anchor.position.set(p.x, p.y, p.z);
     const flat = Math.hypot(v.x, v.z);
     if (flat > 0.5) anchor.rotation.y += (Math.atan2(v.x, v.z) - anchor.rotation.y) * 0.05;
@@ -283,7 +290,7 @@ async function radioCall(s, ctx) {
   s.viking = viking;
   ctx.characters.set('viking', viking);
   s.hero.setEmotion('curious');
-  s.sound('radio_static');
+  s.sound('static');
   await s.wait(1);
   ctx.followCam.setTarget(viking.object, 1.1);
   await s.shot('viking_wakes', viking.object);

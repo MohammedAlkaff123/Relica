@@ -24,6 +24,7 @@
 //   await stage.until(() => condition)        checked every frame
 //   await stage.card(title, sub) / say(dialogueId) / photo(nasaId) / shot(shotId, anchor)
 //   stage.every((dt) => {...})                per-frame task, removed with the chapter; returns remove()
+//   stage.onDispose(() => {...})              runs when the chapter is left (stop a sound loop...)
 //   stage.add(object3d)                       added to the scene, removed with the chapter
 //   stage.prop(name, x, z, yaw)               a prop standing on the ground (see _props.js)
 //   stage.ground(x, z)                        ground height
@@ -94,6 +95,7 @@ export function setupStage(ctx, cfg) {
   const added = [];
   const tasks = new Set();
   const pending = new Set(); // { reject } of every helper promise still waiting
+  const cleanups = [];       // run when the chapter is left (stop loops, music...)
   let clock = 0;
 
   // A promise that rejects with Gone if the chapter is left first.
@@ -142,6 +144,7 @@ export function setupStage(ctx, cfg) {
     lockControls() { stage.controls = false; },
     unlockControls() { stage.controls = true; },
     every(fn) { tasks.add(fn); return () => tasks.delete(fn); },
+    onDispose(fn) { cleanups.push(fn); },
 
     // ---- goals ----
     goTo(x, z, text, opts) {
@@ -213,9 +216,9 @@ export function setupStage(ctx, cfg) {
     // Takes a prop off whatever it rides on and puts it back in the scene where it was.
     detach(object) { scene.attach(object); if (!added.includes(object)) added.push(object); return object; },
     counter(label, value, planned) {
-      const v = typeof value === 'number' ? Math.floor(value).toLocaleString('en') : value;
+      const v = typeof value === 'number' ? Math.floor(value) : value;
       if (ctx.hud.setCounter) ctx.hud.setCounter(label, v, planned);
-      else ctx.hud.setStat(label, planned != null ? `${v} / ${planned} planned` : v);
+      else ctx.hud.setStat(label, planned != null ? `${v} / ${planned} planned` : String(v));
     },
     battery(level) {
       const v = THREE.MathUtils.clamp(level, 0, 1);
@@ -236,6 +239,7 @@ export function setupStage(ctx, cfg) {
     },
     dispose() {
       stage.alive = false;
+      for (const fn of cleanups) { try { fn(); } catch (err) { console.error(err); } }
       for (const entry of pending) entry.reject(new Gone());
       pending.clear();
       tasks.clear();

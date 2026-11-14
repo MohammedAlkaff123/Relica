@@ -26,10 +26,10 @@ export default makeChapter({
     ctx.hud.setStat('date', '1971');
     const wheels = findWheels(s.hero);
     s.tutorial = { spun: 0, steered: 0, wheels };
-    const m = mission(ctx, 'Wake up', ['Spin your wheels', 'Steer left and right']);
+    const m = mission(ctx, 'opening');
 
     s.hero.setEmotion('sleepy');
-    await s.card('RELICA', 'Press Enter to wake up');
+    await s.do(ctx.card.title());
     await s.shot('opening_wake');
     s.hero.setEmotion('curious');
     await s.say('ch0_wake');
@@ -63,7 +63,7 @@ export default makeChapter({
 
     // Black. Launch rumble, then silence.
     await s.fade(true, 1.2);
-    s.sound('launch');
+    s.sound('rumble');
     await s.shot('launch');
     await s.wait(2.5);
     s.hero.setEmotion('curious');

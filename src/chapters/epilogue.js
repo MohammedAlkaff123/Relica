@@ -32,10 +32,10 @@ export default makeChapter({
     sun.position.set(Math.sin(SUN_YAW) * 900, 30, Math.cos(SUN_YAW) * 900);
     ctx.hud.setStat('date', 'Today');
     s.spinRate = 0;
-    const m = mission(ctx, 'Listen', ['Find the Sun', 'Hold the signal']);
+    const m = mission(ctx, 'epilogue'); // tasks: 0 find the Sun, 1 hold the signal
 
     s.hero.setEmotion('sleepy');
-    await s.card('Far Away', 'Pioneer 10 · still travelling');
+    await s.do(ctx.card.chapter('epilogue'));
     await s.say('ep_drift');
 
     s.hero.setEmotion('curious');
@@ -67,11 +67,13 @@ export default makeChapter({
     s.hero.talk(false);
     s.hero.setEmotion('sleepy');
     await s.say('ep_last');
+    ctx.audio.music?.('ending');
+    s.onDispose(() => ctx.audio.music?.(null));
     await s.shot('ending');
-    await s.card('Abandoned, but not forgotten', 'Every photo you are about to see is real.');
     await s.photo('ARC-1972-AC72-2135');
     await s.do(ctx.memory.wall());
-    await s.card('Relica', 'The conversations are imagined. The machines, the places, the dates and the photos are real.');
+    await s.do(ctx.card.ending());
+    await s.do(ctx.card.credits());
     ctx.hud.setObjective('The end. Press 1 to play again');
   },
 
