@@ -1,0 +1,11 @@
+{
+  "_readme": "Owner: Moayad. Placeholder shot: rise out of the storm, pan across Mars, zoom toward Jezero.",
+  "letterbox": true,
+  "years": [2018, 2021],
+  "keys": [
+    { "t": 0,   "pos": [2.5, 1.2, -4],  "look": [0, 0.8, 0],     "fov": 55, "shake": 1.2 },
+    { "t": 3.0, "pos": [2.5, 14, -10],  "look": [0, 6, 40],      "fov": 55, "shake": 0.8 },
+    { "t": 5.5, "pos": [2.5, 16, -10],  "look": [-60, 2, 80],    "fov": 45, "shake": 0.7 },
+    { "t": 8.0, "pos": [2.5, 16, -10],  "look": [-60, 2, 80],    "fov": 8,  "shake": 0.25 }
+  ]
+}

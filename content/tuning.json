@@ -1,0 +1,5 @@
+{
+  "camera": { "distance": 7, "height": 3, "lag": 4, "fov": 55, "shakeDeg": 0.5, "shakeSpeed": 0.5 },
+  "rover": { "speed": 5, "accel": 3, "turn": 1.6, "hop": 3 },
+  "heli": { "lift": 7, "speed": 4, "turn": 1.6 }
+}

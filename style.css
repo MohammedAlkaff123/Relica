@@ -1,0 +1,77 @@
+/* Owner: Set C. Everything drawn on top of the 3D view. */
+:root {
+  --ink: #f2f0ea;
+  --dim: #b9b6ad;
+  --panel: rgba(12, 16, 26, 0.72);
+  --line: rgba(242, 240, 234, 0.22);
+  --foil: #e3a23c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, monospace;
+  --arabic: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#ui { position: fixed; inset: 0; pointer-events: none; color: var(--ink); font-family: var(--display); }
+.hidden { display: none !important; }
+
+/* Environment panel */
+.hud {
+  position: absolute; top: 16px; left: 16px; min-width: 250px; max-width: 340px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+  padding: 10px 14px; font-family: var(--mono); font-size: 13px; line-height: 1.5;
+}
+.hud h2 { margin: 0; font: 700 16px var(--display); }
+.hud .place { color: var(--dim); margin-bottom: 6px; }
+.hud .row { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding: 3px 0; }
+.hud .row span:first-child { color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; padding-top: 2px; }
+.hud .row span:last-child { text-align: right; }
+.hud .unverified::after { content: " ?"; color: var(--foil); }
+.hud .legend { color: var(--foil); font-size: 11px; margin-top: 4px; }
+
+.objective {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 16px; font-size: 15px; max-width: 46vw; text-align: center;
+}
+
+/* Dialogue: Arabic line on top, English subtitle underneath */
+.dialogue {
+  position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%);
+  width: min(760px, 92vw); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 14px 20px 12px;
+}
+.dialogue .who { font: 500 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--foil); }
+.dialogue .ar { font: 600 26px/1.6 var(--arabic); margin: 4px 0 2px; }
+.dialogue .en { font-size: 16px; color: var(--dim); }
+.dialogue .hint, .card .hint, .memory .hint { font: 400 11px var(--mono); color: var(--dim); margin-top: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Chapter card */
+.card {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(4, 6, 12, 0.62); text-align: center; padding: 24px;
+}
+.card h1 { font-size: clamp(34px, 7vw, 76px); margin: 0; letter-spacing: 0.02em; }
+.card p { font: 400 16px var(--mono); color: var(--dim); margin: 10px 0 0; }
+
+/* Memory photo: a real NASA photo with its caption */
+.memory { position: absolute; inset: 0; background: rgba(4, 6, 12, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.memory .frame { background: #f4f1e8; color: #1b1b1b; padding: 14px 14px 16px; width: min(560px, 92vw); border-radius: 3px; transform: rotate(-1.2deg); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6); }
+.memory .photo { aspect-ratio: 4 / 3; overflow: hidden; background: #111; }
+.memory .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.memory h3 { margin: 12px 0 2px; font-size: 18px; }
+.memory .meta { font: 400 12px var(--mono); color: #5b5b5b; }
+.memory .desc { font: 400 14px/1.5 "Segoe UI", system-ui, sans-serif; margin-top: 8px; }
+.memory .hint { color: #5b5b5b; }
+.memory .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; width: min(900px, 94vw); }
+.memory .wall figure { margin: 0; background: #f4f1e8; color: #1b1b1b; padding: 8px; border-radius: 2px; }
+.memory .wall img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.memory .wall figcaption { font: 400 11px var(--mono); margin-top: 6px; }
+
+/* Cutscene dressing */
+.cinema .hud, .cinema .objective { display: none; }
+.bars::before, .bars::after { content: ""; position: absolute; left: 0; right: 0; height: 11vh; background: #000; }
+.bars::before { top: 0; }
+.bars::after { bottom: 0; }
+.bars { position: absolute; inset: 0; }
+.years { position: absolute; left: 50%; bottom: 14vh; transform: translateX(-50%); font: 500 42px var(--mono); letter-spacing: 0.12em; text-shadow: 0 2px 12px #000; }

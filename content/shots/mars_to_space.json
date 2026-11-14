@@ -1,0 +1,9 @@
+{
+  "_readme": "Owner: Moayad. Placeholder shot: lie on the sand beside Ingenuity, look up with it, long zoom into the sky.",
+  "letterbox": true,
+  "keys": [
+    { "t": 0,   "pos": [1.6, 0.25, -1.6], "look": [0, 0.3, 0],   "fov": 50, "shake": 0.5 },
+    { "t": 3.0, "pos": [1.6, 0.25, -1.6], "look": [-4, 40, 30],  "fov": 50, "shake": 0.9 },
+    { "t": 8.0, "pos": [1.6, 0.25, -1.6], "look": [-4, 40, 30],  "fov": 5,  "shake": 0.2 }
+  ]
+}

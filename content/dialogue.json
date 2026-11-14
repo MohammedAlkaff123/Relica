@@ -1,0 +1,31 @@
+{
+  "_readme": [
+    { "who": "note", "ar": "", "en": "Owner: Set C with Mohammed. Every line below is a PLACEHOLDER so the system can be tested. Write the real script here. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy." }
+  ],
+  "ch0_wake": [
+    { "who": "lrv", "emotion": "sleepy", "ar": "…أين أنا؟ (نص مؤقت)", "en": "…Where am I? (placeholder)" },
+    { "who": "lrv", "emotion": "curious", "ar": "عندي عجلات! (نص مؤقت)", "en": "I have wheels! (placeholder)" }
+  ],
+  "ch1_intro": [
+    { "who": "lrv", "emotion": "happy", "ar": "كل شيء هنا خفيف جدًا. (نص مؤقت)", "en": "Everything is so light here. (placeholder)" }
+  ],
+  "ch1_left_behind": [
+    { "who": "lrv", "emotion": "sad", "ar": "هل ستعودون؟ (نص مؤقت)", "en": "Are you coming back? (placeholder)" }
+  ],
+  "ch2_intro": [
+    { "who": "opportunity", "emotion": "curious", "ar": "تسعون يومًا فقط؟ لنرَ. (نص مؤقت)", "en": "Only ninety days? Let's see. (placeholder)" }
+  ],
+  "ch2_viking_call": [
+    { "who": "viking", "emotion": "sleepy", "ar": "أنا هنا منذ زمن طويل يا صغيري. (نص مؤقت)", "en": "I have been here a long time, little one. (placeholder)" },
+    { "who": "opportunity", "emotion": "sad", "ar": "السماء تظلم. (نص مؤقت)", "en": "The sky is getting dark. (placeholder)" }
+  ],
+  "ch3_intro": [
+    { "who": "ingenuity", "emotion": "scared", "ar": "الهواء رقيق جدًا… هل أستطيع الطيران؟ (نص مؤقت)", "en": "The air is so thin… can I even fly? (placeholder)" }
+  ],
+  "ch3_grounded": [
+    { "who": "ingenuity", "emotion": "sad", "ar": "طرت أكثر مما توقعوا. (نص مؤقت)", "en": "I flew more than they ever expected. (placeholder)" }
+  ],
+  "ep_drift": [
+    { "who": "pioneer", "emotion": "sleepy", "ar": "ما زلت أسافر. (نص مؤقت)", "en": "I am still travelling. (placeholder)" }
+  ]
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+__pycache__/
+.DS_Store
+Thumbs.db
+
+# Pack photo that shows a child: must not be part of the published project
+nasa_data/nasa_data/viking_landers/NHQ201707210014.jpg
+
+# Briefing transcript: contains names of other participants, keep it out of the public repo
+هاكاثون ناسا - المحتوى المنظم.md

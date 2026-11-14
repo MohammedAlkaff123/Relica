@@ -1,0 +1,33 @@
+{
+  "_readme": "Owner: Set C. One place for every real-world number. The HUD shows these and the physics uses the same gravity. Set \"verified\": true and fill \"source\" with the NASA page only after you have checked the number yourself.",
+  "worlds": {
+    "factory": {
+      "label": "Earth",
+      "place": "Assembly building",
+      "gravity": { "value": 9.81, "unit": "m/s²", "verified": false, "source": "" },
+      "temperature": { "text": "about 20 °C, clean room", "verified": false, "source": "" },
+      "pressure": { "text": "1 atmosphere", "verified": false, "source": "" }
+    },
+    "moon": {
+      "label": "The Moon",
+      "place": "Taurus–Littrow valley",
+      "gravity": { "value": 1.62, "unit": "m/s²", "verified": false, "source": "" },
+      "temperature": { "text": "about +120 °C sun, −130 °C night", "verified": false, "source": "" },
+      "pressure": { "text": "practically zero", "verified": false, "source": "" }
+    },
+    "mars": {
+      "label": "Mars",
+      "place": "Surface",
+      "gravity": { "value": 3.71, "unit": "m/s²", "verified": false, "source": "" },
+      "temperature": { "text": "about −60 °C on average", "verified": false, "source": "" },
+      "pressure": { "text": "about 6 mbar, under 1% of Earth", "verified": false, "source": "" }
+    },
+    "space": {
+      "label": "Deep space",
+      "place": "Beyond the planets",
+      "gravity": { "value": 0, "unit": "m/s² (drifting)", "verified": false, "source": "" },
+      "temperature": { "text": "near absolute zero", "verified": false, "source": "" },
+      "pressure": { "text": "vacuum", "verified": false, "source": "" }
+    }
+  }
+}
