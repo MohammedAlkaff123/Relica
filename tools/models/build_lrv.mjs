@@ -86,11 +86,11 @@ for (const sx of [-1, 1]) for (const sz of [-1, 1]) {                    // susp
 }
 // Two seats: tube frames with webbing, the backs leaning back a little.
 for (const sx of [-1, 1]) {
-  add('body', C.dark, box(0.42, 0.05, 0.42, [sx * 0.26, DECK + 0.2, -0.2]));
-  add('body', C.dark, box(0.42, 0.5, 0.05, [sx * 0.26, DECK + 0.45, -0.46], 0.22));
-  add('body', C.frame, box(0.04, 0.2, 0.04, [sx * 0.26, DECK + 0.1, -0.05]));
-  add('body', C.frame, box(0.04, 0.2, 0.04, [sx * 0.26, DECK + 0.1, -0.36]));
-  add('body', C.frame, box(0.3, 0.03, 0.2, [sx * 0.26, DECK + 0.04, 0.3]));  // footrest
+  add('body', C.dark, box(0.4, 0.05, 0.42, [sx * 0.34, DECK + 0.2, -0.2]));
+  add('body', C.dark, box(0.4, 0.5, 0.05, [sx * 0.34, DECK + 0.45, -0.46], 0.22));
+  add('body', C.frame, box(0.04, 0.2, 0.04, [sx * 0.34, DECK + 0.1, -0.05]));
+  add('body', C.frame, box(0.04, 0.2, 0.04, [sx * 0.34, DECK + 0.1, -0.36]));
+  add('body', C.frame, box(0.3, 0.03, 0.2, [sx * 0.34, DECK + 0.04, 0.4]));  // footrest
 }
 // Console between the seats, with the T-handle the commander steers with.
 add('body', C.frame, box(0.22, 0.3, 0.3, [0, DECK + 0.25, 0.28], -0.35));

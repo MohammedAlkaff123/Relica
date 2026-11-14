@@ -1,5 +1,7 @@
 # RELICA: who does what
 
+> Current implementation status (14 Nov): see [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md) and [TESTLOG.md](TESTLOG.md). Camera and mission changes requested by the directors are implemented; art acceptance, novice testing, rehearsal and submission remain explicit human steps. Earlier hour estimates and paper chapter timings are planning history.
+
 Read [STORY.md](STORY.md) first. It says what the game is. This file says who builds each part of it.
 
 | Person | Role | Owns |
@@ -164,7 +166,7 @@ In `character.js`, load `public/models/<id>.glb` if it exists and put it in plac
 Lunar Module in two parts (`descent`, `ascent`) so the top can lift off; one astronaut with a mirror visor and no flag or logo, used twice; airbag bundle; lander petals; `perseverance` as a simple grey silhouette; science-stop marker; flight ring; rock set; the pebble patch.
 *Done when:* Ziad has replaced every box prop.
 
-**Astronaut animation follow-up (Abdulkarim, with Ziad and Moayad):** the current model is documented as “Arms out. Not rigged” in `public/models/README.md`. Add a rig or named limb pivots, a relaxed idle and usable walk, seated ride, collect/kneel, repair/pat and boarding poses or clips. Preserve the mirror visor and silent performance. Abdulkarim owns the asset and an update/play interface; Ziad selects actions from chapter events and advances animation each frame; Moayad directs the repair, farewell and boarding shots. Confirm both astronaut instances animate independently, feet stay grounded, the seated pose fits the rover, and no transition exposes a T-pose. This is assigned work, not an animation fix claimed in this PR.
+**Astronaut animation follow-up (Abdulkarim, with Ziad and Moayad):** main `21deaa0` supplies jointed procedural figures with breathing, walking, climbing and sitting. The old unrigged GLB is no longer the gameplay astronaut. Preserve these changes; add collect/kneel, repair/pat, reassurance and farewell actions. Abdulkarim owns those performances and their action interface; Ziad selects actions from chapter events; Moayad checks their framing. Confirm the two figures animate independently and seated positions fit the updated rover.
 
 **B-7 Mars.** Wide flat plains with fine ripples for chapter 2, a crater rim to reach, and a different area with cliffs on the horizon for Jezero in chapter 3. A sun disc in the sky that the storm can dim.
 
@@ -324,3 +326,8 @@ The directors asked for clearer, more fun tasks and more short cutscenes. The de
 | **B-13** | Abdulkarim | hour 8 | New props and effects: sample box, parking circle, whirlwind, the three dangers (sand trap, boulder field, cliff edge), the height band, a water badge icon | Ziad has replaced every placeholder |
 | **CAM-9** | Moayad | rough by hour 8, final by hour 16 | The nine extra shots in STORY.md section 9. `mars_day` is one shot reused three times. `where_they_are` needs each machine left in its final pose in its own world | `where_they_are` plays and somebody in the room goes quiet |
 | **DIR-10** | Mohammed | hour 11 | Fun check. Watch someone new play each mission. If they ask "what do I do?", the task text is wrong. If they stop trying to jump on the Moon after ten seconds, the jumps are not fun yet | Each mission passes with a new player |
+
+
+### Animation integration update — 14 November
+
+Main commit `21deaa0` replaces the astronaut/worker stand-ins with jointed procedural figures: breathing, walking, climbing aboard and sitting now run automatically. That update, the crew start positions and the revised rover seats are preserved in the directors’ integration. Earlier notes about the unrigged astronaut describe the old model. Abdulkarim now owns task-specific collecting, repair, reassurance and farewell gestures; Ziad owns their chapter triggers; Moayad reviews the performance in the authored shots.

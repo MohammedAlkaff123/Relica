@@ -23,7 +23,7 @@ const letters = (text) => (segmenter ? Array.from(segmenter.segment(text), (s) =
 
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 
-export async function createDialogue(root, prompt, audio, getCharacter) {
+export async function createDialogue(root, prompt, audio, getCharacter, followCam) {
   const script = await loadJSON('content/dialogue.json');
   const box = el('div', 'dialogue hidden', root);
   const who = el('div', 'who', box);
@@ -36,6 +36,7 @@ export async function createDialogue(root, prompt, audio, getCharacter) {
   const en = el('div', 'en', box);
   const hint = el('div', 'hint', box, 'Enter to continue');
 
+  let generation = 0;
   let typing = null; // the running typewriter, so Enter can finish it
 
   // Types both lines together, so the Arabic and the English finish at the same moment.
@@ -78,13 +79,17 @@ export async function createDialogue(root, prompt, audio, getCharacter) {
   }
 
   return {
-    async play(id, { auto = false } = {}) {
+    async play(id, { auto = false, camera = true, onLine } = {}) {
+      const token = ++generation;
       const lines = script[id];
       if (!lines) { console.warn(`dialogue "${id}" is missing from content/dialogue.json`); return; }
       hint.textContent = auto ? 'Enter to skip' : 'Enter to continue';
-      for (const line of lines) {
+      for (const [index, line] of lines.entries()) {
+        if (token !== generation) break;
         const speaker = getCharacter(line.who);
         const cast = CAST[line.who];
+        onLine?.(line, index);
+        if (camera && followCam?.enabled && speaker) followCam.talkTo(speaker.object);
         box.dataset.who = line.who;
         whoEn.textContent = cast?.name ?? line.who;
         whoAr.textContent = cast?.ar ?? '';
@@ -107,10 +112,14 @@ export async function createDialogue(root, prompt, audio, getCharacter) {
         if (voice) voice.stop();
         if (result === 'cancel') break;
       }
-      if (typing) typing.stop();
-      box.classList.add('hidden');
+      if (token === generation) {
+        if (typing) typing.stop();
+        box.classList.add('hidden');
+        if (camera) followCam?.release();
+      }
     },
     hide() {
+      generation++; followCam?.release();
       if (typing) typing.stop();
       box.classList.add('hidden');
     },

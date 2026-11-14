@@ -1,5 +1,7 @@
 # RELICA: game plan and team tasks
 
+> Current implementation status (14 Nov): see [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md) and [TESTLOG.md](TESTLOG.md). Camera and mission changes requested by the directors are implemented; art acceptance, novice testing, rehearsal and submission remain explicit human steps. Earlier hour estimates and paper chapter timings are planning history.
+
 Working title taken from the project folder. Browser game, 5 people, 24 hours.
 
 ## 1. The game in one minute
@@ -35,7 +37,7 @@ Taken from the data guide and the briefing transcript in this folder.
 |---|---|---|---|
 | **Lunar Roving Vehicle**, Apollo 17, 1972 | Playable, chapter 1 | Moon, Taurus–Littrow | TV camera is the eye, umbrella antenna is the mouth |
 | **Opportunity**, 2004–2018 | Playable, chapter 2 | Mars, Meridiani Planum | Camera mast is the head with two eyes, small antenna is the mouth |
-| **Viking 1 lander**, 1976–1982 | The old one. Not playable, speaks by radio | Mars, Chryse Planitia | Two camera turrets are eyes, dish is the mouth, beard and long eyebrows made of dusty foil strips and cables |
+| **Viking 1 lander**, 1976–1982 | Historical photo/soil memory, then imagined radio conversation | Mars, Chryse Planitia | Two camera turrets are eyes, dish is the mouth, beard and long eyebrows made of dusty foil strips and cables |
 | **Ingenuity**, 2021–2024 | Playable, chapter 3 | Mars, Jezero crater | Eyes on the body box, top antenna is the mouth, rotors droop when sad |
 | **Pioneer 10**, 1972 to today | Epilogue | Beyond the planets | The big dish is the face, one small sensor eye, very slow blink |
 
@@ -56,7 +58,7 @@ Background props: Lunar Module, two astronauts with mirror visors, airbag lander
 | *Cutscene 3: Mars to deep space* | 0:12 | | | |
 | **Epilogue: Pioneer 10** | 1:35 | Photograph Jupiter and send the image home in a dated 1973 memory. Years pass beyond the planned 21 months. Enter the imagined listening scene with a small fiction label; hear four voices, answer, then end on real photos and service tributes | Useful work, endurance, recognition and pride | Pioneer photos and sourced planned/achieved tributes for all five machines |
 
-The revised story draft totals 11:52 on paper: 11:20 of chapters plus 0:32 of transitions. Short character inserts are included in the chapters, not added twice. Target a measured 12–13 minute first playthrough; manual reading and optional photo/credits browsing can extend it. Mohammed checks actual pacing with a stopwatch. The full Opportunity staging, detailed Pioneer staging and revised shot timing are proposals for review; the photo task, endurance and tributes are approved directions; see STORY_REVIEW.md.
+The earlier 11:52 paper budget predates the new mission/photo tasks. The implemented full automated playthrough takes 11:49 of game time with reading skipped; target a measured 12–13 minute human run. See TESTLOG.md before making a runtime claim.
 
 Only the Moon rover gets the full factory-to-retirement arc. The others start at arrival, so each chapter stays short.
 
@@ -266,7 +268,7 @@ Set C checks each line on a NASA page before it goes into the game.
 **Already in the pack**
 
 - The rover was used on Apollo 15, 16 and 17 in 1971–1972.
-- Apollo 17, Taurus–Littrow, 12 Dec 1972: a fender broke and was repaired with lunar maps and clamps.
+- Apollo 17, Taurus–Littrow: the fender broke during EVA 1 at the lander; a map-and-clamp replacement was installed before EVA 2.
 - Viking 1 launched on 20 Aug 1975.
 - Opportunity was still working on sol 4,712 (April 2017), at Orion crater on the rim of Endeavour crater.
 - Ingenuity arrived on 18 Feb 2021 under Perseverance and has two cameras on its underside.

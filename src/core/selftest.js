@@ -109,6 +109,8 @@ export async function runSelfTest(ctx) {
   for (const [index, world] of [[1, 'moon'], [2, 'mars']]) {
     await test(`A-1 physics ground matches heightAt (${world})`, async () => {
       await go(index);
+      // Rapier populates its query pipeline on the first physics step.
+      await waitGame(0.1);
       let worst = 0, misses = 0;
       for (let i = 0; i < 80; i++) {
         // Off the 2 m grid lines and cell diagonals: a ray exactly on a triangle edge can slip through
@@ -269,12 +271,20 @@ export async function runSelfTest(ctx) {
       return [];
     },
     moon() {
+      if (objective().includes('Hold E')) return ['KeyE'];
       if (objective().startsWith('Stop inside')) return [];
       const b = beam();
       return b ? ['KeyW', ...steer(b.position.x, b.position.z)] : [];
     },
     mars(s, memo) {
       const o = objective();
+      if (s.captureState?.phase === 'frame') {
+        const c=s.captureState, keys=[];
+        if(Math.abs(c.yaw)>.02)keys.push(c.yaw>0?'KeyA':'KeyD');
+        if(Math.abs(c.pitch)>.02)keys.push(c.pitch>0?'KeyS':'KeyW');
+        return keys.length ? keys : ['Space'];
+      }
+      if (o.startsWith('Stop inside')) return [];
       if (o.includes('Hold E')) return ['KeyE'];
       // The storm: keep holding W. Nothing tells the player to let go.
       if (s.viking && s.controls) {
@@ -331,7 +341,7 @@ export async function runSelfTest(ctx) {
   const plays = [
     [0, 'opening', 'A-6 Opening', 200, 2, 45],
     [1, 'moon', 'A-4 + A-15 Moon (Carry the crew)', 600, 3, 180],
-    [2, 'mars', 'A-7 + A-16 Mars (Follow the water)', 700, 3, 210],
+    [2, 'mars', 'A-7 + A-16 Mars (Find evidence of ancient water)', 850, 5, 270],
     [3, 'sky', 'A-8 + A-17 Mars sky (Be the eyes)', 700, 2, 150],
     [4, 'epilogue', 'A-9 Epilogue (Photograph Jupiter, then listen)', 300, 2, 95],
   ];
@@ -371,7 +381,7 @@ export async function runSelfTest(ctx) {
       if (id === 'epilogue') check(s.photoState?.captured && s.photoState?.sent, 'A-9 Jupiter image captured and sent before the listening scene');
     });
   }
-  report('info', 'Chapter lengths with the bot (the bot is faster than a person, and placeholders are short)', timing.join('\n    '));
+  report('info', 'Automated chapter lengths (dialogue is skipped; this is not a human pacing test)', timing.join('\n    '));
 
   const found = ctx.hud.discoveries?.map((d) => d.id) ?? [];
   report('info', 'Discovery cards shown during the test', `${found.length}: ${found.join(', ')}`);

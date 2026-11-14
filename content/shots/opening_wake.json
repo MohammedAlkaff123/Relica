@@ -1,0 +1,61 @@
+{
+  "_readme": "Owner: Moayad. Authored camera; metres relative to the anchor, seconds, degrees. Named look targets follow the bound object. cut keys change instantly.",
+  "letterbox": true,
+  "local": true,
+  "keys": [
+    {
+      "t": 0,
+      "pos": [
+        0.4,
+        0.4,
+        1.2
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 40,
+      "shake": 0,
+      "black": 1
+    },
+    {
+      "t": 3,
+      "pos": [
+        0.5,
+        0.45,
+        1.4
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 40,
+      "shake": 0.3,
+      "black": 0
+    },
+    {
+      "t": 8,
+      "pos": [
+        3,
+        2.2,
+        5
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 48,
+      "shake": 0.3
+    }
+  ],
+  "events": [
+    {
+      "t": 3,
+      "who": "lrv",
+      "emotion": "curious"
+    }
+  ]
+}

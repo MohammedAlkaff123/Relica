@@ -21,6 +21,8 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { makeProp } from './_props.js';
 import { mission, factNumber } from './_mission.js';
+import { captureHistoricPhoto } from './_historicPhoto.js';
+import { el } from '../ui/dom.js';
 import { createCharacter } from '../characters/character.js';
 
 // Dates as short labels. Each matches a verified fact: opportunity_landing, opportunity_sol_4712,
@@ -49,7 +51,7 @@ export default makeChapter({
       orionSol: factNumber(ctx, 'opportunity_sol_4712', 4712),
     };
     // The counter jumps used by the three time skips (story pacing, not facts), ending on the real sol.
-    const SKIP = [120, 2400, MISSION.orionSol];
+    const SKIP = [120, 4248, MISSION.orionSol];
     s.sol = 1;
     s.power = { on: false, level: 1, clean: 1, shown: -1, lowest: 1 };
     s.water = 0;
@@ -60,9 +62,10 @@ export default makeChapter({
       s.counter('sol', s.sol, MISSION.planned);
       if (s.sol > MISSION.planned) m.discover('opportunity_90');
     };
-    const waterSign = () => { s.water++; m.progress(1, s.water, 3); };
+    const waterSign = () => { m.done(s.water++); ctx.hud.setStat('water evidence', `${s.water} / 3`); };
     s.prop('pebbles', PEBBLES[0], PEBBLES[1]);
     s.prop('layeredRock', ROCK[0] - 2, ROCK[1] + 2);
+    s.prop('layeredRock', VIEW[0] - 2, VIEW[1] + 2);
 
     if (!opts.jump) {
       await s.do(ctx.card.chapter('mars'));
@@ -71,44 +74,46 @@ export default makeChapter({
       showSol();
       await s.say('ch2_intro');
 
-      // Out of the crater to the pebbles.
+      ctx.hud.setStat('water evidence', '0 / 3');
+      ctx.hud.setStat('mission', 'Search for evidence of past liquid water');
       s.unlockControls();
-      await s.goTo(PEBBLES[0], PEBBLES[1], 'Climb out of the crater', { radius: 5 });
-      m.done(0);
-      s.hero.setEmotion('happy');
-      await s.hold('KeyE', 2, 'Hold E to study the tiny round pebbles');
-      waterSign();
-      m.discover('pebbles_water');
+      await s.goTo(PEBBLES[0], PEBBLES[1], 'Reach the hematite blueberries', { radius: 4, park: true });
+      await investigate(s, ctx, 'Hold E: examine the blueberries with your instruments',
+        'Hematite-rich spheres formed in water-altered rock.', 'كرات غنية بالهيماتيت تكوّنت في صخور غيّرها الماء.');
+      waterSign(); m.discover('pebbles_water');
 
-      // Time skip 1: the counter passes 90 and keeps going.
-      await timeSkip(s, SKIP[0], showSol);
-      await s.say('ch2_sol90');
-
-      // The long drive on solar power. Whirlwinds wander the plain.
       s.power.on = true;
       startWhirlwinds(s, ctx);
       s.unlockControls();
-      await s.goTo(ROCK[0], ROCK[1], 'Drive to the layered rock. Whirlwinds clean your panels', { radius: 5 });
-      await timeSkip(s, SKIP[1], showSol);
-      s.unlockControls();
-      s.hero.setEmotion('curious');
-      await s.hold('KeyE', 2, 'Hold E to grind the layered rock');
-      waterSign();
-      await s.photo('PIA20285');
+      await s.goTo(ROCK[0], ROCK[1], 'Find the outcrop: test its minerals for a watery past', { radius: 4, park: true });
+      await investigate(s, ctx, 'Hold E: grind the crust, then analyze the exposed rock',
+        'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.');
+      waterSign(); m.discover('jarosite_water');
 
-      await s.goTo(VIEW[0], VIEW[1], 'Drive to the crater rim', { radius: 6 });
-      m.done(3);
-      if (s.power.lowest > 0.1) m.done(2);
-      s.lockControls();
-      await s.shot('mars_tracks');
       s.unlockControls();
-      await s.hold('KeyE', 2, 'Hold E to study the view from the rim');
-      waterSign();
-      s.lockControls();
+      await s.goTo(VIEW[0], VIEW[1], 'Inspect the fine layers in the next outcrop', { radius: 4, park: true });
+      await investigate(s, ctx, 'Hold E: scan the tilted layers in the rock',
+        'Cross-lamination: evidence of ripples made by flowing water.', 'طبقات متقاطعة: دليل على تموّجات صنعها ماء جارٍ.');
+      waterSign(); m.discover('ripples_water');
+      await s.say('ch2_water');
+      // Three different clues support ancient water, not a discovery of present-day drinking water.
+      await timeSkip(s, SKIP[0], showSol);
+      await s.say('ch2_sol90');
+      await timeSkip(s, SKIP[1], showSol);
+      ctx.hud.setStat('date', '5 Jan 2016');
+      await s.card('Still investigating, twelve years later', 'بعد اثنتي عشرة سنة، ما زالت تفحص الصخور');
+      await s.hold('KeyE', 2, 'Hold E: examine the Potts rock target');
+      await captureHistoricPhoto(s, ctx, 'PIA20285');
+
       await timeSkip(s, SKIP[2], showSol);
       ctx.hud.setStat('date', DATES.orion);
-      await s.photo('PIA21708');
+      await s.shot('mars_tracks');
+      await captureHistoricPhoto(s, ctx, 'PIA21708');
+      m.done(3);
       await s.say('ch2_orion');
+      await s.hold('KeyE', 2, 'Hold E: transmit the science record to Earth');
+      m.done(4);
+      if (s.power.lowest > 0.1) m.bonus('Battery protected through the science traverse');
     } else {
       s.controller.place(VIEW[0], VIEW[1], 0.6);
       s.sol = SKIP[2];
@@ -131,23 +136,34 @@ export default makeChapter({
     s.power.on = false;
     s.devils?.forEach((d) => { d.visible = false; });
     s.unlockControls();
-    ctx.hud.setObjective('');
-    let level = 0, said = false;
+    ctx.hud.setObjective('Dust is blocking the sunlight. Solar power is falling.');
+    ctx.hud.setStat('solar input', '100%');
+    let level = 0, stormLine = null;
     await s.until((dt) => {
       level = Math.min(1, level + dt / 25);
       s.storm.setLevel(level);
+      ctx.followCam.setMotion({ storm: level });
+      ctx.hud.setStat('solar input', `${Math.round((1-level)*100)}%`);
       ctx.audio.setWind?.(level);
       s.power.level = Math.min(s.power.level, 1 - level);
       s.controller.speedScale = Math.max(0, 1 - level * 1.1);
       if (level > 0.6) s.hero.setEmotion('sleepy');
-      if (level > 0.5 && !said) { said = true; s.say('ch2_storm').catch(() => {}); }
+      if (level > 0.5 && !stormLine) stormLine = s.say('ch2_storm', { keepControls: true });
       return level >= 1;
     });
+    ctx.hud.setObjective('No sunlight reaches the panels. Last contact: 10 June 2018.');
     await s.wait(5); // 30 s in all
     s.sound('powerdown');
     s.lockControls();
+    if (stormLine) await stormLine;
+    await s.say('ch2_storm_presence');
     await s.wait(2);
+    m.discover('opportunity_storm');
+    await s.card('More than fourteen years of discovery', 'Evidence of ancient water sent home. Last contact: 10 June 2018.');
+    let rise=0;
+    const clearSky=s.every((dt)=>{rise+=dt;s.storm.setLevel(Math.max(0,1-rise/5));});
     await s.shot('storm_to_jezero');
+    clearSky();
     ctx.next();
   },
 
@@ -231,7 +247,7 @@ async function landing(s, ctx) {
   const anchor = s.add(new THREE.Object3D());
   ctx.followCam.setTarget(anchor, 1.6);
   s.hero.setEmotion('scared');
-  const shot = s.shot('mars_landing'); // plays over the bounce if it exists
+  const shot = s.shot('mars_landing', anchor);
   let still = 0, t = 0, lastVy = 0;
   await s.until((dt) => {
     t += dt;
@@ -290,13 +306,46 @@ async function radioCall(s, ctx) {
   viking.setEmotion('sleepy');
   s.viking = viking;
   ctx.characters.set('viking', viking);
+  // Historical work comes before the explicitly imagined, decades-later radio exchange.
+  await s.card('Viking 1 · Chryse Planitia · 1976', 'First successful U.S. Mars landing · أول هبوط أمريكي ناجح على المريخ');
+  const remembered = mission(ctx, 'viking');
+  ctx.hud.setContext('Viking 1', 'Chryse Planitia · August 1976');
+  await captureHistoricPhoto(s, ctx, 'PIA10738');
+  remembered.done(0);
+  ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
+  await s.hold('KeyE', 2, 'Hold E: deliver a soil sample to the biology experiments');
+  remembered.done(1);
+  await s.card('A search for life, not a confirmed discovery', 'The experiments found no definitive evidence of life. · لم تؤكّد التجارب وجود حياة.');
+  s.mission.discover('viking_first');
+  ctx.hud.setWorld('mars'); ctx.hud.setStat('date', '2017 · imagined conversation');
+  ctx.hud.setMission('mars');
+  for (let i=0;i<5;i++) if (s.mission.isDone(i)) ctx.hud.completeTask(i);
+  const fiction=el('div','fiction-label',document.getElementById('ui'),'Imagined conversation · حوار متخيّل');
+  s.onDispose(()=>fiction.remove());
   s.hero.setEmotion('curious');
   s.sound('static');
   await s.wait(1);
   ctx.followCam.setTarget(viking.object, 1.1);
   await s.shot('viking_wakes', viking.object);
-  await s.say('ch2_viking_call');
+  await s.do(ctx.cinematics.conversation('ch2_viking_call', 'ch2_viking_call', s.hero.object, { opportunity: s.hero.object, viking: viking.object }, ctx.dialogue));
+  fiction.remove();
   ctx.followCam.setTarget(s.hero.object, 1);
   s.hero.setEmotion('sad');
   await s.wait(1);
+}
+
+// Each observation needs a stopped rover and an instrument action; driving into a ring is not science.
+async function investigate(s, ctx, instruction, result, arabic) {
+  s.lockControls();
+  s.hero.setEmotion('curious');
+  const target=s.hero.object.position.clone(); target.z+=1.8;
+  const ring=s.add(new THREE.Mesh(new THREE.TorusGeometry(.65,.035,6,32),new THREE.MeshBasicMaterial({color:0x8fd18b})));
+  ring.rotation.x=-Math.PI/2;ring.position.set(target.x,s.ground(target.x,target.z)+.2,target.z);
+  const stop=s.every((dt)=>{ring.rotation.z+=dt;});
+  const cleanup=()=>{stop();ring.parent?.remove(ring);ring.geometry.dispose();ring.material.dispose();};
+  s.onDispose(cleanup);
+  s.hero.lookAt?.(target);
+  await s.hold('KeyE',2.5,instruction);
+  cleanup(); s.hero.lookAt?.(null);
+  await s.card(result,arabic);
 }

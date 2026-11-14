@@ -85,12 +85,13 @@ export function setupStage(ctx, cfg) {
     hero.object.rotation.y = syaw;
   }
 
+  ctx.followCam.setProfile(cfg.character);
   ctx.followCam.setTarget(hero.object, cfg.cameraScale ?? 1);
   ctx.hud.setWorld(factsWorld);
   ctx.hud.setObjective('');
   ctx.audio.setWorld?.(factsWorld);
 
-  const objectives = createObjectives({ scene, hud: ctx.hud, world, getHero: () => hero, getSpeed: () => controller?.speed ?? 0 });
+  const objectives = createObjectives({ scene, hud: ctx.hud, world, navigation: ctx.navigation, getHero: () => hero, getSpeed: () => controller?.speed ?? 0 });
   // Set B's effects: wheel and rotor dust follow the hero on their own; dust shower and storm on call.
   const fx = createEffects({ scene, env, hero, gravity });
   const dust = { shower: (on) => fx.dust.shower(on) };
@@ -101,6 +102,7 @@ export function setupStage(ctx, cfg) {
   const pending = new Set(); // { reject } of every helper promise still waiting
   const cleanups = [];       // run when the chapter is left (stop loops, music...)
   let clock = 0;
+  let idleLookTime = 0;
 
   // A promise that rejects with Gone if the chapter is left first.
   function guarded(executor) {
@@ -123,6 +125,7 @@ export function setupStage(ctx, cfg) {
 
   const stage = {
     cfg, env, hero, body, controller, gravity, world, dust, storm, fx, objectives,
+    actors: { hero: hero.object },
     alive: true,      // false once the chapter has been left
     controls: false,  // true while the player drives or flies
     get time() { return clock; },
@@ -172,20 +175,34 @@ export function setupStage(ctx, cfg) {
     // ---- other people's systems, wrapped so a chapter switch stops the script ----
     do: after,
     card: (title, sub) => after(ctx.card.show(title, sub)),
-    say: (id) => after(ctx.dialogue.play(id)),
+    async say(id, { keepControls = false } = {}) {
+      const resume=stage.controls;
+      if (!keepControls) stage.lockControls();
+      try { return await after(ctx.dialogue.play(id)); }
+      finally { if (stage.alive && !keepControls) stage.controls=resume; }
+    },
     photo: (id) => after(ctx.memory.show(id)),
     // A missing shot file is not fatal: the script carries on after a short pause.
     // Returns true if the shot played, false if it does not exist yet.
     async shot(id, anchor = hero.object) {
+      let destination=null;
+      const points={moon_to_mars:[8,34,60],storm_to_jezero:[50,26,90],mars_to_space:[25,70,90]};
+      if(points[id]){
+        destination=new THREE.Mesh(new THREE.SphereGeometry(id==='moon_to_mars'?3: .3,24,16),new THREE.MeshBasicMaterial({color:id==='moon_to_mars'?0xb76c43:0xffe3b0,fog:false}));
+        destination.position.fromArray(points[id]).applyQuaternion(anchor.quaternion).add(anchor.position);
+        scene.add(destination);
+      }
+      const cleanup=()=>{if(destination){scene.remove(destination);destination.geometry.dispose();destination.material.dispose();destination=null;}};
+      stage.onDispose(cleanup);
       try {
-        await after(ctx.cinematics.play(id, anchor));
+        await after(ctx.cinematics.play(id, anchor, { ...stage.actors, hero: anchor }));
         return true;
       } catch (err) {
         if (err instanceof Gone) throw err;
         console.info(`shot "${id}" is not in content/shots/ yet, skipping it`);
         await stage.wait(0.5);
         return false;
-      }
+      } finally { cleanup(); }
     },
 
     // A named sound from Set C (audio.play, TASKS.md hand-off at hour 7). Until it exists, optionally
@@ -236,7 +253,11 @@ export function setupStage(ctx, cfg) {
         if (stage.controls) controller.update(dt);
         else controller.idle(dt);
       }
+      const idle = stage.controls && (controller?.speed ?? 0) < 0.1 && !controller?.flying && !ctx.cinematics.playing;
+      idleLookTime = idle ? idleLookTime + dt : 0;
+      hero.lookBack?.(idleLookTime > 2, ctx.camera);
       hero.update(dt);
+      if (cfg.character === 'lrv') ctx.followCam.setMotion({ airborne: controller && !controller.grounded });
       objectives.update(dt);
       fx.update(dt);
       for (const task of [...tasks]) task(dt);

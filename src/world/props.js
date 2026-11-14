@@ -8,8 +8,10 @@
 //
 // Names:
 //   lunarModule   parts `descent` and `ascent`. 9 m wide, 7 m tall
-//   astronaut     1.85 m, mirror visor, no flag or logo. Use it twice for the crew.
-//                 Markers `hand_L`, `hand_R`, `head` to aim hero.lookAt at (it stands arms out)
+//   astronaut     1.8 m, mirror visor, backpack, no flag or logo. Use it twice for the crew.
+//                 Jointed and self-animating: it breathes, walks when moved, sits when put on the rover.
+//                 Parts `head`, `arm_L` `arm_R`, `hand_L` `hand_R`, `leg_L` `leg_R`, `visor`.
+//                 For the rover's eyes: hero.lookAt(astronaut.getObjectByName('head'))
 //   perseverance  plain grey shape for the background of chapter 3
 //   airbags       the bundle Opportunity lands in. A ball 2.2 m across, origin at its centre
 //   petals        the lander base with three petals. Parts `petal_1` `petal_2` `petal_3`:
@@ -20,10 +22,11 @@
 //   layeredRock   the layered outcrop Opportunity studies
 //   pebbles       the patch of tiny round pebbles, 1.6 m across
 //   sampleBox     one sample box, to stack on the back of the Moon rover
-//   worker        a factory worker in a hooded clean-room suit, 1.75 m. No face: mask and goggles.
-//                 Parts `head`, `arm_L`, `arm_R` (arms turn at the shoulder), `hand_L`, `hand_R`
+//   worker        a factory worker: the same jointed figure as the astronaut, in a hooded
+//                 clean-room suit with mask and goggles instead of the helmet and backpack. Same parts
 //
-// The three models are adapted from NASA's 3D Resources: see public/models/README.md.
+// The Lunar Module and Perseverance are adapted from NASA's 3D Resources: see public/models/README.md.
+// The people are built here from boxes, so they can have joints.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -70,12 +73,137 @@ function fromFile(name, size, marks = {}) {
   return group;
 }
 
+// ---- people ----
+// One jointed figure for both the astronauts and the factory workers: hips, knees, shoulders,
+// elbows and a head, each a group that turns. It moves itself, with nothing to call:
+//   standing still   it breathes, shifts its weight and looks around a little
+//   being moved      it walks, one step every 0.55 m, arms swinging
+//   put on a vehicle it climbs up and sits, legs out in front
+// "Put on a vehicle" means its parent is not the scene or the world. A chapter only has to slide
+// it across the ground (stage.moveTo) or add it to the rover (hero.object.add), as it does now.
+const SIT = { legL: -1.45, legR: -1.45, kneeL: 0.3, kneeR: 0.3, armL: -0.75, armR: -0.75, elbowL: -0.7, elbowR: -0.7, lean: -0.1, drop: -0.38 };
+
+function makeFigure(kind) {
+  const astro = kind === 'astronaut';
+  const w = astro ? 1.15 : 1; // a pressure suit is bulkier than a clean-room suit
+  const suit = flat(astro ? 0xe8e6df : 0xf1f3f5), shade = flat(astro ? 0xcfccc2 : 0xd3d9e0);
+  const glove = flat(astro ? 0xb9bec6 : 0x8fb4d6), boot = flat(0x9aa3ae), dark = flat(0x1f2a38);
+  const g = new THREE.Group();
+  const rig = new THREE.Group(); // everything you see; the animation moves this, never `g`
+  g.add(rig);
+  const box = (parent, sx, sy, sz, x, y, z, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat); m.position.set(x, y, z); parent.add(m); return m; };
+  const joint = (parent, name, x, y, z) => { const j = new THREE.Group(); j.name = name; j.position.set(x, y, z); parent.add(j); return j; };
+
+  const hips = joint(rig, 'hips', 0, 0.92, 0);
+  const spine = joint(hips, 'spine', 0, 0, 0);
+  const torso = box(spine, 0.42 * w, 0.52, 0.26 * w, 0, 0.3, 0, suit);
+  box(spine, 0.44 * w, 0.07, 0.28 * w, 0, 0.03, 0, shade); // belt
+  if (astro) {
+    box(spine, 0.38, 0.52, 0.2, 0, 0.34, -0.25, shade);   // life-support backpack
+    box(spine, 0.2, 0.15, 0.08, 0, 0.36, 0.18, shade);    // chest control box
+  }
+  const head = joint(spine, 'head', 0, 0.66, 0);
+  head.add(new THREE.Mesh(new THREE.IcosahedronGeometry(astro ? 0.21 : 0.18, 1), suit));
+  if (astro) {
+    box(head, 0.27, 0.2, 0.1, 0, 0, 0.15, dark).name = 'visor'; // mirror visor: no face
+  } else {
+    box(head, 0.2, 0.1, 0.06, 0, -0.06, 0.15, glove);     // mask
+    box(head, 0.24, 0.07, 0.05, 0, 0.035, 0.15, dark);    // goggles
+  }
+  const J = { hips, spine, head };
+  for (const [side, sx] of [['L', 1], ['R', -1]]) {
+    const arm = joint(spine, 'arm_' + side, sx * 0.27 * w, 0.5, 0);
+    box(arm, 0.13 * w, 0.3, 0.14 * w, 0, -0.15, 0, suit);
+    const elbow = joint(arm, 'elbow_' + side, 0, -0.3, 0);
+    box(elbow, 0.12 * w, 0.28, 0.13 * w, 0, -0.14, 0, suit);
+    box(elbow, 0.13 * w, 0.12, 0.14 * w, 0, -0.33, 0, glove).name = 'hand_' + side;
+    const leg = joint(hips, 'leg_' + side, sx * 0.115 * w, 0, 0);
+    box(leg, 0.17 * w, 0.44, 0.19 * w, 0, -0.22, 0, suit);
+    const knee = joint(leg, 'knee_' + side, 0, -0.44, 0);
+    box(knee, 0.16 * w, 0.42, 0.18 * w, 0, -0.21, 0, suit);
+    box(knee, 0.18 * w, 0.1, 0.3, 0, -0.43, 0.05, boot);
+    J['arm' + side] = arm; J['elbow' + side] = elbow; J['leg' + side] = leg; J['knee' + side] = knee;
+  }
+
+  // ---- it animates itself: this runs once a frame, when the torso is about to be drawn ----
+  const seed = Math.random() * 10;
+  const pose = { legL: 0, legR: 0, kneeL: 0, kneeR: 0, armL: 0, armR: 0, elbowL: -0.15, elbowR: -0.15, lean: 0, drop: 0 };
+  const want = { ...pose };
+  const at = new THREE.Vector3(), was = new THREE.Vector3(), lag = new THREE.Vector3(), v = new THREE.Vector3();
+  const q = new THREE.Quaternion(), sc = new THREE.Vector3();
+  let lastTime = 0, lastParent = null, phase = 0, walk = 0, lagStart = 0;
+
+  torso.frustumCulled = false; // always drawn, so this always runs, even if the body has swung out of view
+  torso.onBeforeRender = () => {
+    const now = performance.now() / 1000;
+    if (now - lastTime < 0.002) return; // drawn twice in one frame
+    const fresh = now - lastTime > 0.5; // first frame, or back after being hidden
+    const dt = Math.min(0.05, now - lastTime);
+    lastTime = now;
+    g.getWorldPosition(at);
+    if (fresh) { was.copy(at); lastParent = g.parent; lag.set(0, 0, 0); }
+
+    // A sudden jump (put on a seat, taken off it): keep the body where it was and ease it over,
+    // with a little hop, instead of snapping.
+    const jumped = g.parent !== lastParent || at.distanceTo(was) > 0.6;
+    if (jumped) {
+      lag.add(was).sub(at);
+      if (lag.length() > 1.6) lag.set(0, 0, 0); // further than a climb on or off: it was placed there, so just be there
+      lagStart = lag.length();
+    }
+    const speed = jumped || fresh ? 0 : Math.hypot(at.x - was.x, at.z - was.z) / dt;
+    was.copy(at); lastParent = g.parent;
+
+    const parentName = g.parent?.name ?? '';
+    const riding = !!g.parent && !g.parent.isScene && !parentName.startsWith('world:');
+    walk += ((riding ? 0 : Math.min(1, speed / 1.0)) - walk) * (1 - Math.exp(-10 * dt));
+    if (!riding) phase += speed * dt * (Math.PI / 0.55);
+    const swing = Math.sin(phase), t = now + seed, breath = Math.sin(t * 1.5);
+
+    if (riding) Object.assign(want, SIT);
+    else {
+      want.legL = -swing * 0.5 * walk; want.legR = swing * 0.5 * walk;                 // forward is negative
+      want.kneeL = Math.max(0, Math.cos(phase)) * 0.75 * walk;                         // the knee bends as the leg comes through
+      want.kneeR = Math.max(0, -Math.cos(phase)) * 0.75 * walk;
+      want.armL = swing * 0.4 * walk + Math.sin(t * 0.8) * 0.02; want.armR = -swing * 0.4 * walk - Math.sin(t * 0.8) * 0.02;
+      want.elbowL = want.elbowR = -0.15 - 0.2 * walk;
+      want.lean = 0.05 * walk; want.drop = 0;
+    }
+    const k = 1 - Math.exp(-9 * dt);
+    for (const key of Object.keys(pose)) pose[key] += (want[key] - pose[key]) * k;
+
+    J.legL.rotation.x = pose.legL; J.legR.rotation.x = pose.legR;
+    J.kneeL.rotation.x = pose.kneeL; J.kneeR.rotation.x = pose.kneeR;
+    J.armL.rotation.x = pose.armL; J.armR.rotation.x = pose.armR;
+    J.elbowL.rotation.x = pose.elbowL; J.elbowR.rotation.x = pose.elbowR;
+    J.spine.rotation.x = pose.lean;
+    const still = 1 - walk;
+    J.hips.rotation.y = swing * 0.06 * walk;
+    J.hips.rotation.z = riding ? 0 : Math.sin(t * 0.4) * 0.02 * still;                 // weight from foot to foot
+    // Breathing: the chest fills, the shoulders lift a touch. The head looks about slowly.
+    torso.scale.set(1 + 0.015 * breath, 1 + 0.01 * breath, 1 + 0.045 * breath);
+    J.armL.position.y = J.armR.position.y = 0.5 + 0.007 * breath;
+    J.head.rotation.y = Math.sin(t * 0.31) * 0.16 * still;
+    J.head.rotation.x = Math.sin(t * 0.23 + 1) * 0.04;
+
+    lag.multiplyScalar(Math.exp(-6 * dt));
+    if (lag.lengthSq() < 1e-5) lag.set(0, 0, 0);
+    const u = lagStart > 0 ? Math.min(1, lag.length() / lagStart) : 0;
+    const hop = 4 * u * (1 - u) * 0.3 * Math.min(1, lagStart);
+    g.getWorldQuaternion(q).invert(); g.getWorldScale(sc);
+    v.copy(lag).setY(lag.y + hop).applyQuaternion(q).divide(sc);                       // world offset -> our own space
+    rig.position.set(v.x, v.y + pose.drop + Math.abs(swing) * 0.035 * walk, v.z);
+  };
+  g.userData.figure = { pose, lag, was }; // read-only, for debugging
+  return g;
+}
+
 const rockShape = new THREE.IcosahedronGeometry(1, 0);
 const ball = new THREE.IcosahedronGeometry(1, 1);
 
 const BUILDERS = {
   lunarModule: () => fromFile('lunarModule', [9, 7, 9]),
-  astronaut: () => fromFile('astronaut', [0.7, 1.85, 0.5], { hand_L: [0.8, 1.36, 0], hand_R: [-0.8, 1.36, 0], head: [0, 1.68, 0.1] }),
+  astronaut: () => makeFigure('astronaut'),
   perseverance: () => fromFile('perseverance', [2.7, 1.85, 3.1]),
 
   // Four lobes of six bags each, like the real pyramid of airbags.
@@ -189,35 +317,7 @@ const BUILDERS = {
     return g;
   },
 
-  worker() {
-    const g = new THREE.Group();
-    const suit = flat(0xf1f3f5), shade = flat(0xd3d9e0), glove = flat(0x8fb4d6), boot = flat(0x9aa3ae);
-    const put = (geo, mat, x, y, z, parent = g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
-    for (const x of [-0.12, 0.12]) {
-      put(new THREE.BoxGeometry(0.17, 0.8, 0.2), suit, x, 0.5, 0);
-      put(new THREE.BoxGeometry(0.19, 0.12, 0.3), boot, x, 0.06, 0.04);
-    }
-    put(new THREE.CylinderGeometry(0.2, 0.25, 0.62, 6), suit, 0, 1.2, 0);
-    put(new THREE.BoxGeometry(0.44, 0.06, 0.3), shade, 0, 0.92, 0); // belt
-    for (const [name, x] of [['arm_L', 0.3], ['arm_R', -0.3]]) {
-      const arm = new THREE.Group();
-      arm.name = name;
-      arm.position.set(x, 1.45, 0);
-      put(new THREE.BoxGeometry(0.13, 0.6, 0.15), suit, 0, -0.3, 0, arm);
-      put(new THREE.BoxGeometry(0.14, 0.14, 0.16), glove, 0, -0.66, 0, arm).name = x > 0 ? 'hand_L' : 'hand_R';
-      arm.rotation.z = x > 0 ? 0.12 : -0.12;
-      g.add(arm);
-    }
-    // Hood, with a pale mask and a dark strip of goggles where a face would be.
-    const head = new THREE.Group();
-    head.name = 'head';
-    head.position.set(0, 1.6, 0);
-    put(new THREE.IcosahedronGeometry(0.18, 1), suit, 0, 0, 0, head);
-    put(new THREE.BoxGeometry(0.2, 0.1, 0.06), glove, 0, -0.06, 0.15, head);
-    put(new THREE.BoxGeometry(0.24, 0.07, 0.05), flat(0x2a303a), 0, 0.035, 0.15, head);
-    g.add(head);
-    return g;
-  },
+  worker: () => makeFigure('worker'),
 
   sampleBox() {
     const g = new THREE.Group();

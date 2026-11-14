@@ -11,6 +11,7 @@
 import { makeChapter } from './_stage.js';
 import { mission } from './_mission.js';
 import { photographJupiter } from './_pioneerPhoto.js';
+import { rememberTheMachines } from './_remembrance.js';
 import { el } from '../ui/dom.js';
 
 const ALIGN = (5 * Math.PI) / 180; // must point within 5 degrees
@@ -72,7 +73,7 @@ export default makeChapter({
     s.hero.setEmotion('happy');
     m.done(1);
     // As each voice arrives: where that machine rests today. Plays with the voices if it exists.
-    await Promise.all([s.shot('where_they_are'), s.say('ep_voices')]);
+    await rememberTheMachines(s, ctx);
     s.hero.setEmotion('sleepy');
     await s.say('ep_last');
     ctx.audio.music?.('ending');

@@ -27,8 +27,8 @@
         "ar": "أوصل الطاقم إلى ٣ محطات علمية"
       },
       {
-        "en": "Bring back 3 sample boxes",
-        "ar": "أعِد ٣ صناديق من العيّنات"
+        "en": "Secure 3 boxes of the crew’s geology samples",
+        "ar": "ثبّت ٣ صناديق من عيّنات الطاقم الجيولوجية"
       },
       {
         "en": "Drive blind to stop 2",
@@ -42,27 +42,35 @@
   },
   "mars": {
     "title": {
-      "en": "Follow the water",
-      "ar": "اتبع أثر الماء"
+      "en": "Find evidence of ancient water",
+      "ar": "اكتشف أدلّة الماء القديم"
     },
     "tasks": [
       {
-        "en": "Climb out of the crater",
-        "ar": "اخرج من الفوهة"
+        "en": "Analyze the hematite blueberries",
+        "ar": "حلّل كرات الهيماتيت"
       },
       {
-        "en": "Find 3 signs of water",
-        "ar": "اعثر على ٣ علامات للماء"
+        "en": "Grind and analyze the water-altered rock",
+        "ar": "اكشط الصخر وحلّل أثر الماء فيه"
       },
       {
-        "en": "Keep the battery alive",
-        "ar": "لا تدع البطارية تنفد"
+        "en": "Read the layers left by flowing water",
+        "ar": "افحص الطبقات التي خلّفها الماء الجاري"
       },
       {
-        "en": "Reach the rim",
-        "ar": "صِل إلى حافة الفوهة"
+        "en": "Photograph Potts and Orion on the extended mission",
+        "ar": "صوّر بوتس وأوريون في المهمة الممتدة"
+      },
+      {
+        "en": "Send the science record to Earth",
+        "ar": "أرسل النتائج العلمية إلى الأرض"
       }
-    ]
+    ],
+    "bonus": {
+      "en": "Solar power",
+      "ar": "الطاقة الشمسية"
+    }
   },
   "sky": {
     "title": {
@@ -75,8 +83,8 @@
         "ar": "الرحلة الأولى: اثبتي على ارتفاع ٣ أمتار لمدة ٣ ثوانٍ"
       },
       {
-        "en": "Scout the road: mark 3 dangers",
-        "ar": "استكشفي الطريق وحدّدي ٣ مخاطر"
+        "en": "Scout and report 3 hazards for Perseverance",
+        "ar": "استكشف ٣ مخاطر وأبلغ بيرسيفيرانس بها"
       },
       {
         "en": "Land with battery to spare",
@@ -117,6 +125,22 @@
       {
         "en": "Turn toward Earth and send the image",
         "ar": "اتجه نحو الأرض وأرسل الصورة"
+      }
+    ]
+  },
+  "viking": {
+    "title": {
+      "en": "Viking 1: see and investigate Mars",
+      "ar": "فايكنغ ١: صوّر المريخ وافحصه"
+    },
+    "tasks": [
+      {
+        "en": "Photograph the soil beside the lander",
+        "ar": "صوّر التربة بجانب المركبة"
+      },
+      {
+        "en": "Sample the soil for the biology experiments",
+        "ar": "خذ عيّنة تربة للتجارب الحيوية"
       }
     ]
   }

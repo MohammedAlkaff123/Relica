@@ -1,0 +1,134 @@
+{
+  "_readme": "Owner: Moayad. Authored camera; metres relative to the anchor, seconds, degrees. Named look targets follow the bound object. cut keys change instantly.",
+  "letterbox": true,
+  "local": true,
+  "keys": [
+    {
+      "t": 0,
+      "pos": [
+        -2,
+        1.5,
+        -3
+      ],
+      "look": "ascent",
+      "fov": 45,
+      "shake": 0.3
+    },
+    {
+      "t": 5,
+      "pos": [
+        -2,
+        2,
+        -3
+      ],
+      "look": "ascent",
+      "fov": 45,
+      "shake": 0.3
+    },
+    {
+      "t": 5.01,
+      "pos": [
+        1.4,
+        0.8,
+        2.5
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 45,
+      "shake": 0.3,
+      "cut": true
+    },
+    {
+      "t": 10,
+      "pos": [
+        1.4,
+        0.8,
+        2.5
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 45,
+      "shake": 0.3
+    },
+    {
+      "t": 10.01,
+      "pos": [
+        -9,
+        3.8,
+        10
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 48,
+      "shake": 0.3,
+      "cut": true
+    },
+    {
+      "t": 15,
+      "pos": [
+        -9,
+        3.8,
+        10
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 48,
+      "shake": 0.3
+    }
+  ],
+  "lines": [
+    {
+      "subject": "lrv",
+      "pos": [
+        -2,
+        1.5,
+        -3
+      ],
+      "look": "ascent",
+      "fov": 45,
+      "shake": 0.25
+    },
+    {
+      "subject": "lrv",
+      "pos": [
+        1.4,
+        0.8,
+        2.5
+      ],
+      "look": [
+        0,
+        0.35,
+        0
+      ],
+      "fov": 40,
+      "shake": 0
+    },
+    {
+      "subject": "lrv",
+      "pos": [
+        -9,
+        3.8,
+        10
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 48,
+      "shake": 0
+    }
+  ]
+}

@@ -329,6 +329,36 @@
       "value": "90 days planned; more than six years",
       "verified": true,
       "source": "https://science.nasa.gov/mission/viking/"
+    },
+    "jarosite_water": {
+      "claim": "Jarosite in Opportunity’s outcrop records exposure to acidic water.",
+      "value": "Jarosite in Opportunity’s outcrop records exposure to acidic water.",
+      "verified": true,
+      "source": "https://science.nasa.gov/photojournal/mineral-tells-tale-of-watery-past/"
+    },
+    "ripples_water": {
+      "claim": "Fine cross-lamination in Opportunity’s rock images supports ancient flowing water.",
+      "value": "Fine cross-lamination in Opportunity’s rock images supports ancient flowing water.",
+      "verified": true,
+      "source": "https://science.nasa.gov/photojournal/ripples-in-rocks-point-to-water/"
+    },
+    "opportunity_storm": {
+      "claim": "In June 2018, a dust storm blocked sunlight; Opportunity’s last contact was June 10.",
+      "value": "In June 2018, a dust storm blocked sunlight; Opportunity’s last contact was June 10.",
+      "verified": true,
+      "source": "https://science.nasa.gov/resource/opportunitys-last-message/"
+    },
+    "viking_first": {
+      "claim": "Viking 1 made the first successful U.S. Mars landing in 1976 and investigated the soil for signs of life.",
+      "value": "Viking 1 made the first successful U.S. Mars landing in 1976 and investigated the soil for signs of life.",
+      "verified": true,
+      "source": "https://science.nasa.gov/astrobiology/missions/viking-project/"
+    },
+    "viking_no_life": {
+      "claim": "Viking’s biology experiments produced no definitive evidence of life.",
+      "value": "No confirmed detection",
+      "verified": true,
+      "source": "https://www.nasa.gov/history/45-years-ago-viking-1-touches-down-on-mars/"
     }
   }
 }

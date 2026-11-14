@@ -194,3 +194,24 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 .bars::after { bottom: 0; }
 .bars { position: absolute; inset: 0; }
 .years { position: absolute; left: 50%; bottom: 14vh; transform: translateX(-50%); font: 500 42px var(--mono); letter-spacing: 0.12em; text-shadow: 0 2px 12px #000; }
+
+/* Navigation remains readable when the destination is behind the camera. */
+.navigation { position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: min(420px, 90vw); padding: 9px 15px; background: rgba(9,13,20,.88); border: 1px solid var(--foil); border-radius: 8px; }
+.navigation-dial { flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; text-align: center; }
+.navigation-arrow { display: block; color: var(--foil); font: 36px/42px var(--display); }
+.navigation-name { font-size: 14px; }
+.navigation-detail { font: 12px/1.6 var(--mono); color: var(--foil); }
+.historic-viewfinder { position: absolute; inset: 0; display: grid; place-items: center; }
+.historic-frame { width: min(86vw, 1000px); aspect-ratio: var(--photo-aspect, 1.3); max-height: 64vh; border: 2px solid #e3a23c; box-shadow: 0 0 0 100vmax #0008; position: relative; }
+.historic-frame.aligned { border-color: #a6e3ae; }
+.historic-reticle { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font: 40px var(--mono); color: #e3a23c; }
+.historic-label { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: #060b12e8; border-radius: 5px; padding: 12px 18px; width: min(720px, 94vw); text-align: center; font-size: 14px; }
+.historic-label .ar { font-family: var(--arabic); }
+.memory.photo-reveal { animation: photo-reveal .7s ease-in both; }
+@keyframes photo-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .memory.photo-reveal { animation-duration: .01s; } }
+
+.photo-mode .hud, .photo-mode .mission, .photo-mode .discovery { visibility: hidden; }
+.launch-eyes { position: absolute; left: 50%; top: 50%; display: flex; gap: 34px; transform: translate(-50%,-50%); }
+.launch-eyes span { display: block; width: 62px; height: 9px; border-radius: 50%; background: #f1ede4; box-shadow: 0 0 18px #e3bb7766; transition: height .6s; }
+.launch-eyes.weightless span { height: 50px; }

@@ -1,11 +1,87 @@
 {
-  "_readme": "Owner: Moayad. Placeholder shot. pos and look are measured from the machine, in metres: [left/right, up, forward/back]. t is seconds. shake is degrees of handheld sway.",
+  "_readme": "Owner: Moayad. Authored camera; metres relative to the anchor, seconds, degrees. Named look targets follow the bound object. cut keys change instantly.",
   "letterbox": true,
-  "years": [1972, 2004],
+  "local": true,
   "keys": [
-    { "t": 0,   "pos": [-3.5, 1.8, -5], "look": [0, 0.8, 0],   "fov": 55, "shake": 0.6 },
-    { "t": 2.5, "pos": [-3.0, 1.4, -4], "look": [6, 30, 60],   "fov": 50, "shake": 1.1 },
-    { "t": 4.0, "pos": [-3.0, 1.4, -4], "look": [8, 34, 60],   "fov": 46, "shake": 0.9 },
-    { "t": 8.0, "pos": [-3.0, 1.4, -4], "look": [8, 34, 60],   "fov": 6,  "shake": 0.25 }
+    {
+      "t": 0,
+      "pos": [
+        -3.5,
+        1.8,
+        -5
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 55,
+      "shake": 0.6
+    },
+    {
+      "t": 2.5,
+      "pos": [
+        -3,
+        1.4,
+        -4
+      ],
+      "look": [
+        8,
+        34,
+        60
+      ],
+      "fov": 50,
+      "shake": 1.1
+    },
+    {
+      "t": 4,
+      "pos": [
+        -3,
+        1.4,
+        -4
+      ],
+      "look": [
+        8,
+        34,
+        60
+      ],
+      "fov": 46,
+      "shake": 0.9
+    },
+    {
+      "t": 8,
+      "pos": [
+        -3,
+        1.4,
+        -4
+      ],
+      "look": [
+        8,
+        34,
+        60
+      ],
+      "fov": 6,
+      "shake": 0.25
+    },
+    {
+      "t": 10,
+      "pos": [
+        -3,
+        1.4,
+        -4
+      ],
+      "look": [
+        8,
+        34,
+        60
+      ],
+      "fov": 6,
+      "shake": 0,
+      "black": 1
+    }
+  ],
+  "years": [
+    1972,
+    2004
   ]
 }

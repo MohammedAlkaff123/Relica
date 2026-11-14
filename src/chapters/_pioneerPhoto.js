@@ -1,6 +1,7 @@
 // A compressed memory of Pioneer's Jupiter imaging work. The captured picture is a game image.
 import * as THREE from 'three';
 import { mission } from './_mission.js';
+import { revealPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
 
 const CONE = 8 * Math.PI / 180;
@@ -124,6 +125,8 @@ export async function photographJupiter(s, ctx) {
   ctx.hud.setObjective('Image sent home · أُرسلت الصورة إلى الأرض');
   ctx.audio.beep('pioneer');
   await s.wait(1.5);
+  overlay.classList.add('hidden');
+  await revealPhoto(s, ctx, 'AC73-9341');
   await s.fade(true, 0.5);
   cleanup();
   ctx.hud.setObjective('');
