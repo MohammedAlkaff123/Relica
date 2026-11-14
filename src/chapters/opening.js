@@ -5,24 +5,20 @@
 // it cannot go anywhere) -> two workers fold it -> black, launch rumble -> chapter 1
 //
 // Waiting on others (works without them): shots opening_wake, launch (Moayad); dialogue ch0_fold (Set C);
-// props stand, worker (Set B); audio.play('launch') (Set C); shot earth_goodbye (Moayad).
+// shot earth_goodbye (Moayad). The test stand and the two workers are part of Set B's factory room.
 // Mission "Wake up" (STORY.md section 8): spin your wheels, steer left and right.
 import { makeChapter } from './_stage.js';
 import { findWheels } from '../vehicles/wheels.js';
 import { mission } from './_mission.js';
-
-const STAND_TOP = 1.07;
 
 export default makeChapter({
   id: 'opening',
   world: 'factory',
   character: 'lrv',
   vehicle: null,
-  start: [0, 0, Math.PI],
+  start: [0, 0, 0], // on Set B's test stand at (0, 0), facing +Z
 
   async script(s, ctx) {
-    s.prop('stand', 0, 0);
-    s.hero.object.position.y = STAND_TOP + s.hero.half[1];
     ctx.hud.setStat('date', '1971');
     const wheels = findWheels(s.hero);
     s.tutorial = { spun: 0, steered: 0, wheels };
@@ -48,8 +44,9 @@ export default makeChapter({
     s.lockControls();
 
     // Two workers fold it in half and close a panel over it.
-    const workers = [s.prop('worker', -6, -3), s.prop('worker', 6, -3)];
-    await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.6 : -1.6, -0.4, 2.5)));
+    // Set B's two workers stand by the test stand (env.workers); they step up to the rover.
+    const workers = s.env.workers?.length ? s.env.workers : [s.prop('worker', -3.4, 1.6), s.prop('worker', 3.5, -0.4)];
+    await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.5 : -1.5, 0.2, 2)));
     s.hero.setEmotion('scared');
     await s.say('ch0_fold');
     await s.until((dt) => {

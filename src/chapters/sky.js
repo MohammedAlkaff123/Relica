@@ -19,21 +19,24 @@
 import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { mission, factNumber } from './_mission.js';
+import { placesOf } from '../world/terrain.js';
 
 // Dates as short labels, each matching a verified fact: ingenuity_first_flight, ingenuity_total.
 const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
 
-const START = [-80, -80];
-const ROVER_START = [START[0], START[1] - 7];
-const DEST = [-18, -4];                      // where the big rover wants to go
-// The three dangers sit on the straight road. Marking one bends the route around it.
+// The places come from Set B's Jezero map (placesOf('jezero')): three dangers and the smooth sand.
+const START = [0, 0];
+const ROVER_START = [0, -7];
+const DEST = [-10, 140];                     // where the big rover wants to go
+// Which danger is marked on which flight. The rover's planned road runs through all three, in the
+// order cliff, sand trap, boulder field; marking one moves the road around it.
 const DANGERS = [
-  { prop: 'sandTrap', name: 'the sand trap', at: [-66, -63], flight: 2 },
-  { prop: 'boulders', name: 'the boulder field', at: [-50, -45], flight: 2 },
-  { prop: 'cliffEdge', name: 'the cliff edge', at: [-35, -26], flight: 3 },
+  { place: 'sandTrap', name: 'the sand trap', flight: 2 },
+  { place: 'cliff', name: 'the cliff edge', flight: 2 },
+  { place: 'boulders', name: 'the boulder field', flight: 3 },
 ];
-const PADS = { 2: [-48, -54], 3: [-24, -12] }; // where each scouting flight lands
-const FAR = [110, 60]; // flight 72 heads out over the smooth sand; too far to reach before the crash
+const ROAD_ORDER = ['cliff', 'sandTrap', 'boulders'];
+const PADS = { 2: [70, -15], 3: [25, 82] }; // where each scouting flight lands, clear of the dangers
 
 export default makeChapter({
   id: 'sky',
@@ -105,8 +108,10 @@ export default makeChapter({
 
       // Flights 2 and 3: scout the road and mark the dangers. The route bends around each mark.
       await s.say('ch3_scout');
-      const dangers = DANGERS.map((d) => ({ ...d, object: s.prop(d.prop, d.at[0], d.at[1], 0.4), marked: false }));
-      const route = makeRoute(s, ROVER_START, DEST);
+      const places = placesOf('jezero');
+      const at = (name) => { const p = places.find((q) => q.name === name); return p ? [p.x, p.z, p.r] : [0, 50, 10]; };
+      const dangers = DANGERS.map((d) => ({ ...d, at: at(d.place), marked: false }));
+      const route = makeRoute(s, [ROVER_START, ...ROAD_ORDER.map((n) => at(n).slice(0, 2)), DEST]);
       let marked = 0;
       for (const f of [2, 3]) {
         flight = f;
@@ -114,15 +119,15 @@ export default makeChapter({
         heli.battery = 1;
         s.unlockControls();
         for (const d of dangers.filter((x) => x.flight === f)) {
-          await s.goTo(d.at[0], d.at[1], `Fly over ${d.name}`, { radius: 5 });
+          await s.goTo(d.at[0], d.at[1], `Fly over ${d.name}`, { radius: 6 });
           ctx.hud.setObjective(`Press E above ${d.name} to mark it`);
           await s.until(() => {
             const p = heli.position;
-            return heli.flying && ctx.input.pressed('KeyE') && Math.hypot(p.x - d.at[0], p.z - d.at[1]) < 7;
+            return heli.flying && ctx.input.pressed('KeyE') && Math.hypot(p.x - d.at[0], p.z - d.at[1]) < Math.max(8, d.at[2]);
           });
           d.marked = true;
           s.prop('flag', d.at[0], d.at[1]);
-          route.avoid(d.at);
+          route.avoid(d.at[0], d.at[1], d.at[2]);
           s.sound('park');
           m.progress(1, ++marked, 3);
         }
@@ -152,8 +157,10 @@ export default makeChapter({
 
     // Flight 72. Smooth sand with nothing to look at. The horizon tips and the controls drift.
     pad.dispose();
-    heli.place(-20, 0, 0.8);
-    rover.position.set(-14, s.ground(-14, -6), -6);
+    const sand = placesOf('jezero').find((q) => q.name === 'sand') ?? { x: -45, z: 55, r: 26 };
+    const FAR = [sand.x - 110, sand.z + 50]; // across the sand; too far to reach before the crash
+    heli.place(sand.x + sand.r, sand.z - 10, -1.6);
+    rover.position.set(sand.x + sand.r + 8, s.ground(sand.x + sand.r + 8, sand.z - 18), sand.z - 18);
     flight = MISSION.total;
     showFlight();
     ctx.hud.setStat('date', DATES.lastFlight);
@@ -248,11 +255,12 @@ async function land(s, ctx, pad, text) {
   return { battery };
 }
 
-// The big rover's planned route, drawn on the ground. avoid(point) bends it around a marked danger.
-function makeRoute(s, from, to) {
-  const points = [from, to];
+// The big rover's planned route, drawn on the ground through a list of points.
+// avoid(x, z, r) moves the road out of a marked danger of radius r, so the line visibly swings round it.
+function makeRoute(s, start) {
+  const points = start.map((p) => [...p]);
   let line = null;
-  const mat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 1.2, gapSize: 0.8, transparent: true, opacity: 0.8 });
+  const mat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 1.2, gapSize: 0.8, transparent: true, opacity: 0.85 });
 
   function draw() {
     if (line) { line.parent?.remove(line); line.geometry.dispose(); }
@@ -262,10 +270,11 @@ function makeRoute(s, from, to) {
       const n = Math.ceil(Math.hypot(bx - ax, bz - az) / 2);
       for (let k = 0; k < n; k++) {
         const x = ax + ((bx - ax) * k) / n, z = az + ((bz - az) * k) / n;
-        pts.push(new THREE.Vector3(x, s.ground(x, z) + 0.12, z));
+        pts.push(new THREE.Vector3(x, s.ground(x, z) + 0.15, z));
       }
     }
-    pts.push(new THREE.Vector3(to[0], s.ground(to[0], to[1]) + 0.12, to[1]));
+    const [lx, lz] = points[points.length - 1];
+    pts.push(new THREE.Vector3(lx, s.ground(lx, lz) + 0.15, lz));
     line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
     line.computeLineDistances();
     s.add(line);
@@ -273,18 +282,17 @@ function makeRoute(s, from, to) {
   draw();
 
   return {
-    // Insert a detour point to the side of the danger, on the segment it sits on.
-    avoid([x, z]) {
-      let best = 0, bestD = Infinity;
-      for (let i = 0; i < points.length - 1; i++) {
-        const [ax, az] = points[i], [bx, bz] = points[i + 1];
-        const d = Math.hypot((ax + bx) / 2 - x, (az + bz) / 2 - z);
+    avoid(x, z, r = 8) {
+      // The road point inside the danger (or the nearest one) moves sideways, out past its edge.
+      let best = 1, bestD = Infinity;
+      for (let i = 1; i < points.length - 1; i++) {
+        const d = Math.hypot(points[i][0] - x, points[i][1] - z);
         if (d < bestD) { bestD = d; best = i; }
       }
-      const [ax, az] = points[best], [bx, bz] = points[best + 1];
-      const len = Math.hypot(bx - ax, bz - az) || 1;
-      const side = [-(bz - az) / len, (bx - ax) / len]; // perpendicular to the road
-      points.splice(best + 1, 0, [x + side[0] * 10, z + side[1] * 10]);
+      const [px, pz] = points[best - 1], [nx, nz] = points[best + 1];
+      const len = Math.hypot(nx - px, nz - pz) || 1;
+      const side = [-(nz - pz) / len, (nx - px) / len]; // across the road
+      points[best] = [x + side[0] * (r + 6), z + side[1] * (r + 6)];
       draw();
     },
     // Drive the rover prop along the route, one leg after another.

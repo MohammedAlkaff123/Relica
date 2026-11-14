@@ -313,7 +313,7 @@ export async function runSelfTest(ctx) {
     },
     epilogue(s) {
       if (!objective().includes('turn back')) return [];
-      const d = 2.3 - hero().rotation.y;
+      const d = s.sunYaw - hero().rotation.y;
       const a = Math.atan2(Math.sin(d), Math.cos(d));
       return a > 0.03 ? ['KeyA'] : a < -0.03 ? ['KeyD'] : [];
     },

@@ -6,17 +6,16 @@
 // -> Abandoned, but not forgotten -> the wall of real photos -> credits
 //
 // Waiting on others (works without them): dialogue ep_voices, ep_last (Set C); shot ending (Moayad);
-// prop sun (Set B); memory.wall() layout and credits (Set C); shot where_they_are (Moayad).
+// shot where_they_are (Moayad). The Sun comes from Set B's space sky (env.sunDirection).
 // Mission "Listen" (STORY.md section 8): find the Sun, hold the signal.
 import { makeChapter } from './_stage.js';
 import { mission } from './_mission.js';
 
-const SUN_YAW = 2.3;               // where the Sun sits, measured from the way the probe first faces
 const ALIGN = (5 * Math.PI) / 180; // must point within 5 degrees
 const VOICES = ['lrv', 'viking', 'opportunity', 'ingenuity'];
 
 const angleTo = (s) => {
-  const d = SUN_YAW - s.hero.object.rotation.y;
+  const d = s.sunYaw - s.hero.object.rotation.y;
   return Math.atan2(Math.sin(d), Math.cos(d));
 };
 
@@ -28,8 +27,10 @@ export default makeChapter({
   start: [0, 0, 0],
 
   async script(s, ctx) {
-    const sun = s.prop('sun');
-    sun.position.set(Math.sin(SUN_YAW) * 900, 30, Math.cos(SUN_YAW) * 900);
+    // The Sun is part of Set B's deep-space sky; env.sunDirection points at it. Without it, a stand-in.
+    const dir = s.env.sunDirection;
+    s.sunYaw = dir ? Math.atan2(dir.x, dir.z) : 2.3;
+    if (!dir) s.prop('sun').position.set(Math.sin(s.sunYaw) * 900, 30, Math.cos(s.sunYaw) * 900);
     ctx.hud.setStat('date', 'Today');
     s.spinRate = 0;
     const m = mission(ctx, 'epilogue'); // tasks: 0 find the Sun, 1 hold the signal
