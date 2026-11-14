@@ -1,6 +1,6 @@
 # RELICA: Still Here — ريليكا: ما زلتُ هنا
 
-Director brief, 14 November 2026. The title is approved. UI/branding delivery is open. Environment style is awaiting the directors' selection.
+Director brief, 14 November 2026. The title is approved. UI/branding delivery is open. The supplied Outer Wilds wallpaper collection is now the visual reference direction; the first RELICA art slice still needs director review.
 
 ## Name and ownership
 
@@ -8,8 +8,8 @@ Director brief, 14 November 2026. The title is approved. UI/branding delivery is
 - Arabic title: **ريليكا: ما زلتُ هنا**.
 - “Abandoned but not Forgotten” / the Arabic challenge title describes the challenge, not the game name. Keep it in challenge credits/submission context.
 - Abdullatif (Abdulatif): game logo, bilingual wordmarks, brand system, main menu, HUD and interface components, language copy and sound presentation.
-- Abdulkarim: world materials, textures, lighting and restrained environmental effects **after style selection**; existing character animation and photo reconstruction work continues.
-- Ziad: menu/start/pause/input lifecycle, quality settings and performance support. Moayad approves look and readability; Mohammed reviews language, comprehension and feel.
+- Abdulkarim: world materials, textures, lighting, restrained environmental effects and switchable Low/Medium/High visual presets; existing character animation and photo reconstruction work continues.
+- Ziad: menu/start/pause/input lifecycle, renderer/settings integration and performance support. Abdullatif owns the graphics selector; Abdulkarim owns the three visual presets. Moayad approves look and readability; Mohammed reviews language, comprehension and feel.
 - Existing pitch slides/video use the earlier short title. Update their title/wordmark during the branding pass and recapture final media after visual approval.
 
 ## Main menu and Arabic — Abdullatif, open deliverables
@@ -27,17 +27,60 @@ The current build starts with a title card and Enter prompt, not a finished menu
 
 Acceptance: start in Arabic, reload, play a mission, open settings, switch to English and back, complete a photo task, then read the ending and credits. Verify no lost progress, no overlapping text, correct RTL and no unexplained English prompts. Check desktop and narrow phone layouts with real Arabic fonts. Mobile menu support alone does not establish mobile gameplay support; touch controls and device testing are a separate integration check.
 
-## Visual options — selection pending
+## Supplied visual reference — Outer Wilds
 
-The directors have seen one comparison board showing the same Mars-rover and Moon-rover scenes in three styles. It is a mood/material reference, not a measured engine render or a model blueprint. Existing machine identities, facial rig and NASA photo viewpoints take precedence over any inaccuracies in the concept art.
+The director supplied `outer_wilds_wallpapers.zip` after the initial A/B/C exploration. Use this collection as the reference direction, rather than treating A, B or C as selected. The descriptions below are the visual interpretation of the supplied images; review the first original RELICA slice with Moayad before extending it across every chapter.
 
-| Option | Shapes and surfaces | Lighting and mood | Tradeoff |
+![User-supplied Outer Wilds visual references](docs/art-references/outer-wilds-contact-sheet.jpg)
+
+Reference images: Outer Wilds; supplied by the director for art discussion. This contact sheet is documentation only and is not loaded by the game. Build original RELICA assets and branding.
+
+| Reference in the archive | What to carry into RELICA |
+|---|---|
+| `OW_Campfire.png` | Chunky readable forms, selective surface detail, warm focal light against cool shaded ground; retain softness and character readability |
+| `OW_Moon.png` | Strong foreground silhouettes, quiet dark space and a large celestial focal point; create awe through framing and scale |
+| `OW_Village.png` | Simplified textured environments, controlled palette, distant depth and clear sun direction |
+| `OW_ShipInterior.png` | Believable worn materials and readable functional machinery; reduce clutter for our smaller scenes |
+| `OW_Skeleton.png` | Layered silhouettes, distance and dramatic scale; use the compositional idea without adding its fantasy creatures or atmosphere to airless lunar scenes |
+| `OuterWilds_4k Background image.jpg` | Small explorers against a vast dark sky and a warm visual anchor; RELICA keeps its own wordmark |
+
+Direction: approachable stylized realism, not smooth plastic and not dense photorealism. Preserve clean forms with restrained painted/roughness variation. Warm/cool separation and deliberate shadows provide drama. NASA terrain, machine proportions, emotional face rigs and historical-photo framing remain the factual/functional constraints. Moon/deep space remain airless; Mars gets restrained dusty depth. A large planet is a composition reference, not permission to change historical views or astronomical scale in photo tasks.
+
+## Low / Medium / High graphics — required, implementation OPEN
+
+**Abdullatif:** add **Graphics quality / جودة الرسومات** to both main-menu Settings and in-game Settings, with **Low / منخفضة**, **Medium / متوسطة**, **High / عالية**. Show the current selection, a short localized description, and keyboard/touch-accessible states. Save the preference and restore it before the first world loads; handle unavailable storage. Medium is the initial default when no preference exists. No automatic quality changes that silently override the player's selection.
+
+**Abdulkarim:** author all worlds, materials, textures, shadows, decorations and effects to support these three modes. Provide a shared preset definition and an `applyQuality` hook for each active world/effect; dispose resources cleanly when changing settings or chapters. The same art style, silhouettes, palette and mission readability must survive in all modes. Low is a finished visual target, not a placeholder version.
+
+**Ziad:** connect the selector and presets through one runtime settings API, apply resolution/shadow settings, pass the chosen preset to newly loaded worlds and coordinate safe asynchronous asset changes. The existing renderer currently has only a fixed pixel-ratio cap of 2; selectable graphics presets do not exist yet.
+
+Suggested integration contract (to implement, not an existing API): `quality.get()` returns `low|medium|high`; `await quality.set(level)` updates the renderer and active world; `quality.subscribe(listener)` updates the UI and returns an unsubscribe function. Put preset values in one shared data file. The UI must not reach into individual world meshes. Validate saved values, retain the previous working preset if loading fails, and allow only the latest change to finish when the player clicks rapidly.
+
+Starting budgets below are tuning proposals, not measured performance promises. Abdulkarim and Ziad may adjust them together after profiling, preserving the three clear quality levels.
+
+| Feature | Low | Medium | High |
 |---|---|---|---|
-| A — Warm Explorer | Broad low-poly shapes, gentle painted variation, minimal fine texture | Warm, clear and friendly; soft contact shading | Most cartoon-like; simplest visual detail |
-| B — Quiet Frontier | Simplified believable forms, restrained wear, readable rock strata and metal/foil differences | Calm amber light, subtle cool lunar shadows, loneliness and wonder | Recommended balance of approachable and semi-realistic; simplify the board's fine detail in engine |
-| C — Cosmic Cinema | More realistic surface variation and sharper forms | Strong long shadows, deeper contrast, dramatic scale | More texture work and greater risk of dark unreadable gameplay; avoid expensive effects |
+| Drawing-buffer pixel-ratio cap | 1.0 | 1.5 | 2.0 |
+| Contact / sun shadows | Baked or simple contact shading; no dynamic shadow map | One tightly bounded 512–1024 sun shadow map if the device budget allows | One bounded map up to 2048 with a few important casters |
+| Shared material textures | Typically 256–512 px variants | Typically 512–1024 px | Up to 1024–2048 for close-up hero surfaces where justified |
+| Decorative rock/debris detail | Reduced counts and earlier distance culling | Standard counts and distance | More nearby decorative detail; same terrain and landmarks |
+| Local dust pool | About 25% of the profiled maximum | About 50% | Up to the fixed profiled maximum; never unbounded |
+| Stars and atmosphere | Sparse static stars; inexpensive Mars fog/color | Same composition, modest extra depth/detail | Same composition with restrained extra detail |
+| Post-processing | None required | None required | Optional only after profiling; no dependency on bloom, volumetrics or depth of field |
 
-**Selected option: not yet chosen.** Do not interpret the recommendation as approval. Once chosen, add the selected image/reference, date and director decision to DIRECTORS_HANDOFF.md, then turn the following constraints into Abdulkarim's approved work order. Do not send messages or assign an unselected look on the directors' behalf.
+Texture size means real asset/residency reduction, not just a lower texture-filter setting. Load the appropriate variants and release superseded GPU resources safely; do not download or retain every high-resolution map on Low. Device capability limits may cap a setting, but the interface must explain a fallback rather than showing High while silently rendering a different preset. Keep DOM text/menu rendering at full CSS resolution when lowering the 3D drawing buffer.
+
+Across modes preserve physics/collision, routes, mission timing, science targets, navigation arrows, emotional faces, camera shots, photograph alignment and real-photo reveal quality. The storm still visibly blocks sunlight and ends the mission on Low. Important silhouettes must not pop during close-up cutscenes. No setting may remove a gameplay obstacle or historical photo feature.
+
+Switch without page reload, mission restart, lost photos or dialogue advancement. Apply safely at a frame boundary; return control only after the UI is closed. Do not promise toggling constructor-only renderer options such as WebGL antialiasing through a simple property change; keep those fixed unless Ziad deliberately implements and validates renderer recreation.
+
+Acceptance for the joint handoff:
+
+- Switch Low → Medium → High → Low in every world, then restart and jump chapters. Confirm the selected mode persists and newly loaded worlds inherit it.
+- Repeat in Arabic and English, reload the browser and test storage failure/invalid values. Check that saved progress and language preference are unaffected.
+- Check switching during the storm, a conversation and photo framing; no lost inputs, paused-state leaks or hidden mission targets.
+- Record draw calls, texture/geometry residency and frame times on the demo laptop and a named lower-end device for each mode. Repeated switches must not steadily increase memory or accumulate emitters/lights/listeners.
+- Compare the same Moon/Mars/Pioneer camera frames at all three levels. Low must still feel intentional and majestic. Maintain the existing 30/60 fps targets as targets until measured.
 
 ## Constraints for the eventual art pass
 

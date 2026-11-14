@@ -6,7 +6,9 @@
 
 See [BRANDING_AND_ART_DIRECTION.md](BRANDING_AND_ART_DIRECTION.md) for the actionable brief. Abdullatif owns the logo, bilingual branding, a real main menu with a visible Arabic/English selector, and a unified redesign of the existing interface. Ziad supports menu/pause/input integration. These remain OPEN; prior functional UI delivery did not mean final visual design was complete.
 
-Three environment-style concepts have been shown to the directors: A Warm Explorer, B Quiet Frontier, C Cosmic Cinema. **Style selection is PENDING.** B is a recommendation only. Do not begin a texture/lighting/particle overhaul from an unapproved option. After selection, attach the selected reference here and record the choice before Abdulkarim implements it. Existing animation and photo-scene tasks remain active.
+The director has now supplied **Outer Wilds wallpaper references** (14 November). Use their simplified textured forms, warm/cool lighting contrast, dramatic silhouettes and sense of scale as the reference direction. [View the supplied reference sheet](docs/art-references/outer-wilds-contact-sheet.jpg) and the interpretation in [BRANDING_AND_ART_DIRECTION.md](BRANDING_AND_ART_DIRECTION.md). A/B/C were exploratory, not selected. Abdulkarim should deliver one original RELICA Moon/Mars slice for Moayad’s review before extending the look; existing animation and photo-scene tasks remain active.
+
+**Graphics settings are required and still OPEN:** Abdullatif adds the bilingual Low / Medium / High selector to main-menu and in-game Settings, with a saved preference. Abdulkarim supplies switchable material, texture, shadow, decorative-detail and particle presets. Ziad connects renderer/runtime settings and world lifecycle. Changes must preserve progress, historical-photo composition and all gameplay cues. The shared contract, initial budgets and acceptance checklist are in the art brief; the current renderer does not yet provide this feature.
 
 
 > Current implementation status (14 Nov): see [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md) and [TESTLOG.md](TESTLOG.md). Camera and mission changes requested by the directors are implemented; art acceptance, novice testing, rehearsal and submission remain explicit human steps. Earlier hour estimates and paper chapter timings are planning history.
@@ -340,3 +342,13 @@ The directors asked for clearer, more fun tasks and more short cutscenes. The de
 ### Animation integration update — 14 November
 
 Main commit `21deaa0` replaces the astronaut/worker stand-ins with jointed procedural figures: breathing, walking, climbing aboard and sitting now run automatically. That update, the crew start positions and the revised rover seats are preserved in the directors’ integration. Earlier notes about the unrigged astronaut describe the old model. Abdulkarim now owns task-specific collecting, repair, reassurance and farewell gestures; Ziad owns their chapter triggers; Moayad reviews the performance in the authored shots.
+
+### Graphics quality and supplied art references — 14 November
+
+| Id | Owner | Deliverable | Done when |
+|---|---|---|---|
+| C-15 | Abdullatif | Localized Low/Medium/High selector in main-menu and in-game Settings; saved preference and accessible states | Both languages work, reload preserves selection, and UI reflects the applied preset |
+| B-14 | Abdulkarim | Three coherent visual presets for materials/textures, shadows, decorative detail and bounded effects; original art slice guided by supplied Outer Wilds references | All worlds switch safely; Low keeps the visual direction and all essential cues; directors review the slice |
+| A-18 | Ziad | Shared quality API, drawing-buffer settings, world lifecycle and safe asset swaps | No restart/progress loss, no stale changes or resource growth, all chapters inherit the selected preset |
+
+Implementation details and device acceptance are in BRANDING_AND_ART_DIRECTION.md. These rows are OPEN, not completion claims.
