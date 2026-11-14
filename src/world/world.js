@@ -1,6 +1,6 @@
 // Environments. Owner: Set B.
 //
-//   const env = buildWorld('moon', scene)   factory | moon | mars | space
+//   const env = buildWorld('moon', scene)   factory | moon | mars | jezero | space
 //   env.dispose()
 //
 // The ground shape (hills, craters) comes from terrain.js. Here: the mesh, rocks, sky and sun.
@@ -10,8 +10,16 @@ import { heightAt, TERRAIN_SIZE, TERRAIN_CELLS } from './terrain.js';
 
 const LOOK = {
   factory: { sky: 0xdfe5ec, ground: 0xc6ccd5, fog: [30, 140], sun: 2.0, ambient: 1.6, rocks: 0 },
-  moon:    { sky: 0x000000, ground: 0x8b8d92, fog: null,      sun: 3.2, ambient: 0.25, rocks: 70, rock: 0x74767b, stars: true },
-  mars:    { sky: 0xd8a878, ground: 0xb0623a, fog: [40, 240], sun: 2.4, ambient: 1.1, rocks: 90, rock: 0x86482b },
+  moon:    { sky: 0x000000, ground: 0x8b8d92, fog: null,      sun: 3.2, ambient: 0.25, rocks: 70, rock: 0x74767b, stars: true,
+             disc: 0xffffff },
+  // sunAt: the direction to the Sun. Low on Mars, so it sits in the sky ahead of the rover.
+  // disc: the Sun you can see. halo: the patch of sky around it (blue-grey on Mars).
+  mars:    { sky: 0xd8a878, ground: 0xb0623a, fog: [40, 240], sun: 2.4, ambient: 1.1, rocks: 90, rock: 0x86482b,
+             sunAt: [-0.45, 0.3, 0.85], disc: 0xfff3dc, halo: 0xb9c2cc },
+  // Jezero is Mars too: same sky and light, darker lake-bed floor, and thinner haze so the
+  // crater wall shows on the horizon.
+  jezero:  { sky: 0xd8a878, ground: 0xa35a38, fog: [70, 520], sun: 2.4, ambient: 1.1, rocks: 130, rock: 0x7c4329,
+             sunAt: [0.6, 0.34, 0.72], disc: 0xfff3dc, halo: 0xb9c2cc },
   space:   { sky: 0x02030a, ground: null,     fog: null,      sun: 2.2, ambient: 0.35, rocks: 0, stars: true },
 };
 
@@ -32,9 +40,28 @@ export function buildWorld(name, scene) {
   scene.fog = look.fog ? new THREE.Fog(look.sky, look.fog[0], look.fog[1]) : null;
 
   const sun = new THREE.DirectionalLight(0xffffff, look.sun);
-  sun.position.set(40, 60, -30);
+  sun.position.set(...(look.sunAt ?? [40, 60, -30])).normalize().multiplyScalar(80);
   const ambient = new THREE.HemisphereLight(0xffffff, look.ground ?? 0x222233, look.ambient);
   group.add(sun, ambient);
+
+  // The Sun as a disc in the sky, in the direction the light comes from. Haze does not hide it,
+  // so in the dust storm it stays as a pale dot (effects.js dims it).
+  let sunDisc = null;
+  if (look.disc) {
+    sunDisc = new THREE.Group();
+    sunDisc.position.copy(sun.position).normalize().multiplyScalar(1400);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(22, 20), new THREE.MeshBasicMaterial({ color: look.disc, fog: false }));
+    disc.name = 'disc';
+    sunDisc.add(disc);
+    if (look.halo) {
+      const halo = new THREE.Mesh(new THREE.CircleGeometry(150, 24), new THREE.MeshBasicMaterial({ color: look.halo, fog: false, transparent: true, opacity: 0.35, depthWrite: false }));
+      halo.name = 'halo';
+      halo.position.z = -1;
+      sunDisc.add(halo);
+    }
+    sunDisc.lookAt(0, 0, 0);
+    group.add(sunDisc);
+  }
 
   let ground = null; // the ground's material, so the storm can change its colour
   if (look.ground !== null) {
@@ -77,7 +104,7 @@ export function buildWorld(name, scene) {
   scene.add(group);
   return {
     group,
-    name, look, sun, ambient, ground, // effects.js reads and changes these
+    name, look, sun, ambient, ground, sunDisc, // effects.js reads and changes these
     dispose() {
       scene.remove(group);
       scene.fog = null;

@@ -1,7 +1,12 @@
 // The shape of the ground. Owner: Set B.
 //
 //   heightAt('moon', x, z)        ground height in metres at any point
-//   cratersOf('moon')             [{ x, z, r, depth }] so chapters can put things on or around them
+//   cratersOf('moon')             [{ x, z, r, depth, name? }] so chapters can put things on or around them
+//   mesasOf('jezero')             [{ x, z, r, height }] the flat-topped hills
+//
+// Worlds: 'moon', 'mars' (Meridiani plains, chapter 2), 'jezero' (chapter 3). Anything else is flat.
+// On 'mars', cratersOf gives two named places: 'start' (the small crater Opportunity lands in)
+// and 'rim' (the big crater to reach, 160 m away).
 //   heightGrid('moon')            the same heights on a grid, laid out for a Rapier heightfield
 //
 // The picture (world.js) and the physics (Set A) both read heightAt, so they always agree.
@@ -53,7 +58,24 @@ function rng(seed) {
 // rough: height of the small bumps. roughSize: how wide one bump is.
 const WORLDS = {
   moon: { seed: 1972, hills: 6, hillSize: 90, rough: 0.5, roughSize: 14, craters: 22 },
-  mars: { seed: 2004, hills: 3, hillSize: 130, rough: 0.25, roughSize: 18, craters: 0 }, // B-7 will shape Mars properly
+
+  // Meridiani Planum, chapter 2. Very flat, with wind ripples. Opportunity starts on the floor of a
+  // small crater (`pit`, like Eagle crater) and drives out. Far off there is one big crater whose
+  // rim is the place to reach.
+  mars: {
+    seed: 2004, hills: 1.6, hillSize: 150, rough: 0.12, roughSize: 20,
+    ripples: { height: 0.09, length: 10, angle: 0.5 },
+    pit: { r: 11, depth: 1.3 },
+    fixed: [{ name: 'rim', x: -70, z: 150, r: 45, depth: 8 }],
+  },
+
+  // Jezero crater, chapter 3. A flat old lake bed, two flat-topped mesas, and the crater wall
+  // standing in steps all around the horizon. Ask for it by name: heightAt('jezero', x, z).
+  jezero: {
+    seed: 2021, hills: 1.2, hillSize: 120, rough: 0.15, roughSize: 16,
+    wall: { from: 120, to: 190, steps: 3, stepHeight: 10 },
+    mesas: [{ x: 70, z: 95, r: 18, height: 9 }, { x: -95, z: 40, r: 14, height: 7 }, { x: -30, z: -110, r: 22, height: 11 }],
+  },
 };
 
 // Craters are placed once per world: a ring of them near the start so the drive passes some,
@@ -63,6 +85,10 @@ export function cratersOf(world) {
   if (craterLists.has(world)) return craterLists.get(world);
   const spec = WORLDS[world];
   const list = [];
+  // Named places come first. `flat: true` means heightAt shapes it another way; it is listed so a
+  // chapter can find it.
+  if (spec?.pit) list.push({ name: 'start', x: 0, z: 0, r: spec.pit.r, depth: spec.pit.depth, flat: true });
+  if (spec?.fixed) list.push(...spec.fixed);
   if (spec?.craters) {
     const rand = rng(spec.seed);
     let tries = 0;
@@ -82,6 +108,10 @@ export function cratersOf(world) {
   return list;
 }
 
+export function mesasOf(world) {
+  return WORLDS[world]?.mesas ?? [];
+}
+
 // A bowl with a raised rim. d is the distance from the centre, in crater radii.
 function craterShape(d, c) {
   if (d > 1.7) return 0;
@@ -93,12 +123,37 @@ function craterShape(d, c) {
 export function heightAt(world, x, z) {
   const spec = WORLDS[world];
   if (!spec) return 0; // factory floor, deep space
+  const far = Math.hypot(x, z);
   // Flat at the start, rising to full height 30 m out.
-  const open = smoothstep(8, 30, Math.hypot(x, z));
+  const open = smoothstep(spec.pit ? spec.pit.r : 8, 30, far);
   let h = layered(x / spec.hillSize, z / spec.hillSize, spec.seed, 3) * spec.hills;
   h += layered(x / spec.roughSize, z / spec.roughSize, spec.seed + 7, 2) * spec.rough;
+  if (spec.ripples) {
+    // Long wind ripples, all lying the same way, bent a little so they do not look ruled.
+    const r = spec.ripples, along = x * Math.cos(r.angle) + z * Math.sin(r.angle);
+    h += Math.sin((along / r.length) * Math.PI * 2 + noise(x / 30, z / 30, spec.seed + 3) * 4) * r.height;
+  }
   h *= open;
+  if (spec.pit) {
+    // The start is the floor of a shallow crater: the plain around it is higher, with a low rim.
+    const p = spec.pit;
+    h += p.depth * smoothstep(p.r * 0.45, p.r, far) + 0.3 * Math.exp(-(((far - p.r) / 2.5) ** 2));
+  }
+  if (spec.wall) {
+    // The crater wall: it rises in steps, each a steep face with a flat shelf on top.
+    const w = spec.wall;
+    const d = far + (noise(x / 40, z / 40, spec.seed + 5) - 0.5) * 36;
+    const t = smoothstep(w.from, w.to, d) * w.steps, whole = Math.floor(t);
+    h += (whole + smoothstep(0.5, 0.9, t - whole)) * w.stepHeight;
+  }
+  if (spec.mesas) {
+    for (const m of spec.mesas) {
+      const d = Math.hypot(x - m.x, z - m.z) / m.r;
+      if (d < 1) h += m.height * (1 - smoothstep(0.7, 1, d)); // flat top, steep sides
+    }
+  }
   for (const c of cratersOf(world)) {
+    if (c.flat) continue;
     const dx = x - c.x, dz = z - c.z, reach = c.r * 1.7;
     if (dx > reach || dx < -reach || dz > reach || dz < -reach) continue;
     h += craterShape(Math.hypot(dx, dz) / c.r, c);

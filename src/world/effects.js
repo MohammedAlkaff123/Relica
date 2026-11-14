@@ -19,6 +19,7 @@ import { heightAt } from './terrain.js';
 
 const STORM_SKY = new THREE.Color(0x7a5236);
 const STORM_GROUND = new THREE.Color(0x6e4630);
+const STORM_SUN = new THREE.Color(0xc9ae8c);
 const DEAD = -9999;
 
 // A fixed set of square dust specks, reused in a circle. One draw call.
@@ -150,6 +151,10 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
     ambient: env.ambient.intensity,
     ground: env.ground ? env.ground.color.clone() : null,
   };
+  const disc = env.sunDisc?.getObjectByName('disc') ?? null;
+  const halo = env.sunDisc?.getObjectByName('halo') ?? null;
+  if (disc) clear.disc = disc.material.color.clone();
+  if (halo) clear.halo = halo.material.opacity;
   let level = 0;
   const mix = new THREE.Color();
 
@@ -168,6 +173,12 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
     env.sun.intensity = clear.sun * (1 - 0.8 * e);
     env.ambient.intensity = clear.ambient * (1 - 0.35 * e);
     if (clear.ground) env.ground.color.copy(clear.ground).lerp(STORM_GROUND, e);
+    if (disc) {
+      // The Sun shrinks to a pale dot and its halo goes.
+      disc.material.color.copy(clear.disc).lerp(STORM_SUN, e);
+      disc.scale.setScalar(1 - 0.25 * e);
+      if (halo) halo.material.opacity = clear.halo * (1 - e);
+    }
     stormMat.opacity = Math.min(1, t * 1.2) * 0.9;
     stormPoints.visible = t > 0.01;
   }
