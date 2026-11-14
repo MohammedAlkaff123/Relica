@@ -23,11 +23,8 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-12: English and Arabic subtitle files for the 30-second video, timed to the storyboard in STORY.md |
 | 14 Nov | Abdullatif | Claude Code | C-11: proofreading pass over all player text; fixed four Arabic and English lines. Final read-through with Mohammed still to do |
 | 14 Nov | Abdullatif | Claude Code | C-7: louder audio chain with a boost control, and a voice for each machine built from the words of its line (chirps, Morse code, low hums, fast blips, echoing tones) |
-<<<<<<< Updated upstream
 | 14 Nov | Abdulkarim | Claude Code | Searched for open-licence 3D models and found NASA's own set (github.com/nasa/NASA-3D-Resources); checked each model's triangle count, size and textures |
 | 14 Nov | Abdulkarim | Claude Code | B-2/B-5: wrote the script in tools/models that adapts seven NASA models to our look (no textures or flags, under 5,000 triangles, metres, named parts); results checked by eye |
 | 14 Nov | Abdulkarim | Claude Code | B-3: model loading in character.js, with the boxes kept when a file is missing, and the face rig moved onto the model's head and antenna |
 | 14 Nov | Abdulkarim | Claude Code | B-1: terrain function (heightAt, crater list, height grid for the physics) and the ground mesh built from it; heights checked against a Rapier heightfield |
-=======
 | 14 Nov | Abdullatif | Claude Code | C-7: Morse voices with a signature per machine (Viking as an old telegraph, Pioneer deep and echoing), mix buses with dB levels measured per sound, new distinct interface and event sounds |
->>>>>>> Stashed changes
