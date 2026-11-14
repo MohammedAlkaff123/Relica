@@ -18,7 +18,7 @@ Taken from the data guide and the briefing transcript in this folder.
 
 | Rule | What we do about it |
 |---|---|
-| Code and assets may only be made on 14–15 Nov | Nothing is reused from before today |
+| Code and assets may only be made on 14–15 Nov | Our own code and assets are made on these two days. The one exception is NASA's open 3D models (github.com/nasa/NASA-3D-Resources): they are NASA data, we adapt them to our look, and every one is listed in References |
 | NASA upload closes 15 Nov, 11:59 pm local | Final build is frozen 3 hours before our own deadline |
 | Upload needs: summary, 30-second video or about 7 slides, public GitHub repo, how to run it, tools used, NASA data statement, AI disclosure, references, all in English | Set C owns the checklist in section 11 |
 | Local jury pitch is 5–7 minutes live, plus questions | Keys 1–4 jump to any chapter so we can demo highlights |
@@ -194,7 +194,7 @@ Assigned: Set A to Ziad, Set B to Abdulkarim, Set C to Abdullatif. This is the s
 **Set B: Worlds and characters (Abdulkarim)**
 
 - Box placeholder for every character in the first two hours
-- Five low-poly character models and the props, made with an image-to-3D tool using the pack photos as reference, then cleaned up: right scale, named parts, under about 5,000 triangles each, no logos
+- Five low-poly character models and the props, adapted from NASA's open 3D models where one exists (the Moon rover has none, so it is built by hand from the pack photos), then cleaned up: right scale, named parts, under about 5,000 triangles each, no logos
 - Face rig and the five emotions for every character, including Viking's beard and eyebrows
 - Moon terrain with craters, Mars plains, Jezero, the factory room, the star field
 - Light, sky colour, wheel dust, the dust storm
