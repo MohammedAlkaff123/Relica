@@ -19,6 +19,8 @@
 //   layeredRock   the layered outcrop Opportunity studies
 //   pebbles       the patch of tiny round pebbles, 1.6 m across
 //   sampleBox     one sample box, to stack on the back of the Moon rover
+//   worker        a factory worker in a hooded clean-room suit, 1.75 m. No face: mask and goggles.
+//                 Parts `head`, `arm_L`, `arm_R` (arms turn at the shoulder)
 //
 // The three models are adapted from NASA's 3D Resources: see public/models/README.md.
 import * as THREE from 'three';
@@ -176,6 +178,36 @@ const BUILDERS = {
     }
     const g = new THREE.Group();
     g.add(mesh);
+    return g;
+  },
+
+  worker() {
+    const g = new THREE.Group();
+    const suit = flat(0xf1f3f5), shade = flat(0xd3d9e0), glove = flat(0x8fb4d6), boot = flat(0x9aa3ae);
+    const put = (geo, mat, x, y, z, parent = g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+    for (const x of [-0.12, 0.12]) {
+      put(new THREE.BoxGeometry(0.17, 0.8, 0.2), suit, x, 0.5, 0);
+      put(new THREE.BoxGeometry(0.19, 0.12, 0.3), boot, x, 0.06, 0.04);
+    }
+    put(new THREE.CylinderGeometry(0.2, 0.25, 0.62, 6), suit, 0, 1.2, 0);
+    put(new THREE.BoxGeometry(0.44, 0.06, 0.3), shade, 0, 0.92, 0); // belt
+    for (const [name, x] of [['arm_L', 0.3], ['arm_R', -0.3]]) {
+      const arm = new THREE.Group();
+      arm.name = name;
+      arm.position.set(x, 1.45, 0);
+      put(new THREE.BoxGeometry(0.13, 0.6, 0.15), suit, 0, -0.3, 0, arm);
+      put(new THREE.BoxGeometry(0.14, 0.14, 0.16), glove, 0, -0.66, 0, arm);
+      arm.rotation.z = x > 0 ? 0.12 : -0.12;
+      g.add(arm);
+    }
+    // Hood, with a pale mask and a dark strip of goggles where a face would be.
+    const head = new THREE.Group();
+    head.name = 'head';
+    head.position.set(0, 1.6, 0);
+    put(new THREE.IcosahedronGeometry(0.18, 1), suit, 0, 0, 0, head);
+    put(new THREE.BoxGeometry(0.2, 0.1, 0.06), glove, 0, -0.06, 0.15, head);
+    put(new THREE.BoxGeometry(0.24, 0.07, 0.05), flat(0x2a303a), 0, 0.035, 0.15, head);
+    g.add(head);
     return g;
   },
 
