@@ -49,20 +49,20 @@ Background props: Lunar Module, two astronauts with mirror visors, airbag lander
 |---|---|---|---|---|
 | **Opening: the factory** | 0:45 | Open your eyes in a clean room. Test your wheels on a stand (this is the driving tutorial). Get folded and packed. Darkness and launch rumble | Born with a purpose | LRV training photos `S71-16722`, `S71-30542` |
 | **1. Moon: the rover** | 3:00 | Unfold next to the Lunar Module. Drive two astronauts to three science stops in one-sixth gravity. A fender breaks and dust rains on you until they tape maps over it. Park. The crew climbs in and lifts off. You tilt your camera up and watch them go | Joy of being useful, then quietly waiting for the crew to return | Moon panel. Photos `as17-137-20979` (the real map-and-clamp fender repair), `as15-86-11603` |
-| *Cutscene 1: Moon to Mars* | 0:30 | | | Year counter 1972 → 2004 |
-| **2. Mars: Opportunity** | 3:30 | Bounce to a stop inside airbags. Roll off. Drive on solar power that depends on sun and dust. A counter says "planned: 90 sols" and keeps going into the thousands. Grind a rock. At sunset, a radio call with old Viking. Then the 2018 dust storm: the sky darkens, the battery drops, the controls fade | Stubborn hope, then a quiet ending | Mars panel, sol counter. Photos `PIA07108` (frost on the rover), `PIA20285` (rock grinding target), `PIA21708` (Orion crater, named after the Apollo 16 lunar module, which links back to chapter 1) |
-| *Cutscene 2: storm to Jezero* | 0:30 | | | Year counter 2018 → 2021 |
+| *Cutscene 1: Moon to Mars* | 0:10 | | | Year counter 1972 → 2004 |
+| **2. Mars: Opportunity** | 3:30 | Bounce to a stop inside airbags. Roll off. Drive on solar power that depends on sun and dust. A counter says "planned: 90 sols" and keeps going into the thousands. Grind a rock. At sunset, an imagined call with old Viking acknowledges loneliness and encourages more discovery. The 2018 dust storm drains power as the rover still tries to explore | Patient curiosity, companionship, then a quiet ending | Mars panel, sol counter. Photos `PIA07108` (frost on the rover), `PIA20285` (rock grinding target), `PIA21708` (Orion crater, named after the Apollo 16 lunar module, which links back to chapter 1) |
+| *Cutscene 2: storm to Jezero* | 0:10 | | | Year counter 2018 → 2021 |
 | **3. Mars sky: Ingenuity** | 2:30 | Drop from the rover's belly. Fight for height, recover from staged dips, and keep helping the rover through three short flights. The counter passes "planned: 5 flights" and reaches 72. On the final vertical flight over featureless sand ripples, she struggles to steady herself until the landing damages her blades. She tries to lift again, then sends the rover onward | Repeated hard-won recoveries, fierce persistence, then loss of flight with pride intact | Photos `PIA23882`, `PIA23969` (its two real cameras) |
-| *Cutscene 3: Mars to deep space* | 0:30 | | | |
-| **Epilogue: Pioneer 10** | 1:15 | Drift. Turn the dish back toward a pale dot, the Sun. Too weak to speak, but you hear the other machines faintly. Then a wall of every real photo you collected, with credits. Last card: "Abandoned, but not forgotten" | Peace | Photos `ARC-1972-AC72-2135`, `ARC-1972-A72-2137` (the plaque) |
+| *Cutscene 3: Mars to deep space* | 0:12 | | | |
+| **Epilogue: Pioneer 10** | 1:15 | Proposed: drift and turn toward the Sun in an explicitly imagined listening scene. Hear four remembered voices one at a time. "I hear you. All of you." Hold the quiet, then the ending card, real photo wall and credits | Recognition, pride and peace | Photos `ARC-1972-AC72-2135`, `ARC-1972-A72-2137` (the plaque) |
 
-Total is about 12:30 on paper. Mohammed trims with a stopwatch.
+The revised story draft totals 11:32 on paper: 11:00 of chapters plus 0:32 of transitions. Short character inserts are included in the chapters, not added twice. Target a measured 12–13 minute first playthrough; manual reading and optional photo/credits browsing can extend it. Mohammed checks actual pacing with a stopwatch. The full Opportunity staging, Pioneer ending and revised shot timing are proposals for review; see STORY_REVIEW.md.
 
 Only the Moon rover gets the full factory-to-retirement arc. The others start at arrival, so each chapter stays short.
 
 **Accuracy rules for the script**
 
-- The machines never meet in person. They are thousands of kilometres and decades apart. All talk is by radio and framed as imagination.
+- The machines never meet in person. Their conversations and the Pioneer listening scene are imagined, not operational links across decades. Identify that when the scene starts and on the end card. Pioneer's last received signal was in 2003; Viking stopped operating in 1982.
 - Never present an invented line as a real quote. The well-known "my battery is low" line was a journalist's paraphrase, so we do not show it as Opportunity's words.
 - Real events keep their real dates, places and numbers. Feelings, dialogue, compressed time, player controls and staged flight recoveries are dramatized. Ingenuity’s struggle is not a claim of repeated historical engine failures; the factual basis and sources are in STORY.md chapter 3.
 

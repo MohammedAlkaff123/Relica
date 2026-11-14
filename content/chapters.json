@@ -86,8 +86,12 @@
       "ar": "ما وراء الكواكب"
     },
     "dates": {
-      "en": "1972 – today",
-      "ar": "١٩٧٢ – اليوم"
+      "en": "Launched 1972",
+      "ar": "انطلق عام ١٩٧٢"
+    },
+    "sub": {
+      "en": "Last signal to Earth: 23 January 2003. An imagined listening scene.",
+      "ar": "آخر إشارة إلى الأرض: ٢٣ يناير ٢٠٠٣. مشهد إنصات متخيّل."
     }
   }
 }

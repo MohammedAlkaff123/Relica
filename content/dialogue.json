@@ -32,7 +32,7 @@
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "كل شي هنا خفيف",
+      "ar": "كلّ شيء هنا خفيف.",
       "en": "Everything is so light here."
     },
     {
@@ -274,8 +274,8 @@
     {
       "who": "pioneer",
       "emotion": "happy",
-      "ar": "أسمعكم. لا أستطيع الردّ… لكنني أسمعكم.",
-      "en": "I hear you. I can't answer. But I hear you."
+      "ar": "أسمعكم… أسمعكم جميعًا.",
+      "en": "I hear you. All of you."
     }
   ],
   "ch3_recover": [
