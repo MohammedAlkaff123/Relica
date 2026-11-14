@@ -20,3 +20,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-6: memory photo captions in Arabic and English, crops that keep logos out of frame, a memory sound; photos checked by eye |
 | 14 Nov | Abdullatif | Claude Code | C-9: title screen, ending card and credits (card.title, card.ending, card.credits), texts in content/credits.json, photo credits read from CREDITS.csv |
 | 14 Nov | Abdullatif | Claude Code | C-10: README upload pack (how to run, tools, NASA data statement, AI disclosure, references) and the Set C calls in the contracts |
+| 14 Nov | Abdullatif | Claude Code | C-12: English and Arabic subtitle files for the 30-second video, timed to the storyboard in STORY.md |
