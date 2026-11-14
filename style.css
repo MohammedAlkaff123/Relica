@@ -70,9 +70,18 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
   width: min(760px, 92vw); background: var(--panel); border: 1px solid var(--line);
   border-radius: 6px; padding: 14px 20px 12px;
 }
-.dialogue .who { font: 500 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--foil); }
-.dialogue .ar { font: 600 26px/1.6 var(--arabic); margin: 4px 0 2px; }
-.dialogue .en { font-size: 16px; color: var(--dim); }
+.dialogue .who { display: flex; justify-content: space-between; gap: 12px; font: 500 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--speaker, var(--foil)); }
+.dialogue .who-ar { font: 600 14px var(--arabic); letter-spacing: 0; text-transform: none; }
+.dialogue { border-top: 3px solid var(--speaker, var(--foil)); }
+/* One colour per speaker, so the player knows who talks before reading */
+.dialogue[data-who="lrv"]         { --speaker: #e3a23c; }
+.dialogue[data-who="opportunity"] { --speaker: #e8835a; }
+.dialogue[data-who="viking"]      { --speaker: #cdbf98; }
+.dialogue[data-who="ingenuity"]   { --speaker: #7cc6ea; }
+.dialogue[data-who="pioneer"]     { --speaker: #b7a8ec; }
+/* plaintext keeps Arabic punctuation and Latin digits in the right order inside a right-to-left line */
+.dialogue .ar { font: 600 26px/1.6 var(--arabic); margin: 4px 0 2px; min-height: 1.6em; unicode-bidi: plaintext; text-align: right; }
+.dialogue .en { font-size: 16px; color: var(--dim); min-height: 1.4em; }
 .dialogue .hint, .card .hint, .memory .hint { font: 400 11px var(--mono); color: var(--dim); margin-top: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
 
 /* Chapter card */
