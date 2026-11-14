@@ -13,3 +13,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-1: checked the world numbers in facts.json against the NASA fact sheets and added the source links |
 | 14 Nov | Abdullatif | Claude Code | C-3: dialogue box version 2 (letter-by-letter typing, a colour per speaker, auto mode for cutscenes) |
 | 14 Nov | Abdullatif | Claude Code | C-5: HUD version 2 (battery bar, counter with planned number, cleaner objective line, chapter cards from content/chapters.json) |
+| 14 Nov | Abdullatif | Claude Code | C-7: sound functions (play, setWorld, setWind, loops, music cues, a voice per character), all sounds generated in code for now |
