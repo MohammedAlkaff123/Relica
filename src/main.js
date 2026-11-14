@@ -88,6 +88,23 @@ async function boot() {
   const speed = Math.max(1, Math.min(8, Number(new URLSearchParams(location.search).get('speed')) || 1));
   ctx.clock = 0; // game seconds since the page opened
 
+  // Pause. The overlay is plain so Abdullatif's menu design can replace it; ctx.setPaused is the contract.
+  const pauseBox = document.createElement('div');
+  pauseBox.className = 'pause-overlay';
+  Object.assign(pauseBox.style, {
+    position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
+    background: 'rgba(3,6,12,0.55)', color: '#eef2f6', font: '600 22px system-ui, sans-serif', zIndex: 40, gap: '8px',
+  });
+  pauseBox.innerHTML = '<div>Paused · متوقفة مؤقتًا</div><div style="font-size:14px;opacity:.75">P to continue · اضغط P للمتابعة</div>';
+  document.body.appendChild(pauseBox);
+  ctx.paused = false;
+  ctx.setPaused = (on) => {
+    ctx.paused = !!on;
+    pauseBox.style.display = ctx.paused ? 'flex' : 'none';
+  };
+  // Leaving the tab pauses the game, so a demo is never found mid-storm with the rover gone.
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !location.search.includes('test')) ctx.setPaused(true); });
+
   game.start((frameDt) => {
     if (fps) {
       const now = performance.now();
@@ -99,6 +116,10 @@ async function boot() {
         fps.frames = 0; fps.worst = 0; fps.last = now;
       }
     }
+    // Pause: P, or the tab being hidden. The picture stays, but game time, physics, chapters and the
+    // camera stop. A menu can call ctx.setPaused(true / false) and read ctx.paused.
+    if (input.pressed('KeyP')) ctx.setPaused(!ctx.paused);
+    if (ctx.paused) { input.endFrame(); return; }
     for (let step = 0; step < speed; step++) tick(frameDt);
   });
 

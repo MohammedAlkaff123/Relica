@@ -80,6 +80,7 @@ export async function photographJupiter(s, ctx) {
     ctx.hud.setObjective(aligned ? 'Space: capture Jupiter · التقط صورة للمشتري' : 'A / D: frame Jupiter · ضع المشتري داخل الإطار');
     if (!aligned || !ctx.input.pressed('Space')) return false;
     state.captured = true;
+    s.sound('shutter', 'tick');
     state.phase = 'scan';
     return true;
   });

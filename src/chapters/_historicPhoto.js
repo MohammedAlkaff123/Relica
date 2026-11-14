@@ -140,7 +140,7 @@ export async function captureHistoricPhoto(s, ctx, id) {
       ctx.hud.setObjective(aligned ? 'Space: capture this mission view' : `Frame ${profile.subject}: ${state.yaw>.035?'A: left':state.yaw<-.035?'D: right':state.pitch>.035?'S: down':'W: up'}`);
       return aligned && ctx.input.pressed('Space');
     });
-    state.captured=true; state.phase='reveal';
+    state.captured=true; state.phase='reveal'; s.sound('shutter', 'tick');
     ctx.hud.setObjective(''); overlay.classList.add('hidden');
     await revealPhoto(s,ctx,id,cleanup);
     state.phase='done';

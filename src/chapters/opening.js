@@ -48,6 +48,7 @@ export default makeChapter({
     const workers = s.env.workers?.length ? s.env.workers : [s.prop('worker', -3.4, 1.6), s.prop('worker', 3.5, -0.4)];
     await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.5 : -1.5, 0.2, 2)));
     s.hero.setEmotion('scared');
+    s.sound('fold');
     await s.say('ch0_fold');
     await s.until((dt) => {
       const sc = s.hero.object.scale;
