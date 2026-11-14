@@ -65,7 +65,7 @@ function tone(x, z, seed) {
 }
 
 // ---- the ground detail texture ----
-// One grey photo texture (public/textures, from Poly Haven "Rocks Ground 05", CC0), in three sizes.
+// One grey photo texture (public/textures, from Poly Haven "Sand 01", CC0), in three sizes.
 // Every world multiplies it by its own ground colour. Only the size the quality level asks for is
 // downloaded and kept; when no world uses a size any more, it is released.
 const textureLoader = new THREE.TextureLoader();
@@ -74,20 +74,23 @@ function takeDetail(size) {
   let entry = details.get(size);
   if (!entry) {
     const url = new URL(`../../public/textures/ground_detail_${size}.jpg`, import.meta.url).href;
-    const texture = textureLoader.load(url);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.anisotropy = 4;
-    entry = { texture, users: 0 };
+    entry = { texture: null, users: 0, ready: null };
     details.set(size, entry);
+    entry.ready = textureLoader.loadAsync(url).then((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.anisotropy = 4;
+      entry.texture = texture;
+      return texture;
+    });
   }
   entry.users++;
-  return entry.texture;
+  return entry.ready;
 }
 function dropDetail(size) {
   const entry = details.get(size);
   if (!entry || --entry.users > 0) return;
-  entry.texture.dispose();
+  entry.texture?.dispose();
   details.delete(size);
 }
 
@@ -405,28 +408,44 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
   if (look.room) buildFactoryRoom(group, workers);
 
   // ---- Low / Medium / High ----
-  let level = null, detailSize = 0;
-  function applyQuality(next) {
-    level = normalizeQuality(next);
-    const preset = presetFor(level);
+  let level = null, detailSize = 0, generation = 0, disposed = false;
+  async function applyQuality(value, next) {
+    const wanted = normalizeQuality(next ?? value);
+    const preset = typeof value === 'object' ? value : presetFor(wanted);
+    const mine = ++generation;
+    const size = ground && !look.plain ? preset.textureSize : 0;
+    let map = ground?.map ?? null;
+    if (size !== detailSize && size) {
+      try { map = await takeDetail(size); }
+      catch (error) { dropDetail(size); throw error; }
+      if (disposed || mine !== generation) { dropDetail(size); return; }
+    }
+    if (disposed || mine !== generation) return;
+    if (size !== detailSize) {
+      ground.map = size ? map : null; ground.needsUpdate = true;
+      if (rockMaterial) { rockMaterial.map = ground.map; rockMaterial.needsUpdate = true; }
+      if (detailSize) dropDetail(detailSize);
+      detailSize = size;
+    }
+    level = wanted;
 
     if (rocks) {
-      rocks.count = rockShade.count = Math.min(rocks.userData.most, Math.round(look.rocks * preset.rocks));
-      rockShade.visible = preset.shadowMap === 0;
-      rocks.castShadow = preset.shadowMap >= 2048; // only High lets the small rocks cast
+      rocks.count = rockShade.count = Math.min(rocks.userData.most, Math.round(look.rocks * preset.decorScale));
+      rockShade.visible = preset.shadowMapSize === 0;
+      rocks.castShadow = preset.shadowMapSize >= 2048; // only High lets the small rocks cast
       pebbles.count = preset.pebbles;
       pebbles.visible = preset.pebbles > 0;
     }
-    for (const field of boulderFields) field.castShadow = preset.shadowMap > 0;
-    for (const layer of starLayers) layer.geometry.setDrawRange(0, Math.floor(layer.userData.total * (layer.userData.band ? preset.starBand : preset.stars)));
+    for (const field of boulderFields) field.castShadow = preset.shadowMapSize > 0;
+    for (const layer of starLayers) layer.geometry.setDrawRange(0, Math.floor(layer.userData.total * (layer.userData.band ? preset.starBand : preset.starScale)));
 
     // The Sun's shadow: one map, kept to a box around the hero (effects.js moves the box).
-    const shadows = preset.shadowMap > 0 && !!groundMesh;
-    if (sun.shadow.map && (!shadows || sun.shadow.mapSize.x !== preset.shadowMap)) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+    const shadows = preset.shadowMapSize > 0 && !!groundMesh;
+    if (sun.shadow.map && (!shadows || sun.shadow.mapSize.x !== preset.shadowMapSize)) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     sun.castShadow = shadows;
     if (shadows) {
       const R = preset.shadowRange, cam = sun.shadow.camera;
-      sun.shadow.mapSize.set(preset.shadowMap, preset.shadowMap);
+      sun.shadow.mapSize.set(preset.shadowMapSize, preset.shadowMapSize);
       cam.left = -R; cam.right = R; cam.top = R; cam.bottom = -R; cam.near = 1; cam.far = 320;
       cam.updateProjectionMatrix();
       sun.shadow.bias = -0.0006;
@@ -434,19 +453,11 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
       sun.shadow.radius = look.shadowSoft ?? 1; // hard on the airless Moon, softer in Mars's haze
     }
 
-    // The ground detail texture at this level's size; the size it replaces is let go.
-    const size = ground && !look.plain ? preset.textureSize : 0;
-    if (size !== detailSize) {
-      const map = size ? takeDetail(size) : null;
-      ground.map = map;
-      ground.needsUpdate = true;
-      if (rockMaterial) { rockMaterial.map = map; rockMaterial.needsUpdate = true; }
-      if (detailSize) dropDetail(detailSize);
-      detailSize = size;
-    }
     return preset;
   }
-  applyQuality(quality);
+  const ready = applyQuality(quality);
+  // A chapter can be disposed while the first texture is loading. attach() also awaits ready.
+  ready.catch((error) => console.warn('World texture failed to load', error.message));
 
   scene.add(group);
   return {
@@ -454,21 +465,31 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
     name, look, sun, ambient, ground, sunDisc, // effects.js reads and changes these
     sunDirection,
     workers,
-    applyQuality,
+    applyQuality, ready,
+    get textureSize() { return detailSize; },
+    updateShadow(target) {
+      if (!sun.castShadow) return;
+      sun.target.position.copy(target.position);
+      sun.position.copy(target.position).addScaledVector(sunDirection, 150);
+      sun.target.updateMatrixWorld();
+    },
     get quality() { return level; },
     get shadowRange() { return sun.castShadow ? presetFor(level).shadowRange : 0; },
     dispose() {
+      disposed = true; generation++;
       scene.remove(group);
       scene.fog = null;
       if (detailSize) { dropDetail(detailSize); detailSize = 0; }
       if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
-      const materials = new Set();
+      const materials = new Set(), geometries = new Set();
       group.traverse((o) => {
-        if (o.geometry) o.geometry.dispose();
+        if (o.geometry) geometries.add(o.geometry);
         if (o.material) materials.add(o.material);
         if (o.isInstancedMesh) o.dispose();
       });
-      materials.forEach((m) => m.dispose());
+      geometries.forEach((g) => { if (!g.userData.shared) g.dispose(); });
+      rockShape.dispose(); // may be unused in the factory/space
+      materials.forEach((m) => { if (!m.userData.shared) m.dispose(); });
     },
   };
 }

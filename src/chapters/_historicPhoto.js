@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { loadJSON } from '../core/content.js';
 import { el } from '../ui/dom.js';
+import { buildPhotoSet } from '../world/photoSet.js';
 
 export async function revealPhoto(s, ctx, id, after = () => {}) {
   await s.do(ctx.memory.preload(id));
@@ -13,72 +14,6 @@ export async function revealPhoto(s, ctx, id, after = () => {}) {
   await s.fade(false, 0.6);
 }
 
-function buildSet(kind) {
-  const group = new THREE.Group();
-  const grey = kind !== 'orion';
-  const materials = new Map();
-  const mat = (color) => {
-    if (!materials.has(color)) materials.set(color, new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 1 }));
-    return materials.get(color);
-  };
-  const mesh = (geo, color, pos, scale = [1, 1, 1]) => {
-    const o = new THREE.Mesh(geo, mat(color));
-    o.position.set(...pos); o.scale.set(...scale); group.add(o); return o;
-  };
-  const rod = (a, b, radius, color) => {
-    const start = new THREE.Vector3(...a), end = new THREE.Vector3(...b), d = end.clone().sub(start);
-    const o = mesh(new THREE.CylinderGeometry(radius, radius, d.length(), 8), color, start.add(end).multiplyScalar(0.5).toArray());
-    o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
-    return o;
-  };
-  const height = (x, z) => kind === 'orion'
-    ? -1.4 * Math.exp(-(x*x + z*z) / 32) + 0.3 * Math.exp(-((Math.hypot(x,z)-7)**2) / 1.5)
-    : kind === 'potts' ? Math.max(0, -z - 1) * 0.22 + 1.5*Math.exp(-((x-1)**2+(z+6)**2)/18) : 0;
-  const ground = new THREE.PlaneGeometry(50, 50, 80, 80);
-  ground.rotateX(-Math.PI / 2);
-  const positions = ground.attributes.position;
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i), z = positions.getZ(i);
-    positions.setY(i, height(x, z) + Math.sin(x * 14 + z * 5) * 0.025);
-  }
-  ground.computeVertexNormals();
-  mesh(ground, grey ? 0x686866 : 0xa4825d, [0, 0, 0]);
-  // Repeatable rocks: photo composition should not change on restart.
-  let seed = 76;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-  for (let i = 0; i < 150; i++) {
-    const x = (rand() - 0.5) * 24, z = (rand() - 0.5) * 20;
-    const size = kind === 'viking' ? 0.06 + rand() * 0.27 : 0.03 + rand() * 0.1;
-    mesh(new THREE.IcosahedronGeometry(size, 0), grey ? 0x7e7c77 : 0x998165, [x, height(x,z) + size * .4, z], [1.3, .7, 1]);
-  }
-  if (kind === 'viking') {
-    for (const [x,z,size] of [[-.8,-.7,.35],[.4,0,.22],[1.4,-.4,.3],[1.9,1,.24],[.3,-1.3,.27],[2.4,-1.2,.42]]) mesh(new THREE.IcosahedronGeometry(size,0),0x81807a,[x,size*.5,z],[1.2,.8,1]);
-  }
-  if (kind === 'potts') {
-    // Low front Hazcam: arm enters from the left, downward tool in the middle, right wheel foreground.
-    rod([-2.5, .25, 2.5], [-.6, 1.5, -.8], .15, 0xb9b8b1);
-    rod([-.6, 1.5, -.8], [-.35, .4, -1.1], .12, 0x777773);
-    const turret = mesh(new THREE.CylinderGeometry(.35, .35, .35, 12), 0x93938d, [-.35,.32,-1.1]);
-    turret.rotation.z = Math.PI/2;
-    const wheel = mesh(new THREE.CylinderGeometry(.55,.55,.4,18), 0x30302e, [2.1,.42,2]);
-    wheel.rotation.z = Math.PI/2;
-    mesh(new THREE.BoxGeometry(1.4,.3,1.5), 0x888781, [-2.6,.3,2.5]);
-  } else if (kind === 'viking') {
-    // Match the published, horizontally flipped view: sampler housing/struts left; exposed soil right.
-    mesh(new THREE.BoxGeometry(1.8,.45,2.6), 0xb7b6b0, [-3,1.1,-.5]);
-    rod([-2.5,1.2,-1.5],[-2.1,.15,2],.16,0xaaa9a1);
-    rod([-3.5,.9,1.4],[-2.1,.15,2],.13,0xa4a39e);
-  } else {
-    // Pancam panorama: shallow oval depression, low far rim, wheel tracks down the left foreground.
-    for (let j=0;j<30;j++) for (const x of [-7.4,-6.7]) {
-      const z = 3 + j*.23;
-      mesh(new THREE.BoxGeometry(.42,.025,.1),0x73634e,[x,height(x,z)+.04,z]);
-    }
-  }
-  group.add(new THREE.HemisphereLight(0xffffff, 0x51463b, 2));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.5); sun.position.set(-6,9,4); group.add(sun);
-  return group;
-}
 
 export async function captureHistoricPhoto(s, ctx, id) {
   const profiles = await s.do(loadJSON('content/photo_tasks.json'));
@@ -91,7 +26,7 @@ export async function captureHistoricPhoto(s, ctx, id) {
   const previous = ctx.scene.children.map((object) => [object, object.visible]);
   const background = ctx.scene.background, fog = ctx.scene.fog, fov = ctx.camera.fov;
   const follow = ctx.followCam.enabled;
-  const set = buildSet(profile.set);
+  const set = buildPhotoSet(profile.set, s.env.ground?.map);
   ctx.scene.add(set);
   ctx.scene.background = new THREE.Color(profile.set === 'orion' ? 0xb89b7c : 0x747472);
   ctx.scene.fog = null;
@@ -122,8 +57,9 @@ export async function captureHistoricPhoto(s, ctx, id) {
   const cleanup = () => {
     if (cleaned) return; cleaned = true;
     stop(); overlay.remove(); root.classList.remove('photo-mode'); ctx.scene.remove(set);
+    set.userData.dispose?.();
     const geometries = new Set(), materials = new Set();
-    set.traverse((o) => { if(o.geometry)geometries.add(o.geometry); if(o.material)materials.add(o.material); });
+    set.traverse((o) => { if(o.geometry)geometries.add(o.geometry); if(o.material)materials.add(o.material); if(o.isInstancedMesh)o.dispose(); });
     geometries.forEach((g)=>g.dispose()); materials.forEach((m)=>m.dispose());
     previous.forEach(([o,v])=>{o.visible=v;});
     ctx.scene.background=background; ctx.scene.fog=fog;
