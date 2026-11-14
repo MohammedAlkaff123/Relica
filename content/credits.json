@@ -1,0 +1,51 @@
+{
+  "_readme": "Owner: Set C. Text for the title, the ending card and the credits (card.title(), card.ending(), card.credits()). The NASA photo list is built in code from public/nasa/CREDITS.csv, using only the photos named in content/memories.json. Add each new sound or tool here when it goes in.",
+  "title": {
+    "name": "RELICA",
+    "line": { "en": "Abandoned, but not forgotten", "ar": "مهجورة، لكنها ليست منسية" },
+    "start": { "en": "Press Enter to wake up", "ar": "اضغط Enter لتستيقظ" }
+  },
+  "ending": {
+    "title": { "en": "Abandoned, but not forgotten", "ar": "مهجورة، لكنها ليست منسية" },
+    "truth": {
+      "en": "The conversations are imagined. The machines, the places, the dates and the photos are real.",
+      "ar": "المحادثات متخيَّلة. أمّا الآلات والأماكن والتواريخ والصور فحقيقية."
+    }
+  },
+  "credits": [
+    {
+      "heading": "Made by",
+      "lines": [
+        "Ziad · engine and gameplay",
+        "Abdulkarim · worlds and characters",
+        "Abdullatif · story text, data, interface and sound",
+        "Moayad · camera, cutscenes and look",
+        "Mohammed · story, feel, testing and pitch"
+      ]
+    },
+    {
+      "heading": "Built for",
+      "lines": ["NASA Space Apps Challenge 2026 · Abandoned but not Forgotten"]
+    },
+    {
+      "heading": "Code libraries",
+      "lines": ["Three.js (MIT)", "Rapier (Apache-2.0)", "lil-gui (MIT)"]
+    },
+    {
+      "heading": "Fonts",
+      "lines": ["Space Grotesk, IBM Plex Mono, IBM Plex Sans Arabic (SIL Open Font License), via Google Fonts"]
+    },
+    {
+      "heading": "Sound",
+      "lines": ["All sounds and music are generated in code with the Web Audio API"]
+    },
+    {
+      "heading": "Facts",
+      "lines": ["Every number and date is checked against a NASA page. The links are in content/facts.json"]
+    },
+    {
+      "heading": "AI use",
+      "lines": ["Claude Code helped write code and draft text. Every use is listed in AI_USE.md"]
+    }
+  ]
+}

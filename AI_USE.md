@@ -18,3 +18,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-14: discovery cards (hud.discover), the eight cards in content/discoveries.json with sources, and the list on the end wall |
 | 14 Nov | Abdullatif | Claude Code | C-4: drafted the Arabic and English lines for chapters 2, 3 and the epilogue from the intent table in STORY.md, checked against the verified facts |
 | 14 Nov | Abdullatif | Claude Code | C-6: memory photo captions in Arabic and English, crops that keep logos out of frame, a memory sound; photos checked by eye |
+| 14 Nov | Abdullatif | Claude Code | C-9: title screen, ending card and credits (card.title, card.ending, card.credits), texts in content/credits.json, photo credits read from CREDITS.csv |

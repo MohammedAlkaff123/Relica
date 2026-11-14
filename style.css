@@ -104,11 +104,32 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
   background: rgba(4, 6, 12, 0.62); text-align: center; padding: 24px;
 }
 .card h1 { font-size: clamp(34px, 7vw, 76px); margin: 0; letter-spacing: 0.02em; }
-.card p { font: 400 16px var(--mono); color: var(--dim); margin: 10px 0 0; }
+.card p { font: 400 16px var(--mono); color: var(--dim); margin: 10px 0 0; max-width: min(760px, 90vw); }
+.card.ending h1 { font-size: clamp(30px, 5.5vw, 60px); }
+.card.ending p { font: 400 17px/1.5 var(--display); color: var(--ink); }
+.card.ending .card-facts { font: 400 16px/1.6 var(--arabic); color: var(--dim); max-width: min(760px, 90vw); }
 .card .mission-name { font: 500 13px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--foil); margin-bottom: 12px; }
 .card .title-ar { font: 600 clamp(20px, 3.4vw, 34px) var(--arabic); color: var(--dim); margin-top: 4px; }
-.card .card-facts { display: flex; gap: 0; margin-top: 14px; font: 400 15px var(--mono); color: var(--ink); }
+.card .card-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; margin-top: 14px; font: 400 15px var(--mono); color: var(--ink); }
 .card .card-facts span + span::before { content: "·"; margin: 0 12px; color: var(--dim); }
+
+/* Title screen: a bigger name, the line under it */
+.card.title-screen { background: radial-gradient(ellipse at 50% 60%, rgba(30, 36, 56, 0.55), rgba(2, 3, 10, 0.92)); }
+.card.title-screen h1 { font-size: clamp(56px, 12vw, 140px); letter-spacing: 0.18em; }
+.card.title-screen .title-ar { color: var(--foil); }
+.card.title-screen > .hint { display: none; } /* the screen already says "Press Enter to wake up" */
+
+/* Credits: a scrolling column */
+.credits {
+  position: absolute; inset: 0; background: rgba(2, 3, 10, 0.94); overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; padding: 8vh 24px 6vh; pointer-events: auto;
+}
+.credits .roll { width: min(640px, 92vw); text-align: center; }
+.credits h1 { font-size: 40px; margin: 0 0 18px; letter-spacing: 0.08em; }
+.credits h2 { font: 500 12px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--foil); margin: 26px 0 8px; }
+.credits p { margin: 3px 0; font-size: 15px; }
+.credits .photo-credit { font: 400 12px var(--mono); color: var(--dim); }
+.credits .hint { font: 400 11px var(--mono); color: var(--dim); margin-top: 30px; letter-spacing: 0.08em; text-transform: uppercase; }
 
 /* Memory photo: a real NASA photo with its caption */
 .memory { position: absolute; inset: 0; background: rgba(4, 6, 12, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; }
