@@ -176,6 +176,8 @@ export default makeChapter({
       pw.level += (0.035 * pw.clean - 0.012 - s.controller.speed * 0.006) * dt;
       pw.level = THREE.MathUtils.clamp(pw.level, 0.05, 1);
       pw.lowest = Math.min(pw.lowest, pw.level);
+      if (pw.level < 0.25 && !pw.warned) { pw.warned = true; s.sound('battery_low', 'powerdown'); }
+      if (pw.level > 0.4) pw.warned = false;
       s.hero.setEmotion(pw.level < 0.3 ? 'sad' : 'happy');
       // A flat battery never stops the game, it only slows the rover down.
       s.controller.speedScale = THREE.MathUtils.clamp(0.35 + pw.level * 1.3, 0.35, 1);
@@ -190,6 +192,7 @@ export default makeChapter({
 // ---- whirlwinds: drive through one and the panels are swept clean ----
 
 function startWhirlwinds(s) {
+  s.loop('whirlwind', true);
   const rand = (a) => a[0] + Math.random() * (a[1] - a[0]);
   s.devils = [];
   for (let i = 0; i < DEVILS; i++) {
@@ -209,6 +212,7 @@ function startWhirlwinds(s) {
 
 function updateWhirlwinds(dt, s) {
   const p = s.hero.object.position;
+  let nearest = Infinity;
   for (const d of s.devils) {
     if (!d.visible) {
       d.userData.respawn += dt;
@@ -225,15 +229,17 @@ function updateWhirlwinds(dt, s) {
     d.position.y = s.ground(d.position.x, d.position.z);
     d.rotation.y += dt * 6;
     d.scale.y = 1 + 0.08 * Math.sin(s.time * 3 + d.id);
+    nearest = Math.min(nearest, Math.hypot(p.x - d.position.x, p.z - d.position.z));
     // Drove through it: panels swept clean, battery jumps.
     if (Math.hypot(p.x - d.position.x, p.z - d.position.z) < 3.2) {
       s.power.clean = 1;
       s.power.level = Math.min(1, s.power.level + 0.3);
       s.mission.discover('wind_cleaning');
-      s.sound('park'); // a rising beep: power back
+      s.sound('panels_clean', 'park');
       d.visible = false;
     }
   }
+  s.loopLevel('whirlwind', 1 - nearest / 25); // louder as the rover gets close
 }
 
 // Airbags hit the ground and bounce into a small crater. A and D nudge the bounces.
@@ -283,6 +289,7 @@ async function landing(s, ctx) {
 // Until that shot exists: fade to black while the counter spins.
 async function timeSkip(s, to, show) {
   s.lockControls();
+  s.sound('time_skip');
   const from = s.sol;
   let t = 0;
   const spin = s.until((dt) => {

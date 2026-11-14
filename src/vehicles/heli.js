@@ -47,7 +47,7 @@ export function createHeli({ body, hero, world, tuning, input }) {
 
     // Rotor spin-up. On the ground it has to reach full speed before it lifts.
     if (heli.broken) {
-      if (lift && twitch <= 0) twitch = 0.5;
+      if (lift && twitch <= 0) { twitch = 0.5; heli.onTwitch?.(); }
       lift = 0;
       heli.spin = 0;
     } else if (lift && heli.battery > 0) heli.spin = Math.min(1, heli.spin + dt / spinUp);
@@ -94,7 +94,8 @@ export function createHeli({ body, hero, world, tuning, input }) {
     drift: { x: 0, z: 0, tilt: 0 },
     noLift: false,
     broken: false,
-    holdAt: null,     // a height in metres: hover there on its own (used while a shot plays)
+    holdAt: null,
+    onTwitch: null,   // called when Space twitches the broken rotor (the chapter plays a sound)     // a height in metres: hover there on its own (used while a shot plays)
     update(dt) {
       const drive = (input.down('KeyW', 'ArrowUp') ? 1 : 0) - (input.down('KeyS', 'ArrowDown') ? 1 : 0);
       const turn = (input.down('KeyA', 'ArrowLeft') ? 1 : 0) - (input.down('KeyD', 'ArrowRight') ? 1 : 0);

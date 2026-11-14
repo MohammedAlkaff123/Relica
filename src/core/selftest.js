@@ -260,6 +260,141 @@ export async function runSelfTest(ctx) {
     check(after === base, 'Nothing is left behind after 20 fast chapter jumps', `objects in the scene: ${base} before, ${after} after`);
   });
 
+  // ---------- A-9: Pioneer's Jupiter image (acceptance in TASKS.md) ----------
+  await test('A-9 Jupiter image rules', async () => {
+    const s = await go(4);
+    await until(() => { if (prompting()) tap('Enter'); return s.photoState?.phase === 'frame' && s.controls; }, 30);
+    const photo = s.photoState;
+    const yaw = (a) => { s.hero.object.rotation.y = a; s.spinRate = 0; };
+    // Pointing at Earth before anything is captured must not send.
+    yaw(-0.65);
+    await waitGame(2.5);
+    check(photo.phase === 'frame' && !photo.captured && !photo.sent, 'A-9 an uncaptured image cannot be sent', `phase ${photo.phase}`);
+    // Space outside the aiming cone (8°) must not capture.
+    yaw(photo.targetYaw + 0.3);
+    await waitGame(0.2);
+    await tap('Space');
+    await waitGame(0.5);
+    check(!photo.captured && photo.phase === 'frame', 'A-9 Space outside the aiming cone does not capture', `phase ${photo.phase}`);
+    // Inside the cone it captures once.
+    yaw(photo.targetYaw);
+    await waitGame(0.2);
+    await tap('Space');
+    const captured = await until(() => photo.captured, 3);
+    check(captured, 'A-9 Space inside the aiming cone captures the image');
+    const doneCount = () => document.querySelectorAll('li.done').length;
+    const ticked = doneCount();
+    await tap('Space');
+    await waitGame(2);
+    check(doneCount() >= ticked && photo.phase !== 'frame', 'A-9 a second Space does not capture again', `phase ${photo.phase}`);
+    // Restart: a fresh, uncaptured image task and a single viewfinder.
+    const before = ctx.stage;
+    await tap('KeyR');
+    await until(() => { if (prompting()) tap('Enter'); return ctx.stage !== before && ctx.stage.photoState; }, 20);
+    await waitGame(0.5);
+    const fresh = ctx.stage.photoState;
+    const finders = document.querySelectorAll('.pioneer-viewfinder').length;
+    check(fresh && !fresh.captured && !fresh.sent && finders <= 1, 'A-9 R restarts the image task cleanly',
+      `captured ${fresh?.captured}, viewfinders on screen ${finders}`);
+    await go(1);
+    check(document.querySelectorAll('.pioneer-viewfinder').length === 0, 'A-9 leaving the chapter removes the viewfinder');
+  });
+
+  // ---------- pause ----------
+  await test('Pause', async () => {
+    const s = await go(1, { jump: 'selftest' });
+    await waitForControls();
+    const c0 = ctx.clock;
+    await tap('KeyP');
+    await sleep(150);
+    const c0p = ctx.clock;
+    await sleep(600);
+    const moved = ctx.clock - c0p;
+    const shown = getComputedStyle(document.querySelector('.pause-overlay')).display !== 'none';
+    await tap('KeyP');
+    await sleep(300);
+    const resumed = ctx.clock > c0p + moved;
+    check(!ctx.paused && moved === 0 && shown && resumed, 'P pauses the game (time stops, a pause screen shows) and P resumes',
+      `game time while paused: ${moved.toFixed(2)} s`);
+    ctx.setPaused(true);
+    const c1 = ctx.clock;
+    await sleep(400);
+    ctx.setPaused(false);
+    check(ctx.clock - c1 < 0.12, 'ctx.setPaused(true / false) works for the menu');
+  });
+
+  // ---------- graphics quality (BRANDING_AND_ART_DIRECTION.md acceptance) ----------
+  await test('Graphics quality', async () => {
+    const q = ctx.quality;
+    const start = q.get();
+    const dpr = window.devicePixelRatio || 1;
+    let s = await go(1, { jump: 'selftest' });
+    await waitForControls();
+    let heard = 0;
+    const off = q.subscribe(() => heard++);
+    const bad = [];
+    for (const l of ['low', 'medium', 'high', 'low']) {
+      await q.set(l);
+      const p = q.preset();
+      const ratioOk = Math.abs(ctx.renderer.getPixelRatio() - Math.min(dpr, p.pixelRatioCap)) < 0.01;
+      if (q.get() !== l || !ratioOk || ctx.renderer.shadowMap.enabled !== !!p.shadows) bad.push(l);
+    }
+    check(!bad.length && heard === 4, 'Quality: Low → Medium → High → Low applies renderer settings and tells the menu',
+      bad.length ? 'wrong at ' + bad.join(', ') : `${heard} updates`);
+    let threw = false;
+    try { await q.set('ultra'); } catch { threw = true; }
+    check(threw && q.get() === 'low', 'Quality: an invalid level is refused and the current one stays');
+    const a = q.set('high'), b = q.set('medium');
+    await Promise.all([a, b]);
+    check(q.get() === 'medium', 'Quality: clicking quickly, only the latest choice finishes', `now ${q.get()}`);
+    let stored = null;
+    try { stored = localStorage.getItem('relica.quality'); } catch { stored = 'no storage'; }
+    check(stored === 'medium' || stored === 'no storage', 'Quality: the choice is saved', `saved "${stored}"`);
+    // The active world is told, and switching does not disturb the chapter.
+    const calls = [];
+    s.env.applyQuality = (preset, l) => calls.push(l);
+    await q.set('high');
+    check(calls.includes('high') && s.alive && s.controls, 'Quality: the active world gets the preset, the chapter carries on',
+      `world got: ${calls.join(', ') || 'nothing'}`);
+    // A new chapter starts in the chosen mode.
+    s = await go(2, { jump: 'storm' });
+    await waitGame(0.5);
+    check(q.get() === 'high' && ctx.renderer.shadowMap.enabled === !!q.preset().shadows, 'Quality: a newly loaded world keeps the chosen mode');
+    // Switching in the middle of the storm.
+    await waitForControls(10);
+    await q.set('low');
+    check(s.alive && s.controls && q.get() === 'low', 'Quality: switching during the storm keeps control and the chapter');
+    off();
+    await q.set(start);
+  });
+
+  // ---------- crew action hooks ----------
+  await test('Crew actions', async () => {
+    const s = await go(1, { jump: 'fender' });
+    await waitForControls();
+    const crew = ctx.scene.children.filter((o) => o.userData?.figure);
+    const riding = [];
+    s.hero.object.traverse((o) => { if (o.userData?.figure) riding.push(o); });
+    const figures = [...crew, ...riding];
+    const calls = [];
+    for (const f of figures) f.userData.act = (name) => calls.push(name);
+    // Drive to stop 2, where the crew repairs the fender.
+    await until(() => {
+      if (prompting()) { tap('Enter'); return false; }
+      if (objective().startsWith('Stop inside')) { setKeys([]); return calls.includes('repair'); }
+      const b = beam();
+      setKeys(b ? ['KeyW', ...steer(b.position.x, b.position.z)] : []);
+      return calls.includes('repair');
+    }, 200);
+    setKeys([]);
+    await until(() => calls.filter((c) => c === null).length > 0, 10);
+    check(figures.length === 2 && calls.includes('repair') && calls.includes(null),
+      'Crew actions: the repair is asked for at stop 2, then back to idle',
+      `${figures.length} figures, calls: ${calls.slice(0, 6).map(String).join(', ')}`);
+    await go(2);
+    for (const f of figures) delete f.userData.act;
+  });
+
   // ---------- every chapter, played to its end by a bot ----------
   const done = () => [...document.querySelectorAll('li')].map((li, i) => (li.classList.contains('done') ? i : -1)).filter((i) => i >= 0);
 
