@@ -3,7 +3,11 @@
 A short low-poly story game about the machines NASA left behind on the Moon, on Mars and in deep space.
 Built for the NASA Space Apps 2026 challenge "Abandoned but not Forgotten".
 
-The full plan, the story and who does what are in [PLAN.md](PLAN.md).
+- [PLAN.md](PLAN.md): the overall plan, rules, tech and timeline
+- [STORY.md](STORY.md): the story beat by beat, every dialogue line's intent, the shot list
+- [TASKS.md](TASKS.md): who does what, with hand-off times
+
+Set A is Ziad, Set B is Abdulkarim, Set C is Abdullatif. The camera file `src/core/followCamera.js` belongs to Moayad.
 
 ## Run it
 

@@ -161,7 +161,7 @@ Every one of these already exists as a small working stub in the skeleton. Every
 
 **Moayad: camera, cutscenes and look**
 
-1. Hour 0–1: write the shot list for the opening, the three cutscenes and the ending in plain words (what we see, how long, what we feel).
+1. Hour 0: check the drafted shot list in `STORY.md` sections 4–6, change what is wrong, and lock it.
 2. Build the cutscene player with AI in `src/cinematics/`: keyframed camera, handheld shake, focus-and-zoom, black bars, year counter.
 3. Tune the gameplay camera for each machine in the tweak panel.
 4. Approve the look: colours, light and sky for each world. Review every model from Set B. Can you read the shape from far away? Do the eyes show emotion?
@@ -169,8 +169,8 @@ Every one of these already exists as a small working stub in the skeleton. Every
 
 **Mohammed: story, feel and testing**
 
-1. Hour 0–1: lock section 4 with the team. He has the final say on the cut list.
-2. Give every dialogue line an intent and an emotion tag. Set C writes the final Arabic and English.
+1. Hour 0: check the drafted story and dialogue intents in `STORY.md` sections 1–3, change what is wrong, and lock them. He has the final say on the cut list.
+2. Choose the Arabic register. Abdullatif writes the final Arabic and English from the intent table.
 3. Tune the feel in the tweak panel: rover speed and bounce, battery drain, flight power, chapter lengths.
 4. Play every milestone build from start to end. Keep one list in `TESTLOG.md`, sorted into blocker, ugly, nice-to-have.
 5. Own the 5–7 minute pitch and the slides.
@@ -179,10 +179,9 @@ Both: one of you is always awake, and any "which is better?" question from a bui
 
 ### Three task sets
 
-Abdulkarim, Abdullatif and Ziad each pick one.
+Assigned: Set A to Ziad, Set B to Abdulkarim, Set C to Abdullatif. This is the summary. The full task sheets with "done when" checks and hand-off times are in `TASKS.md`. The story lock, dialogue intents and shot list are in `STORY.md`.
 
-**Set A: Engine and gameplay**
-Best fit for whoever is most comfortable reading and debugging code.
+**Set A: Engine and gameplay (Ziad)**
 
 - GitHub repo and GitHub Pages. The project skeleton already exists and runs, see `README.md`
 - Game loop, keyboard input, chapter manager, chapter-select keys 1–4
@@ -192,8 +191,7 @@ Best fit for whoever is most comfortable reading and debugging code.
 - Chapter logic: science stops, fender event, battery and sol counter, dust storm, flight waypoints, crash
 - Frame-rate checks and the final build
 
-**Set B: Worlds and characters**
-Best fit for whoever has the best eye, or any Blender experience.
+**Set B: Worlds and characters (Abdulkarim)**
 
 - Box placeholder for every character in the first two hours
 - Five low-poly character models and the props, made with an image-to-3D tool using the pack photos as reference, then cleaned up: right scale, named parts, under about 5,000 triangles each, no logos
@@ -201,8 +199,7 @@ Best fit for whoever has the best eye, or any Blender experience.
 - Moon terrain with craters, Mars plains, Jezero, the factory room, the star field
 - Light, sky colour, wheel dust, the dust storm
 
-**Set C: Story, data, interface and sound**
-Best fit for whoever likes writing, research and interface work.
+**Set C: Story, data, interface and sound (Abdullatif)**
 
 - Check every fact in section 12 against a NASA page, then write `facts.json` with the source link beside each number
 - Final dialogue in Arabic and English with Mohammed
@@ -219,7 +216,7 @@ Hours count from the moment you start.
 
 | Hours | Goal | Done when |
 |---|---|---|
-| 0–1 | **Kickoff.** Read this plan together, pick sets, create the repo, everyone runs the empty project | All five see the same blank scene from the live link |
+| 0–1 | **Kickoff.** Everyone reads `STORY.md` and their section of `TASKS.md` and runs the skeleton. The directors lock the story and the shot list | All five have played the skeleton, and the story is locked |
 | 1–5 | **Milestone 1: Moon slice** | A box rover drives on Moon terrain in low gravity. The panel shows Moon data. One dialogue bubble in Arabic and English. One test cutscene with the handheld camera |
 | 5–11 | **Milestone 2: ugly but complete** | The whole game plays from opening to final card with boxes for characters. All three cutscenes exist in rough form. All dialogue text is in |
 | 11–17 | **Milestone 3: content lock** | Real models in, faces animate, sound in, memory photos in. No new features after this point |
