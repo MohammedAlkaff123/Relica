@@ -8,3 +8,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | (your name) | Claude Code | Reviewed the NASA data pack and drafted PLAN.md from the team's idea |
 | 14 Nov | (your name) | Claude Code | Drafted STORY.md (beat sheet, dialogue intents, shot list) and TASKS.md from the team's idea, for the directors to check and change |
 | 14 Nov | (your name) | Claude Code | Project skeleton: frame loop, physics wrapper, placeholder controllers, placeholder characters, interface stubs, README |
+| 14 Nov | Abdullatif | Claude Code | C-2: drafted the final Arabic and English lines for the opening and chapter 1 from the intent table in STORY.md; reviewed and chosen by Abdullatif |

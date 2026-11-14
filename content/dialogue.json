@@ -1,16 +1,28 @@
 {
   "_readme": [
-    { "who": "note", "ar": "", "en": "Owner: Set C with Mohammed. Every line below is a PLACEHOLDER so the system can be tested. Write the real script here. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy." }
+    { "who": "note", "ar": "", "en": "Owner: Set C with Mohammed. Arabic register: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Each line is one breath, under 12 English words. Final so far: ch0_wake, ch0_fold, ch1_intro, ch1_dust, ch1_fixed, ch1_left_behind. Lines still marked (placeholder) are written in task C-4. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy." }
   ],
   "ch0_wake": [
-    { "who": "lrv", "emotion": "sleepy", "ar": "…أين أنا؟ (نص مؤقت)", "en": "…Where am I? (placeholder)" },
-    { "who": "lrv", "emotion": "curious", "ar": "عندي عجلات! (نص مؤقت)", "en": "I have wheels! (placeholder)" }
+    { "who": "lrv", "emotion": "sleepy", "ar": "…أوه. لقد اشتغلتُ.", "en": "…Oh. I'm on." },
+    { "who": "lrv", "emotion": "happy", "ar": "عجلات! لديّ عجلات!", "en": "Wheels! I have wheels!" }
+  ],
+  "ch0_fold": [
+    { "who": "lrv", "emotion": "scared", "ar": "إلى أين نحن ذاهبون؟", "en": "Where are we going?" }
   ],
   "ch1_intro": [
-    { "who": "lrv", "emotion": "happy", "ar": "كل شيء هنا خفيف جدًا. (نص مؤقت)", "en": "Everything is so light here. (placeholder)" }
+    { "who": "lrv", "emotion": "happy", "ar": "كلّ شيء خفيف جدًّا هنا.", "en": "Everything is so light here." },
+    { "who": "lrv", "emotion": "happy", "ar": "تمسّكا جيدًا. سأحملكما.", "en": "Hold on. I'll carry you." }
+  ],
+  "ch1_dust": [
+    { "who": "lrv", "emotion": "sad", "ar": "آسف… إنني أُحدث فوضى.", "en": "I'm sorry. I'm making a mess." }
+  ],
+  "ch1_fixed": [
+    { "who": "lrv", "emotion": "happy", "ar": "أصلحتماني. بخريطة!", "en": "You fixed me. With a map!" }
   ],
   "ch1_left_behind": [
-    { "who": "lrv", "emotion": "sad", "ar": "هل ستعودون؟ (نص مؤقت)", "en": "Are you coming back? (placeholder)" }
+    { "who": "lrv", "emotion": "curious", "ar": "نسيتماني. …مرحبًا؟", "en": "You forgot me. …Hello?" },
+    { "who": "lrv", "emotion": "sad", "ar": "آه. كنتُ للرحلة فقط.", "en": "Oh. I was only for the ride." },
+    { "who": "lrv", "emotion": "sad", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ch2_intro": [
     { "who": "opportunity", "emotion": "curious", "ar": "تسعون يومًا فقط؟ لنرَ. (نص مؤقت)", "en": "Only ninety days? Let's see. (placeholder)" }
