@@ -33,8 +33,10 @@ export function buildWorld(name, scene) {
 
   const sun = new THREE.DirectionalLight(0xffffff, look.sun);
   sun.position.set(40, 60, -30);
-  group.add(sun, new THREE.HemisphereLight(0xffffff, look.ground ?? 0x222233, look.ambient));
+  const ambient = new THREE.HemisphereLight(0xffffff, look.ground ?? 0x222233, look.ambient);
+  group.add(sun, ambient);
 
+  let ground = null; // the ground's material, so the storm can change its colour
   if (look.ground !== null) {
     // The ground takes its shape from heightAt, the same function the physics reads.
     const geo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_CELLS, TERRAIN_CELLS);
@@ -42,7 +44,8 @@ export function buildWorld(name, scene) {
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(name, pos.getX(i), pos.getZ(i)));
     geo.computeVertexNormals();
-    group.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: look.ground, flatShading: true, roughness: 1 })));
+    ground = new THREE.MeshStandardMaterial({ color: look.ground, flatShading: true, roughness: 1 });
+    group.add(new THREE.Mesh(geo, ground));
   }
 
   if (look.rocks) {
@@ -74,6 +77,7 @@ export function buildWorld(name, scene) {
   scene.add(group);
   return {
     group,
+    name, look, sun, ambient, ground, // effects.js reads and changes these
     dispose() {
       scene.remove(group);
       scene.fog = null;
