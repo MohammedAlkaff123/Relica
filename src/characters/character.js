@@ -6,18 +6,27 @@
 //   c.talk(true)             signal rings come out of the antenna
 //   c.update(dt)             call every frame
 //
-// Right now every character is built from boxes so the game is playable from hour one.
-// TODO Set B: load the real model from public/models/<id>.glb with GLTFLoader
-// ("three/addons/loaders/GLTFLoader.js"), put it inside `object`, and keep the face rig below.
+//   c.part('wheel_FL')       a named part of the loaded model, or null
+//   c.wheels                 every part whose name starts with "wheel_"
+//   await c.ready            resolves when the model is in, or has failed and the boxes stay
+//
+// Every character starts as boxes, so the game is playable at once. If public/models/<id>.glb
+// exists it replaces the boxes a moment later. If it is missing or broken the boxes stay.
+// The face (eyes, lids, antenna, rings) is always built here in code and moves onto the model's
+// `head` and `antenna` parts. How the models are made: public/models/README.md.
 // The box size in CAST is also the physics size, so keep it close to the real model.
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const loader = new GLTFLoader();
+const modelUrl = (id) => new URL(`../../public/models/${id}.glb`, import.meta.url).href;
 
 export const CAST = {
   lrv:         { name: 'Lunar Rover', ar: 'العربة القمرية', color: 0xd9d4c7, size: [1.6, 0.6, 2.4], wheels: true },
   opportunity: { name: 'Opportunity', ar: 'أوبورتيونيتي',  color: 0xcbb48a, size: [1.4, 0.6, 1.7], wheels: true, mast: true },
   viking:      { name: 'Viking 1',    ar: 'فايكنغ ١',       color: 0xb8b3a6, size: [1.8, 0.7, 1.8], beard: true },
   ingenuity:   { name: 'Ingenuity',   ar: 'إنجينويتي',      color: 0x9fa7b0, size: [0.5, 0.5, 0.5], rotor: true },
-  pioneer:     { name: 'Pioneer 10',  ar: 'بايونير ١٠',     color: 0xd8d1bd, size: [1.0, 0.6, 1.0], dish: true },
+  pioneer:     { name: 'Pioneer 10',  ar: 'بايونير ١٠',     color: 0xd8d1bd, size: [1.0, 0.6, 1.0], dish: true, modelScale: 0.4 }, // the model is real size: a 2.74 m dish
 };
 
 // open: how open the eyes are. slant: outer corners down (sad) or up (happy).
@@ -42,13 +51,17 @@ export function createCharacter(id) {
   const [sx, sy, sz] = spec.size;
   const object = new THREE.Group();
   object.name = id;
+  // Everything that is only a stand-in goes in here, so one line removes it when the model arrives.
+  const boxes = new THREE.Group();
+  boxes.name = 'boxes';
+  object.add(boxes);
 
   // Body. With wheels, the box sits on top of them; the physics box covers both.
   const bodyH = spec.wheels ? sy * 0.5 : sy;
   const bodyY = spec.wheels ? sy * 0.25 : 0;
   const body = new THREE.Mesh(new THREE.BoxGeometry(sx, bodyH, sz), flat(spec.color));
   body.position.y = bodyY;
-  object.add(body);
+  boxes.add(body);
 
   if (spec.wheels) {
     const r = sy * 0.45;
@@ -58,21 +71,23 @@ export function createCharacter(id) {
     for (const x of [-1, 1]) for (const z of [-1, 1]) {
       const m = new THREE.Mesh(wheel, tyre);
       m.position.set(x * (sx / 2 + 0.05), -sy / 2 + r, z * (sz / 2 - r));
-      object.add(m);
+      boxes.add(m);
     }
   }
 
   // Face: two eyes with lids. On a mast for Opportunity, on the front of the body for the rest.
   const face = new THREE.Group();
+  let faceBack = null; // the box behind the eyes on a mast; the real camera bar replaces it
   const k = Math.min(1, sx / 1.4); // smaller face on small machines
   face.scale.setScalar(k);
   if (spec.mast) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.9, 6), flat(0x8c8676));
     pole.position.set(0, bodyY + bodyH / 2 + 0.45, sz / 2 - 0.3);
-    object.add(pole);
+    boxes.add(pole);
     face.position.set(0, bodyY + bodyH / 2 + 0.95, sz / 2 - 0.3);
-    face.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.34, 0.2), flat(spec.color)));
-    face.children[0].position.z = -0.1;
+    faceBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.34, 0.2), flat(spec.color));
+    faceBack.position.z = -0.1;
+    face.add(faceBack);
   } else {
     face.position.set(0, bodyY + bodyH * 0.1, sz / 2 + 0.01);
   }
@@ -119,6 +134,7 @@ export function createCharacter(id) {
   const tip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), flat(SIGNAL));
   tip.position.y = 0.9;
   antenna.add(rod, tip);
+  let tipY = 0.9; // where the rings start; changes when a model antenna has another length
   object.add(antenna);
 
   const rings = [];
@@ -128,7 +144,7 @@ export function createCharacter(id) {
       new THREE.MeshBasicMaterial({ color: SIGNAL, transparent: true, opacity: 0, depthWrite: false }),
     );
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.9;
+    ring.position.y = tipY;
     antenna.add(ring);
     rings.push(ring);
   }
@@ -137,13 +153,13 @@ export function createCharacter(id) {
   if (spec.rotor) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 5), flat(0x6f7680));
     pole.position.y = sy / 2 + 0.15;
-    object.add(pole);
+    boxes.add(pole);
     blades = [1, -1].map((dir, i) => {
       const g = new THREE.Group();
       g.position.y = sy / 2 + 0.3 - i * 0.08;
       g.add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.015, 0.07), flat(0x2f333a)));
       g.userData.dir = dir;
-      object.add(g);
+      boxes.add(g);
       return g;
     });
   }
@@ -155,7 +171,7 @@ export function createCharacter(id) {
     );
     dish.rotation.x = Math.PI; // open side up
     dish.position.y = sy / 2 + 0.3;
-    object.add(dish);
+    boxes.add(dish);
   }
 
   const now = { ...EMOTIONS.curious };
@@ -165,10 +181,78 @@ export function createCharacter(id) {
   let blinkIn = 2 + Math.random() * 3;
   let blink = 0;
 
+  // Swap the boxes for the real model and move the face onto it.
+  function useModel(model) {
+    model.scale.setScalar(spec.modelScale ?? 1);
+    model.updateMatrixWorld(true); // still outside the scene, so "world" here means character space
+    const find = (name) => model.getObjectByName(name) ?? null;
+    const box = new THREE.Box3();
+    const at = new THREE.Vector3();
+
+    const head = find('head');
+    if (head) {
+      head.getWorldPosition(at);
+      box.setFromObject(head);
+      if (box.isEmpty()) {
+        // A marker with no shape: the face sits at that point on the body.
+        face.position.copy(at);
+      } else {
+        // A real head (Opportunity's mast): the eyes go on the front of its top bar and turn with it.
+        const k = model.scale.x;
+        face.position.set(0, (box.max.y - at.y) / k - 0.07 / k, (box.max.z - at.z) / k + 0.01);
+        face.scale.setScalar(((box.max.x - box.min.x) / 0.75) / k);
+        head.add(face);
+        if (faceBack) faceBack.visible = false;
+      }
+    }
+
+    const ant = find('antenna');
+    if (ant) {
+      ant.getWorldPosition(at);
+      box.setFromObject(ant);
+      antenna.position.copy(at);
+      if (box.isEmpty()) {
+        antenna.scale.setScalar(0.4); // a marker: keep a short rod of our own on that spot
+      } else {
+        // A real antenna: it replaces our rod, and droops and perks up with the emotions.
+        antenna.scale.setScalar(1);
+        rod.visible = false;
+        tipY = box.max.y - at.y;
+        tip.position.y = tipY;
+        const s = model.scale.x;
+        antenna.add(ant);
+        ant.position.set(0, 0, 0);
+        ant.scale.setScalar(s);
+      }
+    }
+
+    const top = find('blade_top'), bottom = find('blade_bottom');
+    if (top && bottom) {
+      top.userData.dir = 1;
+      bottom.userData.dir = -1;
+      blades = [top, bottom];
+    }
+
+    model.traverse((o) => {
+      if (o.name && !parts.has(o.name)) parts.set(o.name, o);
+      if (o.name?.startsWith('wheel_') && !o.parent?.name?.startsWith('wheel_')) character.wheels.push(o);
+    });
+    if (ant) parts.set('antenna', ant);
+    object.remove(boxes);
+    boxes.traverse((o) => o.geometry?.dispose());
+    object.add(model);
+    character.model = model;
+  }
+
+  const parts = new Map();
   const character = {
     id, spec, object,
     half: [sx / 2, sy / 2, sz / 2],
     rotorSpeed: 0, // radians per second, set by the helicopter controller
+    model: null,   // the loaded model, or null while the boxes are showing
+    wheels: [],
+    part(name) { return parts.get(name) ?? null; },
+    ready: null,
     setEmotion(name) { want = EMOTIONS[name] || EMOTIONS.curious; },
     talk(on) { talking = !!on; },
     update(dt) {
@@ -191,12 +275,17 @@ export function createCharacter(id) {
       rings.forEach((ring, i) => {
         const p = (time * 1.4 + i / 3) % 1;
         ring.scale.setScalar(0.3 + p * 2.2);
-        ring.position.y = 0.9 + p * 0.5;
+        ring.position.y = tipY + p * 0.5;
         ring.material.opacity = talking ? 1 - p : 0;
       });
 
       if (blades) for (const g of blades) g.rotation.y += g.userData.dir * character.rotorSpeed * dt;
     },
   };
+
+  character.ready = loader.loadAsync(modelUrl(id)).then(
+    (gltf) => { useModel(gltf.scene); return true; },
+    () => false, // no file, or a broken one: the boxes stay
+  );
   return character;
 }
