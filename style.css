@@ -124,6 +124,26 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 .memory .wall img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
 .memory .wall figcaption { font: 400 11px var(--mono); margin-top: 6px; }
 
+/* Discovery card: one sentence at the bottom for four seconds, the game keeps going */
+.discovery {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  max-width: min(720px, 92vw); text-align: center; padding: 7px 18px 8px;
+  background: rgba(12, 16, 26, 0.6); border: 1px solid rgba(227, 162, 60, 0.55); border-radius: 999px;
+  animation: discovery-in 0.4s ease-out; transition: opacity 0.4s;
+}
+.discovery::before { content: "DISCOVERY"; display: block; font: 500 10px var(--mono); letter-spacing: 0.2em; color: var(--foil); }
+.discovery .en { font-size: 15px; }
+.discovery .ar { font: 400 14px var(--arabic); color: var(--dim); unicode-bidi: plaintext; }
+.discovery.out { opacity: 0; }
+@keyframes discovery-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.cinema .discovery { display: none; }
+
+/* The list of discoveries under the memory wall */
+.memory { flex-direction: column; overflow-y: auto; }
+.memory .discovered { width: min(900px, 94vw); margin-top: 18px; color: var(--ink); }
+.memory .discovered h3 { margin: 0 0 6px; font-size: 16px; color: var(--foil); }
+.memory .discovered ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6; }
+
 /* Cutscene dressing */
 .cinema .hud, .cinema .objective, .cinema .mission { display: none; }
 .bars::before, .bars::after { content: ""; position: absolute; left: 0; right: 0; height: 11vh; background: #000; }

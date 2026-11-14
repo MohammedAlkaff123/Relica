@@ -13,10 +13,14 @@
 //   hud.setBonus('Longest jump', '3.1 s')        a bonus line under the tasks ('' hides it)
 //   hud.setMission('')                           hides the list
 //
+// Discovery cards (STORY.md section 8):
+//   hud.discover('moon_gravity')   one sentence from content/discoveries.json for four seconds, saved for the end
+//
 // A fact marked "verified": false in facts.json is shown with an orange "?".
 import { el } from './dom.js';
 import { loadJSON } from '../core/content.js';
 import { sfx } from '../audio/audio.js';
+import { found } from './discoveries.js';
 
 export function createHud(root, facts) {
   const panel = el('div', 'hud hidden', root);
@@ -32,6 +36,36 @@ export function createHud(root, facts) {
   const taskList = el('ol', 'tasks', mission);
   const bonus = el('div', 'bonus hidden', mission);
   let taskItems = [];
+
+  // Discovery card: one line at the bottom, no pause.
+  const discovery = el('div', 'discovery hidden', root);
+  const discoveryEn = el('div', 'en', discovery);
+  const discoveryAr = el('div', 'ar', discovery);
+  discoveryAr.lang = 'ar';
+  discoveryAr.dir = 'rtl';
+  let discoveries = {};
+  let discoveryTimer = null;
+  const discoveryQueue = [];
+  loadJSON('content/discoveries.json')
+    .then((data) => { discoveries = data; })
+    .catch((err) => console.warn('content/discoveries.json could not be loaded', err));
+
+  function nextDiscovery() {
+    if (discoveryTimer || !discoveryQueue.length) return;
+    const card = discoveryQueue.shift();
+    discoveryEn.textContent = card.en;
+    discoveryAr.textContent = card.ar ?? '';
+    discovery.classList.remove('hidden', 'out');
+    sfx('discover');
+    discoveryTimer = setTimeout(() => {
+      discovery.classList.add('out');
+      discoveryTimer = setTimeout(() => {
+        discovery.classList.add('hidden');
+        discoveryTimer = null;
+        nextDiscovery();
+      }, 400);
+    }, 4000);
+  }
 
   // The mission texts load in the background, so the HUD is ready at once.
   let missions = null;
@@ -162,6 +196,19 @@ export function createHud(root, facts) {
       item.classList.add('done');
       sfx('tick');
     },
+    // Shows a discovery card for four seconds and saves it for the end screen. Each id shows once.
+    discover(id) {
+      if (found.some((d) => d.id === id)) return;
+      const card = discoveries[id];
+      if (!card) { console.warn(`discovery "${id}" is missing from content/discoveries.json`); return; }
+      const entry = { id, en: card.en, ar: card.ar, source: card.source };
+      found.push(entry);
+      discoveryQueue.push(entry);
+      nextDiscovery();
+    },
+    // Everything discovered so far, in order: [{ id, en, ar, source }]
+    get discoveries() { return found.slice(); },
+
     setBonus(label, value) {
       if (value === undefined) { value = label; label = bonus.dataset.label || 'Bonus'; }
       bonus.textContent = '';

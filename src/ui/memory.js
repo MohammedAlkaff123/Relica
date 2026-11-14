@@ -8,6 +8,7 @@
 // TODO Set C: nicer captions, a "new memory" sound, the final wall layout with credits.
 import { el } from './dom.js';
 import { loadJSON } from '../core/content.js';
+import { found } from './discoveries.js';
 
 export async function createMemory(root, prompt) {
   const [meta, overrides] = await Promise.all([
@@ -65,6 +66,13 @@ export async function createMemory(root, prompt) {
           el('figcaption', '', fig, `${titleOf(p)} · NASA/${p.center}`);
         }
         if (!collected.length) el('div', 'hint', grid, 'No memories collected yet');
+        // Everything the player discovered on the way (hud.discover), under the photos.
+        if (found.length) {
+          const list = el('div', 'discovered', box);
+          el('h3', '', list, 'What you discovered');
+          const ol = el('ol', '', list);
+          for (const d of found) el('li', '', ol, d.en);
+        }
       });
     },
     hide() { box.classList.add('hidden'); },

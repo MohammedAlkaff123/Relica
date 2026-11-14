@@ -15,3 +15,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-5: HUD version 2 (battery bar, counter with planned number, cleaner objective line, chapter cards from content/chapters.json) |
 | 14 Nov | Abdullatif | Claude Code | C-7: sound functions (play, setWorld, setWind, loops, music cues, a voice per character), all sounds generated in code for now |
 | 14 Nov | Abdullatif | Claude Code | C-8: checked the mission facts from PLAN.md section 12 and the (verify) marks in STORY.md on NASA pages; results with links in facts.json under missions |
+| 14 Nov | Abdullatif | Claude Code | C-14: discovery cards (hud.discover), the eight cards in content/discoveries.json with sources, and the list on the end wall |
