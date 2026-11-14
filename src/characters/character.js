@@ -6,6 +6,8 @@
 //   c.talk(true)             signal rings come out of the antenna
 //   c.update(dt)             call every frame
 //
+//   c.lookAt(target)         head and eyes follow a point: a Vector3, any 3D object, or null to stop
+//   c.lookBack(true, camera) glance over the shoulder at the camera; lookBack(false) to stop
 //   c.part('wheel_FL')       a named part of the loaded model, or null
 //   c.wheels                 every part whose name starts with "wheel_"
 //   await c.ready            resolves when the model is in, or has failed and the boxes stay
@@ -92,8 +94,35 @@ export function createCharacter(id) {
     face.position.set(0, bodyY + bodyH * 0.1, sz / 2 + 0.01);
   }
   object.add(face);
+  face.rotation.order = 'YXZ'; // turn left and right first, then nod
 
+  // What turns when the character looks at something. A model with a real head (a camera on a
+  // mast) turns the whole head a long way. A face painted on the body can only turn a little,
+  // so the eyes do most of the work.
+  let neck = face;
+  let neckLimit = 0.45; // radians each side
+  const look = { target: null, back: false, camera: null, yaw: 0, eyeX: 0, eyeY: 0 };
+  const EYE_LIMIT = 0.7;
+  const v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
+  const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+
+  // Where the character wants to look, as angles from straight ahead: [left/right, up/down].
+  function wantedLook() {
+    if (look.back) {
+      // Over the shoulder on the side the camera is on. Without a camera, over the left.
+      let side = 1;
+      if (look.camera) side = object.worldToLocal(look.camera.getWorldPosition(v1)).x >= 0 ? 1 : -1;
+      return [side * 2.6, 0.1];
+    }
+    if (!look.target) return [0, 0];
+    const t = look.target.isObject3D ? look.target.getWorldPosition(v1) : v1.copy(look.target);
+    object.worldToLocal(t);
+    object.worldToLocal(neck.getWorldPosition(v2));
+    t.sub(v2);
+    return [Math.atan2(t.x, t.z), Math.atan2(t.y, Math.hypot(t.x, t.z))];
+  }
   const lids = [];
+  const pupils = [];
   const lidColor = new THREE.Color(spec.color).multiplyScalar(0.7);
   for (const side of [-1, 1]) {
     const eye = new THREE.Group();
@@ -102,6 +131,7 @@ export function createCharacter(id) {
     white.scale.z = 0.5;
     const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), flat(0x14161c));
     pupil.position.z = 0.06;
+    pupils.push(pupil);
     const lid = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.32, 0.14), flat(lidColor));
     lid.position.z = 0.05;
     eye.add(white, pupil, lid);
@@ -203,6 +233,9 @@ export function createCharacter(id) {
         face.scale.setScalar(((box.max.x - box.min.x) / 0.75) / k);
         head.add(face);
         if (faceBack) faceBack.visible = false;
+        face.rotation.y = 0;
+        neck = head;
+        neckLimit = 1.5;
       }
     }
 
@@ -254,6 +287,8 @@ export function createCharacter(id) {
     part(name) { return parts.get(name) ?? null; },
     ready: null,
     setEmotion(name) { want = EMOTIONS[name] || EMOTIONS.curious; },
+    lookAt(target) { look.target = target ?? null; },
+    lookBack(on, camera = null) { look.back = !!on; look.camera = camera; },
     talk(on) { talking = !!on; },
     update(dt) {
       time += dt;
@@ -269,7 +304,16 @@ export function createCharacter(id) {
         lid.position.y = 0.02 + open * 0.3;
         lid.rotation.z = -side * now.slant;
       }
-      face.rotation.x = -now.nod;
+      // Looking: the neck turns as far as it can, the pupils cover what is left.
+      const [yaw, pitch] = wantedLook();
+      const turn = 1 - Math.exp(-6 * dt);
+      look.yaw += (clamp(yaw, neckLimit) - look.yaw) * turn;
+      look.eyeX += (clamp(yaw - look.yaw, EYE_LIMIT) / EYE_LIMIT - look.eyeX) * turn;
+      look.eyeY += (clamp(pitch, EYE_LIMIT) / EYE_LIMIT - look.eyeY) * turn;
+      neck.rotation.y = look.yaw;
+      for (const pupil of pupils) pupil.position.set(look.eyeX * 0.07, look.eyeY * 0.05, 0.06);
+
+      face.rotation.x = -now.nod - look.eyeY * 0.25;
       antenna.rotation.x = now.antenna + (talking ? Math.sin(time * 18) * 0.06 : 0);
 
       rings.forEach((ring, i) => {
