@@ -4,6 +4,8 @@ This is the hour 0–1 work, drafted for the directors to check. Mohammed checks
 
 Every real-world claim marked **(verify)** must be confirmed by Abdullatif on a NASA page before it stays in the game.
 
+**Mohammed's approved direction (14 Nov):** simple Modern Standard Arabic; the Factory opening establishes an innocent, trusting Moon rover through playful wheel discovery and a worker's silent, reassuring gesture; the Moon rover waits with quiet hope; Ingenuity is a fighter who repeatedly recovers and pushes beyond expectations until the final landing takes away her ability to fly. These decisions are settled. The remaining story review and Moayad's shot approval are still open.
+
 ## 1. The vision
 
 A machine is built for one job. It is loved while it is useful. It does far more than anyone asked. Then the people leave, and it stays exactly where it stopped.
@@ -19,7 +21,7 @@ We do not tell the player facts about these machines. We let the player be one: 
 1. Machines and humans never talk to each other. Humans have no faces and no voices.
 2. Machines speak rarely and in short lines. If a look can say it, cut the line.
 3. Machines only talk to each other by radio, and those conversations are imagined. The end card says so.
-4. Everything else is real: the places, the dates, the numbers, the photos.
+4. The places, dates, mission totals and photos are real. Player controls, compressed time and staged recoveries are storytelling devices; they must not be presented as recorded mission events.
 
 ### Three motifs that hold the game together
 
@@ -38,9 +40,11 @@ Times are from the start of each part. "Call" is what the code triggers.
 | Time | Beat | Player | Hero emotion | Call |
 |---|---|---|---|---|
 | 0:00 | Black. One soft beep. Two eyelids open | Enter | sleepy → curious | shot `opening_wake`, title card |
-| 0:08 | Clean room. The rover is on a test stand with its wheels off the floor | W spins the wheels, A and D steer them. It cannot go anywhere yet | happy | dialogue `ch0_wake` |
-| 0:25 | Two workers in hooded suits fold it in half and close a panel over it | none | scared | dialogue `ch0_fold` |
-| 0:35 | Black. Only the eyes. Rumble grows, then sudden silence and floating | none | scared → curious | shot `launch` |
+| 0:08 | Clean room. The rover is on a test stand with its wheels off the floor. It discovers its wheels with delight; give the player time to enjoy making them move | W spins the wheels, A and D steer them. It cannot go anywhere yet | happy | dialogue `ch0_wake` |
+| 0:25 | Two workers in hooded suits carefully fold it for transport. Before closing the panel, one briefly rests a gloved hand on its frame. The rover follows the hand with its eyes, then softens | none | scared → curious, reassured | dialogue `ch0_fold` before the reassuring gesture |
+| 0:35 | Black. Only the eyes. Launch vibrations build and the rover braces. The rumble fades into silence and floating; fear gives way to curiosity | none | scared → curious | shot `launch` |
+
+**Approved opening direction:** the rover is innocent and trusting. Keep the existing three dialogue lines; the gloved hand adds care without words, a visible face or a human reply. Its later choice to wait on the Moon grows from that trust. The gesture is fictional character staging. Fit it within the existing 0:25–0:35 beat and keep the whole opening at 45 seconds. Moayad translates the gesture and eye response into shots; gameplay and camera implementation remain pending.
 
 ### Chapter 1: the Moon (3:00)
 
@@ -52,11 +56,13 @@ Apollo 17, Taurus–Littrow, December 1972.
 | 0:15 | Drive to science stop 1. The first hill throws the rover into the air, slowly | drive, hop | happy | objective, HUD distance |
 | 0:50 | Stop 1. The astronauts collect rocks. The rover's eyes follow them | wait 8 s | curious | |
 | 1:00 | Leaving stop 1, the rear fender breaks **(real)**. Dust fountains over everyone. Driving is slow and blind | drive through its own dust | scared, then sad | dust shower on, dialogue `ch1_dust` |
-| 1:40 | Stop 2. The astronauts tape maps over the wheel **(real)** | wait | happy | memory `as17-137-20979`, dialogue `ch1_fixed`, dust off |
+| 1:40 | Stop 2. The astronauts tape maps over the wheel **(real)**. The rover follows their hands with its eyes, recalling the care it received in the Factory | wait | happy | memory `as17-137-20979`, dialogue `ch1_fixed`, dust off |
 | 1:55 | The long free drive to stop 3. Music comes in. Top speed, big floating hops. This is the happiest moment in the game | drive | happy | |
 | 2:25 | Stop 3 is the last one. The astronauts walk away toward the Lunar Module | none | curious | controls off |
-| 2:35 | The rover turns its eye to the lander. The top half lifts off without a sound. The eye tilts up to follow it **(real: the rover's camera filmed the lift-off, verify)** | none | sad | dialogue `ch1_left_behind`, shot `moon_liftoff` |
-| 2:50 | Alone. Wide shot. "I'm still here." It looks up | none | sad | cutscene `moon_to_mars` |
+| 2:35 | The rover turns its eye to the lander. The top half lifts off without a sound. The eye tilts up to follow it **(real: the rover's camera filmed the lift-off, verify)**. It asks whether the crew will return. Hold a pause with no answer, then let it look toward where they boarded and quietly choose to wait | none | curious → sad, still hopeful | first two lines of `ch1_left_behind`, shot `moon_liftoff` |
+| 2:50 | Alone. Wide shot. "I'm still here." It looks up | none | sad | final line of `ch1_left_behind` once, then cutscene `moon_to_mars` |
+
+**Approved Moon direction:** needed → worried → cared for → joyful → quietly waiting. Preserve the happiest free drive before the departure. The repair eye-line echoes the Factory gesture; both are fictional character performance. Keep the three existing farewell lines in order, with an unanswered pause after "Will you come back?" and the final motif reserved for the wide shot. Fit these beats within the existing three-minute chapter. Moayad stages the eye-lines and pause in CAM-1; chapter/dialogue timing integration remains pending. The Factory and Moon story reviews are approved; Opportunity and the epilogue still need review.
 
 ### Chapter 2: Mars, Opportunity (3:30)
 
@@ -79,15 +85,25 @@ Meridiani Planum, 2004 to 2018.
 
 Jezero crater, 2021 to 2024.
 
+**Her character:** a fighter. The air is difficult and the ground feels close, but she keeps finding enough strength for another flight. The player learns to believe she will recover. Her final loss hurts because that recovery has become familiar. She remains alert and determined after she is grounded.
+
 | Time | Beat | Player | Hero emotion | Call |
 |---|---|---|---|---|
-| 0:00 | Under a big rover's belly, a tiny machine drops to the sand. The rover backs away | none | scared | shot `heli_drop`, dialogue `ch3_intro` |
-| 0:15 | Flight 1. Hold Space, the blades blur, it lifts to 3 metres, hovers, lands **(verify)**. HUD: "Flight 1, planned: 5" | hold Space | scared → happy | memory `PIA23882` |
-| 0:40 | Flights 2 and 3. Fly through rings to find a safe road. The big rover follows the road below | fly | happy | dialogue `ch3_scout` |
-| 1:20 | The counter passes 5 and keeps going: 20, 50, 71. The light changes with the seasons | none | happy | |
-| 1:40 | Flight 72. Smooth sand with nothing to look at **(verify)**. The horizon tips. The controls drift. Hard landing. A blade tip snaps | fight the drift, and lose | scared | shot `last_flight`, dialogue `ch3_crash` |
-| 2:05 | On the sand. The player presses Space. The rotor twitches and stops | hold Space, nothing happens | sad | |
-| 2:15 | Far away, the big rover turns its head, then drives on. "I'm still here." It looks up | none | sad | dialogue `ch3_goodbye`, cutscene `mars_to_space` |
+| 0:00 | Under a big rover's belly, a tiny machine drops to the sand. The rover backs away. She looks up and decides to try | none | scared → curious | shot `heli_drop`, dialogue `ch3_intro` |
+| 0:15 | Flight 1. The rotor strains, she briefly dips, then the player's lift input brings her up to the 3 m band. Hover and land. This first recovery teaches the player to trust her. HUD: "Flight 1, planned: 5" | hold Space, steady the hover, land | scared → happy | memory `PIA23882`, shot `first_shadow` |
+| 0:40 | Flights 2 and 3. Scout the road for the big rover. One readable dip on each flight seems about to become a fall; she steadies herself and climbs again with the player's help. The rover follows the safe road below | fly, recover, mark dangers, land | scared during the dip → happy on recovery | dialogue `ch3_scout`; `ch3_recover` once after the first scouting recovery |
+| 1:20 | The counter passes 5 and keeps going: 20, 50, 71. Brief views of effort and successful flight carry her determination through the years | none | happy, determined | shot `flights_montage` |
+| 1:40 | Flight 72. A brief vertical flight over featureless sand ripples. As she descends, her sense of the ground slips. She fights to steady herself and seems to catch it once more, but sideways motion builds. The final landing damages the rotor blades and permanently grounds her | keep trying to steady her until the landing; the final outcome is scripted | scared, still fighting | `ch3_last_push` during the final struggle; `last_flight` at the landing and its aftermath |
+| 2:05 | On the sand, she tries again. Space makes the damaged rotor twitch and stop. Her eyes stay open; her will to continue remains | press Space, no lift | sad, determined | dialogue `ch3_crash` with the first failed attempt |
+| 2:15 | Far away, the big rover turns its head, then drives on. She sends it onward, proud of how far she flew. "I'm still here." She looks up | none | sad → happy with pride → sad | dialogue `ch3_goodbye`, cutscene `mars_to_space` |
+
+**Play direction for Ziad:** build the recoveries into the existing three flights, within the chapter's current time budget. A dip gives a clear rotor/tilt cue and enough height to recover with the established controls. Restore lift visibly when the player responds; keep these earlier flights recoverable and repeatable. The danger should feel real without relying on surprise control lockouts or random crashes. Keep player control through the final struggle, then hand off to the loss-of-flight cutscene when the landing makes the damage irreversible. No game-over or retry prompt at that story ending.
+
+**Performance direction for Moayad:** let the viewer see both effort and recovery. The camera stays readable while the ground approaches; it settles when she regains height. Save the sustained stillness for the damaged rotor and her next attempt to lift. The exact `last_flight` shot timings in section 5 still need CAM-1 revision to match this approved story beat; camera files are not changed by DIR-1.
+
+**Accuracy:** NASA records up to five planned test flights and 72 completed flights. The first real flight held a stable 3 m hover for 30 seconds; the 3-second task and staged dips here are game compression and invented drama. Flight 72 was a brief vertical test, not a long scouting run. NASA's investigation identifies poor surface tracking and sideways motion at touchdown as the likely accident sequence; all four blades were damaged. Do not imply repeated real engine failures or that she simply ran out of determination.
+
+Sources: [NASA/JPL first-flight report](https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/) and [NASA accident investigation](https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/). See also `content/facts.json` → `missions.ingenuity_first_flight`, `ingenuity_planned`, `ingenuity_total`, `ingenuity_last_flight`.
 
 ### Epilogue: Pioneer 10 (1:15)
 
@@ -112,8 +128,8 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | | lrv | happy | State its purpose proudly | "Hold on. I'll carry you." |
 | `ch1_dust` | lrv | sad | Shame. It thinks it failed them | "I'm sorry. I'm making a mess." |
 | `ch1_fixed` | lrv | happy | Being cared for | "You fixed me. With a map!" |
-| `ch1_left_behind` | lrv | curious | Does not understand yet | "You forgot me. …Hello?" |
-| | lrv | sad | Understands | "Oh. I was only for the ride." |
+| `ch1_left_behind` | lrv | curious | Hopes the crew will return | "Will you come back?" |
+| | lrv | sad | Chooses to wait, without bitterness | "…I’ll wait here." |
 | | lrv | sad | Motif line | "I'm still here." |
 | `ch2_intro` | opportunity | curious | Sets up the planned number | "Ninety days. That's all they asked." |
 | | opportunity | happy | Decides to make them count | "Then let's see everything." |
@@ -127,10 +143,12 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | | viking | happy | Blessing | "Rest, little one. You did more than they asked." |
 | `ch2_storm` | opportunity | sleepy | Notices the dark without fear | "The sky is turning brown." |
 | | opportunity | sleepy | Motif line, whispered | "I'm still here." |
-| `ch3_intro` | ingenuity | scared | The impossible job | "The air is so thin. Can anything fly here?" |
-| | ingenuity | scared | Sets up the planned number | "Five flights. If I'm lucky." |
+| `ch3_intro` | ingenuity | scared | Feels the difficulty, chooses to try | "The air is thin… but I’ll try." |
+| | ingenuity | curious | Treats the planned number as a beginning | "Five flights? Let’s start with one." |
 | `ch3_scout` | ingenuity | happy | Finds its purpose | "Follow me. I can see the way." |
-| `ch3_crash` | ingenuity | scared | Loses its bearings | "There's nothing to hold on to." |
+| `ch3_recover` | ingenuity | happy | A short breath after recovering; play once | "I can keep going." |
+| `ch3_last_push` | ingenuity | scared | Still fighting during the final descent | "Come on… a little more." |
+| `ch3_crash` | ingenuity | sad | Tries the damaged rotor again | "Come on… once more." |
 | `ch3_goodbye` | ingenuity | sad | Tells the rover to leave | "Go on. You have work to do." |
 | | ingenuity | happy | Pride through the sadness | "Seventy-two. I counted." |
 | | ingenuity | sad | Motif line | "I'm still here." |
@@ -139,7 +157,7 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | `ep_voices` | lrv, viking, opportunity, ingenuity | happy | One line each, overlapping at the end | "I'm still here." |
 | `ep_last` | pioneer | happy | It cannot answer, but it listens | "I hear you. I can't answer. But I hear you." |
 
-Open choice for Mohammed: formal Arabic or a lighter everyday register. One register for all machines, with Viking sounding older and slower.
+**Arabic register approved by Mohammed:** simple Modern Standard Arabic, with short, natural sentences. Use one register for all machines; Viking sounds older and slower. Ingenuity uses a feminine voice and keeps her resolve in both languages. Determination is carried by performance and the existing emotions; no new emotion API is required.
 
 ## 4. Camera language
 
@@ -328,7 +346,7 @@ Each mission is built on one fun mechanic, and that mechanic is also the lesson.
 
 ### Chapter 3: "Be the eyes"
 
-**The fun:** delicate flying on a short battery. Every flight is a small dare.
+**The fun:** fighting to stay aloft, recovering, then daring another flight. The player should feel each hard-won recovery before the final loss of flight. The recoveries are staged gameplay, with the same battery and controls already planned.
 
 | Task | How it plays | What the player learns by doing it |
 |---|---|---|

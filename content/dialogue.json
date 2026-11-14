@@ -3,7 +3,7 @@
     {
       "who": "note",
       "ar": "",
-      "en": "Owner: Set C with Mohammed. Arabic register: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Each line is one breath, under 12 English words. Every line is final text from STORY.md section 3, checked against facts.json -> missions. ch3_grounded is a copy of ch3_goodbye, kept only because src/chapters/sky.js still asks for ch3_grounded; delete it once the chapter uses ch3_goodbye. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy."
+      "en": "Owner: Set C with Mohammed. Arabic register approved by Mohammed on 14 Nov: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Ingenuity has a feminine voice and a determined fighter arc. ch3_recover (once after a successful recovery) and ch3_last_push (during the final struggle) are authored for the chapter integration; they are not wired into gameplay yet. ch3_crash belongs after the landing, with the failed rotor attempt. Each line is one breath, under 12 English words. Every line is final text from STORY.md section 3, checked against facts.json -> missions. ch3_grounded is a copy of ch3_goodbye, kept only because src/chapters/sky.js still asks for ch3_grounded; delete it once the chapter uses ch3_goodbye. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy."
     }
   ],
   "ch0_wake": [
@@ -62,14 +62,14 @@
     {
       "who": "lrv",
       "emotion": "curious",
-      "ar": "نسيتماني… هل تسمعانني؟",
-      "en": "You forgot me. …Hello?"
+      "ar": "هل ستعودان؟",
+      "en": "Will you come back?"
     },
     {
       "who": "lrv",
       "emotion": "sad",
-      "ar": "أوه… كنتُ هنا لأوصلكما فقط.",
-      "en": "Oh. I was only for the ride."
+      "ar": "…سأنتظر هنا.",
+      "en": "…I'll wait here."
     },
     {
       "who": "lrv",
@@ -164,14 +164,14 @@
     {
       "who": "ingenuity",
       "emotion": "scared",
-      "ar": "الهواء خفيف جدًا… هل يمكن الطيران هنا؟",
-      "en": "The air is so thin. Can anything fly here?"
+      "ar": "الهواء رقيق… لكنني سأحاول.",
+      "en": "The air is thin… but I'll try."
     },
     {
       "who": "ingenuity",
-      "emotion": "scared",
-      "ar": "خمس رحلات… إن ساعدني الحظ.",
-      "en": "Five flights. If I'm lucky."
+      "emotion": "curious",
+      "ar": "خمس رحلات؟ لنبدأ بالأولى.",
+      "en": "Five flights? Let's start with one."
     }
   ],
   "ch3_scout": [
@@ -185,9 +185,9 @@
   "ch3_crash": [
     {
       "who": "ingenuity",
-      "emotion": "scared",
-      "ar": "لا أرى شيئًا يدلّني على الطريق!",
-      "en": "There's nothing to hold on to."
+      "emotion": "sad",
+      "ar": "هيا… مرةً أخرى.",
+      "en": "Come on… once more."
     }
   ],
   "ch3_goodbye": [
@@ -276,6 +276,22 @@
       "emotion": "happy",
       "ar": "أسمعكم. لا أستطيع الردّ… لكنني أسمعكم.",
       "en": "I hear you. I can't answer. But I hear you."
+    }
+  ],
+  "ch3_recover": [
+    {
+      "who": "ingenuity",
+      "emotion": "happy",
+      "ar": "ما زلتُ قادرةً على المواصلة.",
+      "en": "I can keep going."
+    }
+  ],
+  "ch3_last_push": [
+    {
+      "who": "ingenuity",
+      "emotion": "scared",
+      "ar": "هيا… قليلًا بعد.",
+      "en": "Come on… a little more."
     }
   ]
 }
