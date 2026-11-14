@@ -7,12 +7,19 @@ export function createChapters(list, ctx, closeOverlays) {
   let index = -1;
   let current = null;
 
+  let token = 0;
   function go(i, opts = {}) {
     closeOverlays();
     if (current) current.dispose(ctx);
     index = ((i % list.length) + list.length) % list.length;
     current = list[index];
-    Promise.resolve(current.start(ctx, opts)).catch((err) => console.error(`chapter "${current.id}" failed`, err));
+    // Start on the next tick: the cancelled card, dialogue or photo of the old chapter first finishes
+    // hiding its box, so it cannot hide the new chapter's first card by mistake.
+    const mine = ++token, chapter = current;
+    setTimeout(() => {
+      if (mine !== token) return; // another jump happened meanwhile
+      Promise.resolve(chapter.start(ctx, opts)).catch((err) => console.error(`chapter "${chapter.id}" failed`, err));
+    }, 0);
   }
 
   return {

@@ -244,6 +244,7 @@ export function makeChapter(cfg) {
     // opts.jump: pitch-mode shortcut into the middle of the chapter (keys 6-9, see main.js)
     async start(ctx, opts = {}) {
       const s = stage = setupStage(ctx, cfg);
+      ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
       try {
         await cfg.script(s, ctx, opts);
       } catch (err) {
