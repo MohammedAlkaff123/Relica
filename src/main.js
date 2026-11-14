@@ -6,6 +6,7 @@ import * as physics from './core/physics.js';
 import { createChapters } from './core/chapters.js';
 import { createFollowCamera } from './core/followCamera.js';
 import { loadJSON } from './core/content.js';
+import { fadeTo } from './core/fade.js';
 import { createCinematics } from './cinematics/cinematic.js';
 import { createPrompt } from './ui/prompt.js';
 import { createHud } from './ui/hud.js';
@@ -57,11 +58,20 @@ async function boot() {
     // Called when we jump chapters: close anything that is waiting on the player.
     prompt.cancel();
     cinematics.cancel();
+    fadeTo(0, 0);
     dialogue.hide(); memory.hide(); card.hide();
     hud.setObjective('');
   });
   ctx.next = chapters.next;
   ctx.goto = chapters.go;
+
+  // Pitch mode: keys 6-9 jump straight to a moment inside a chapter (TASKS.md A-11).
+  const JUMPS = {
+    Digit6: ['moon', 'fender'],
+    Digit7: ['mars', 'viking'],
+    Digit8: ['mars', 'storm'],
+    Digit9: ['sky', 'flight72'],
+  };
 
   game.start((dt) => {
     if (input.pressed('Backquote')) tweak.toggle();
@@ -69,6 +79,10 @@ async function boot() {
     for (let i = 0; i < list.length; i++) {
       if (input.pressed('Digit' + (i + 1))) chapters.go(i); // chapter select for the pitch
     }
+    for (const [code, [id, jump]] of Object.entries(JUMPS)) {
+      if (input.pressed(code)) chapters.go(chapters.find(id), { jump });
+    }
+    if (input.pressed('KeyR')) chapters.restart();
     prompt.update();
     chapters.update(dt);
     physics.step(dt);
@@ -77,8 +91,14 @@ async function boot() {
     input.endFrame();
   });
 
-  chapters.go(0);
+  // ?chapter=3 (same numbers as the keys) or ?chapter=mars starts there. &jump=storm also works.
+  const params = new URLSearchParams(location.search);
+  const want = params.get('chapter');
+  let first = 0;
+  if (want) first = /^\d+$/.test(want) ? Number(want) - 1 : Math.max(0, chapters.find(want));
+  chapters.go(first, { jump: params.get('jump') ?? undefined });
   window.relica = ctx; // handy in the browser console
+  ctx.chapters = chapters;
 }
 
 boot().catch((err) => {
