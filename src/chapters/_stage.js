@@ -301,6 +301,7 @@ export function makeChapter(cfg) {
     async start(ctx, opts = {}) {
       const s = stage = setupStage(ctx, cfg);
       ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
+      await ctx.quality?.attach(s); // the new world starts in the chosen graphics mode
       startMotorHum(s);
       try {
         await cfg.script(s, ctx, opts);

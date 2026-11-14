@@ -323,6 +323,51 @@ export async function runSelfTest(ctx) {
     check(ctx.clock - c1 < 0.12, 'ctx.setPaused(true / false) works for the menu');
   });
 
+  // ---------- graphics quality (BRANDING_AND_ART_DIRECTION.md acceptance) ----------
+  await test('Graphics quality', async () => {
+    const q = ctx.quality;
+    const start = q.get();
+    const dpr = window.devicePixelRatio || 1;
+    let s = await go(1, { jump: 'selftest' });
+    await waitForControls();
+    let heard = 0;
+    const off = q.subscribe(() => heard++);
+    const bad = [];
+    for (const l of ['low', 'medium', 'high', 'low']) {
+      await q.set(l);
+      const p = q.preset();
+      const ratioOk = Math.abs(ctx.renderer.getPixelRatio() - Math.min(dpr, p.pixelRatioCap)) < 0.01;
+      if (q.get() !== l || !ratioOk || ctx.renderer.shadowMap.enabled !== !!p.shadows) bad.push(l);
+    }
+    check(!bad.length && heard === 4, 'Quality: Low → Medium → High → Low applies renderer settings and tells the menu',
+      bad.length ? 'wrong at ' + bad.join(', ') : `${heard} updates`);
+    let threw = false;
+    try { await q.set('ultra'); } catch { threw = true; }
+    check(threw && q.get() === 'low', 'Quality: an invalid level is refused and the current one stays');
+    const a = q.set('high'), b = q.set('medium');
+    await Promise.all([a, b]);
+    check(q.get() === 'medium', 'Quality: clicking quickly, only the latest choice finishes', `now ${q.get()}`);
+    let stored = null;
+    try { stored = localStorage.getItem('relica.quality'); } catch { stored = 'no storage'; }
+    check(stored === 'medium' || stored === 'no storage', 'Quality: the choice is saved', `saved "${stored}"`);
+    // The active world is told, and switching does not disturb the chapter.
+    const calls = [];
+    s.env.applyQuality = (preset, l) => calls.push(l);
+    await q.set('high');
+    check(calls.includes('high') && s.alive && s.controls, 'Quality: the active world gets the preset, the chapter carries on',
+      `world got: ${calls.join(', ') || 'nothing'}`);
+    // A new chapter starts in the chosen mode.
+    s = await go(2, { jump: 'storm' });
+    await waitGame(0.5);
+    check(q.get() === 'high' && ctx.renderer.shadowMap.enabled === !!q.preset().shadows, 'Quality: a newly loaded world keeps the chosen mode');
+    // Switching in the middle of the storm.
+    await waitForControls(10);
+    await q.set('low');
+    check(s.alive && s.controls && q.get() === 'low', 'Quality: switching during the storm keeps control and the chapter');
+    off();
+    await q.set(start);
+  });
+
   // ---------- crew action hooks ----------
   await test('Crew actions', async () => {
     const s = await go(1, { jump: 'fender' });

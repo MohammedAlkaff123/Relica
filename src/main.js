@@ -6,6 +6,7 @@ import * as physics from './core/physics.js';
 import { createChapters } from './core/chapters.js';
 import { createFollowCamera } from './core/followCamera.js';
 import { loadJSON } from './core/content.js';
+import { createQuality } from './core/quality.js';
 import { fadeTo } from './core/fade.js';
 import { createCinematics } from './cinematics/cinematic.js';
 import { createPrompt } from './ui/prompt.js';
@@ -27,13 +28,16 @@ const canvas = document.getElementById('view');
 const root = document.getElementById('ui');
 
 async function boot() {
-  const [facts, tuning] = await Promise.all([
+  const [facts, tuning, qualityData] = await Promise.all([
     loadJSON('content/facts.json'),
     loadJSON('content/tuning.json'),
+    loadJSON('content/quality.json'),
   ]);
   await physics.initPhysics();
 
   const game = createGame(canvas);
+  // Graphics quality (Low / Medium / High): applied before the first world loads.
+  const quality = createQuality({ renderer: game.renderer, scene: game.scene, data: qualityData });
   const input = createInput();
   const prompt = createPrompt(input);
   const audio = createAudio();
@@ -52,7 +56,7 @@ async function boot() {
   const ctx = {
     scene: game.scene, camera: game.camera, renderer: game.renderer,
     input, physics, facts, tuning, characters,
-    hud, card, dialogue, memory, followCam, cinematics, audio, navigation,
+    hud, card, dialogue, memory, followCam, cinematics, audio, navigation, quality,
   };
 
   const list = [opening, moon, mars, sky, epilogue];
