@@ -115,7 +115,7 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 
 /* Title screen: a bigger name, the line under it */
 .card.title-screen { background: radial-gradient(ellipse at 50% 60%, rgba(30, 36, 56, 0.55), rgba(2, 3, 10, 0.92)); }
-.card.title-screen h1 { font-size: clamp(56px, 12vw, 140px); letter-spacing: 0.18em; }
+.card.title-screen h1 { font-size: clamp(30px, 6vw, 76px); letter-spacing: 0.02em; max-width: 100%; text-wrap: balance; }
 .card.title-screen .title-ar { color: var(--foil); }
 .card.title-screen > .hint { display: none; } /* the screen already says "Press Enter to wake up" */
 

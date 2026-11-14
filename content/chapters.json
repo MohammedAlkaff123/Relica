@@ -2,8 +2,8 @@
   "_readme": "Owner: Set C. Text for the chapter cards: card.chapter('moon'). Mission names, places and dates must match the verified facts in facts.json under missions.",
   "opening": {
     "title": {
-      "en": "RELICA",
-      "ar": "ريليكا"
+      "en": "RELICA: Still Here",
+      "ar": "ريليكا: ما زلتُ هنا"
     },
     "sub": {
       "en": "Press Enter to wake up",
