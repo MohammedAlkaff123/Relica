@@ -34,11 +34,14 @@ export function createCard(root, prompt) {
     for (const node of [titleAr, mission, sub, facts]) node.classList.toggle('hidden', !node.textContent);
   }
 
+  // Only the newest card may hide the box, so a card opened over another never hides the new one.
+  let shown = 0;
   async function open(c) {
+    const me = ++shown;
     fill(c);
     box.classList.remove('hidden');
     await prompt.wait();
-    box.classList.add('hidden');
+    if (me === shown) box.classList.add('hidden');
   }
 
   return {

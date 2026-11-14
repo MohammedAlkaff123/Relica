@@ -1,6 +1,77 @@
 {
-  "as17-137-20979": { "title": "The fender repair, Apollo 17", "focus": "50% 100%" },
-  "PIA07108": { "title": "Frost on Opportunity" },
-  "PIA23882": { "title": "Ingenuity before launch" },
-  "ARC-1972-AC72-2135": { "title": "Pioneer 10 being readied, with its plaque" }
+  "_readme": "Owner: Set C. Memory photos by NASA id: memory.show('as17-137-20979'). title = short English title. caption = one sentence in English and Arabic. focus = which part of the photo stays in the 4:3 frame (CSS object-position). zoom = enlarge the photo inside the frame (1 = none). fit: 'contain' shows the whole photo (for panoramas and side-by-side photos). The credit line (year, NASA centre, id) comes from public/nasa/metadata.json. Every photo was checked by eye: no children, and no NASA logo left in frame after cropping.",
+  "S71-16722": {
+    "title": "A training rover, 1971",
+    "caption": {
+      "en": "This is a training rover on Earth in 1971, where the Apollo 15 crew practised before going to the Moon.",
+      "ar": "هذه عربة تدريب على الأرض عام ١٩٧١، تدرّب عليها طاقم أبولو ١٥ قبل الذهاب إلى القمر."
+    },
+    "focus": "50% 60%"
+  },
+  "as17-137-20979": {
+    "title": "The fender repair, Apollo 17",
+    "caption": {
+      "en": "The real repair: a new fender made of maps, tape and clamps, December 1972.",
+      "ar": "الإصلاح الحقيقي: رفرف جديد من خرائط وشريط لاصق ومشابك، ديسمبر ١٩٧٢."
+    },
+    "focus": "50% 100%",
+    "_check": "The NASA logo on the backpack is at the top of the photo. focus 50% 100% keeps only the lower part, so the logo is out of frame"
+  },
+  "PIA20285": {
+    "title": "Grinding a rock",
+    "caption": {
+      "en": "Opportunity's arm at a rock target on the rim of Endeavour crater, 2016.",
+      "ar": "ذراع أوبورتيونيتي عند صخرة على حافة فوهة إنديفور، عام ٢٠١٦."
+    }
+  },
+  "PIA07108": {
+    "title": "Frost on Opportunity",
+    "caption": {
+      "en": "Frost on Opportunity on a cold Martian morning, December 2004.",
+      "ar": "صقيع على أوبورتيونيتي في صباح مريخي بارد، ديسمبر ٢٠٠٤."
+    },
+    "fit": "contain"
+  },
+  "PIA21708": {
+    "title": "Orion crater",
+    "caption": {
+      "en": "Orion crater on Mars, named after the Apollo 16 lunar module. Seen on sol 4,712.",
+      "ar": "فوهة أوريون على المريخ، سُمّيت باسم مركبة هبوط أبولو ١٦. صُوّرت في اليوم المريخي ٤٧١٢."
+    },
+    "fit": "contain"
+  },
+  "PIA23882": {
+    "title": "Ingenuity, ready to fly",
+    "caption": {
+      "en": "The real Ingenuity helicopter on Earth, before it went to Mars.",
+      "ar": "المروحية إنجينويتي الحقيقية على الأرض قبل ذهابها إلى المريخ."
+    },
+    "focus": "50% 45%"
+  },
+  "PIA23969": {
+    "title": "Its two cameras",
+    "caption": {
+      "en": "An engineer checks Ingenuity's two cameras on its underside.",
+      "ar": "مهندس يفحص الكاميرتين أسفل إنجينويتي."
+    },
+    "focus": "50% 35%"
+  },
+  "ARC-1972-AC72-2135": {
+    "title": "Pioneer 10, being readied",
+    "caption": {
+      "en": "Pioneer 10 at Cape Kennedy in February 1972, with its plaque in place.",
+      "ar": "بايونير ١٠ في كيب كينيدي في فبراير ١٩٧٢، ولوحته في مكانها."
+    },
+    "focus": "50% 50%",
+    "zoom": 1.15
+  },
+  "ARC-1972-A72-2137": {
+    "title": "The Pioneer plaque",
+    "caption": {
+      "en": "The plaque on Pioneer 10 tells where and when it came from.",
+      "ar": "اللوحة على بايونير ١٠ تخبر من أين جاء ومتى."
+    },
+    "focus": "52% 47%",
+    "zoom": 2.6
+  }
 }

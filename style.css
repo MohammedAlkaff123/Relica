@@ -121,7 +121,9 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 .memory .hint { color: #5b5b5b; }
 .memory .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; width: min(900px, 94vw); }
 .memory .wall figure { margin: 0; background: #f4f1e8; color: #1b1b1b; padding: 8px; border-radius: 2px; }
-.memory .wall img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.memory .wall .thumb { aspect-ratio: 4 / 3; overflow: hidden; background: #111; }
+.memory .wall img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.memory .desc.ar { font: 400 15px/1.6 var(--arabic); margin-top: 4px; unicode-bidi: plaintext; text-align: right; }
 .memory .wall figcaption { font: 400 11px var(--mono); margin-top: 6px; }
 
 /* Discovery card: one sentence at the bottom for four seconds, the game keeps going */

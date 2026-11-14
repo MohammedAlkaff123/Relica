@@ -1,13 +1,15 @@
-// Memory photos: real NASA photos from the data pack, with captions read from its metadata.json. Owner: Set C.
+// Memory photos: real NASA photos from the data pack. Owner: Set C.
 //
 //   await memory.show('as17-137-20979')   freeze the game and show the real photo of this moment
 //   await memory.wall()                   show everything the player has collected (the ending)
 //
-// Photos are in public/nasa/<group>/<nasa_id>.jpg. content/memories.json can override the title
-// and choose which part of a photo is shown ("focus").
-// TODO Set C: nicer captions, a "new memory" sound, the final wall layout with credits.
+// Photos are in public/nasa/<group>/<nasa_id>.jpg, with their credit from public/nasa/metadata.json.
+// content/memories.json gives each photo our own title and one-sentence caption (English and Arabic),
+// and chooses the crop: "focus" (which part stays in frame), "zoom" and "fit": "contain".
+// A photo without an entry there falls back to NASA's own title and description.
 import { el } from './dom.js';
 import { loadJSON } from '../core/content.js';
+import { sfx } from '../audio/audio.js';
 import { found } from './discoveries.js';
 
 export async function createMemory(root, prompt) {
@@ -24,13 +26,29 @@ export async function createMemory(root, prompt) {
   const collected = [];
   const src = (p) => `public/nasa/${p.group}/${p.nasa_id}.jpg`;
   const titleOf = (p) => overrides[p.nasa_id]?.title ?? p.title;
+  const credit = (p) => `${p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`;
 
+  // Puts the photo in its frame with the crop from memories.json.
+  function photo(parent, p) {
+    const o = overrides[p.nasa_id] ?? {};
+    const img = el('img', '', parent);
+    img.src = src(p);
+    img.alt = titleOf(p);
+    if (o.fit === 'contain') { img.style.objectFit = 'contain'; img.style.background = '#000'; }
+    if (o.focus) { img.style.objectPosition = o.focus; img.style.transformOrigin = o.focus; }
+    if (o.zoom && o.zoom !== 1) img.style.transform = `scale(${o.zoom})`;
+    return img;
+  }
+
+  // Only the newest photo may hide the box, so opening one photo over another never hides the new one.
+  let shown = 0;
   async function open(build) {
+    const me = ++shown;
     box.textContent = '';
     build();
     box.classList.remove('hidden');
     await prompt.wait();
-    box.classList.add('hidden');
+    if (me === shown) box.classList.add('hidden');
   }
 
   return {
@@ -40,16 +58,21 @@ export async function createMemory(root, prompt) {
       if (!p) { console.warn(`memory "${id}" is not in public/nasa/metadata.json`); return; }
       if (!collected.includes(id)) collected.push(id);
       const o = overrides[id] ?? {};
+      sfx('memory');
       await open(() => {
         const frame = el('div', 'frame', box);
-        const img = el('img', '', el('div', 'photo', frame));
-        img.src = src(p);
-        img.alt = titleOf(p);
-        if (o.focus) img.style.objectPosition = o.focus;
+        photo(el('div', 'photo', frame), p);
         el('h3', '', frame, titleOf(p));
-        el('div', 'meta', frame, `${p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`);
-        const text = p.description.length > 230 ? p.description.slice(0, 230).trimEnd() + '…' : p.description;
-        el('div', 'desc', frame, text);
+        el('div', 'meta', frame, credit(p));
+        if (o.caption) {
+          el('div', 'desc', frame, o.caption.en);
+          const ar = el('div', 'desc ar', frame, o.caption.ar ?? '');
+          ar.lang = 'ar';
+          ar.dir = 'rtl';
+        } else {
+          const text = p.description.length > 230 ? p.description.slice(0, 230).trimEnd() + '…' : p.description;
+          el('div', 'desc', frame, text);
+        }
         el('div', 'hint', frame, 'A real photo from NASA · Enter to continue');
       });
     },
@@ -59,10 +82,7 @@ export async function createMemory(root, prompt) {
         for (const id of collected) {
           const p = photos.get(id);
           const fig = el('figure', '', grid);
-          const img = el('img', '', fig);
-          img.src = src(p);
-          img.alt = titleOf(p);
-          if (overrides[id]?.focus) img.style.objectPosition = overrides[id].focus;
+          photo(el('div', 'thumb', fig), p);
           el('figcaption', '', fig, `${titleOf(p)} · NASA/${p.center}`);
         }
         if (!collected.length) el('div', 'hint', grid, 'No memories collected yet');
