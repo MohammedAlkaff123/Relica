@@ -80,12 +80,14 @@ function burst(at, length, { freq = 400, q = 0.8, volume = 0.3, type = 'lowpass'
 // ---------- voices ----------
 
 // Each machine speaks in beeps. Viking is low and slow, Ingenuity high and quick.
+// Volumes are loud on purpose: laptop speakers lose a lot, and low voices (Viking, Pioneer) use
+// triangle waves so their overtones are still heard on small speakers.
 const VOICES = {
-  lrv:         { base: 520, notes: [1, 1.25, 0.9],             gap: 0.09, len: 0.08, type: 'triangle' },
-  opportunity: { base: 660, notes: [1, 1.12, 1.33, 1.0],       gap: 0.08, len: 0.07, type: 'triangle' },
-  viking:      { base: 190, notes: [1, 0.84, 0.75],            gap: 0.22, len: 0.2,  type: 'sine' },
-  ingenuity:   { base: 1100, notes: [1, 1.2, 1.1, 1.4, 1.3],   gap: 0.045, len: 0.04, type: 'square', volume: 0.035 },
-  pioneer:     { base: 150, notes: [1, 1.5],                   gap: 0.4,  len: 0.38, type: 'sine', volume: 0.06 },
+  lrv:         { base: 520, notes: [1, 1.25, 0.9],             gap: 0.1,  len: 0.1,  type: 'triangle', volume: 0.3 },
+  opportunity: { base: 660, notes: [1, 1.12, 1.33, 1.0],       gap: 0.09, len: 0.09, type: 'triangle', volume: 0.3 },
+  viking:      { base: 190, notes: [1, 0.84, 0.75],            gap: 0.24, len: 0.22, type: 'triangle', volume: 0.45 },
+  ingenuity:   { base: 1100, notes: [1, 1.2, 1.1, 1.4, 1.3],   gap: 0.05, len: 0.045, type: 'square', volume: 0.12 },
+  pioneer:     { base: 150, notes: [1, 1.5],                   gap: 0.4,  len: 0.38, type: 'triangle', volume: 0.45 },
 };
 
 // ---------- one-shot sounds ----------
@@ -288,7 +290,7 @@ export function createAudio() {
     play: sfx,
     beep: safe((who) => {
       const v = VOICES[who] ?? VOICES.lrv;
-      v.notes.forEach((mult, i) => tone(v.base * mult, i * v.gap, v.len, { type: v.type, volume: v.volume ?? 0.08 }));
+      v.notes.forEach((mult, i) => tone(v.base * mult, i * v.gap, v.len, { type: v.type, volume: v.volume ?? 0.3 }));
     }),
     setWorld: safe((name) => {
       const want = new Set(WORLD_BED[name] ?? []);
