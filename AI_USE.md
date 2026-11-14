@@ -34,3 +34,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdulkarim | Claude Code | B-8: effects (wheel dust, fender dust shower, dust storm, lift-off burst, rotor dust) and the blade break; each one checked by eye in a test scene |
 | 14 Nov | Abdullatif | Claude Code | C-11: final Arabic for all 97 lines, chosen line by line between the Claude and ChatGPT translations for young readers; approved by Abdullatif |
 | 14 Nov | Abdulkarim | Claude Code | B-7: Mars terrain (Meridiani plains with ripples, the landing crater and the far rim; Jezero with its stepped wall and mesas) and a Sun disc the storm dims; checked by eye |
+| 14 Nov | Abdulkarim | Claude Code | B-9: factory clean room (walls, light panels, test stand, crates, two hooded workers), deep-space sky (layered stars, Milky Way band, the Sun as a bright star) and the Earth in the Moon sky; checked by eye in the game |
