@@ -10,7 +10,7 @@ Every date, place, environment number and "memory" photo in the game comes from 
 
 - **Challenge:** Abandoned but not Forgotten (NASA Space Apps 2026)
 - **Audience:** school students and space fans
-- **Text:** Arabic dialogue with English subtitles; menus and HUD in English
+- **Text:** simple Modern Standard Arabic dialogue with English subtitles; menus and HUD in English. Mohammed approved the register on 14 Nov.
 
 ## 2. Rules that shape this plan
 
@@ -48,11 +48,11 @@ Background props: Lunar Module, two astronauts with mirror visors, airbag lander
 | Part | Length | What you do | What you feel | Real NASA material on screen |
 |---|---|---|---|---|
 | **Opening: the factory** | 0:45 | Open your eyes in a clean room. Test your wheels on a stand (this is the driving tutorial). Get folded and packed. Darkness and launch rumble | Born with a purpose | LRV training photos `S71-16722`, `S71-30542` |
-| **1. Moon: the rover** | 3:00 | Unfold next to the Lunar Module. Drive two astronauts to three science stops in one-sixth gravity. A fender breaks and dust rains on you until they tape maps over it. Park. The crew climbs in and lifts off. You tilt your camera up and watch them go | Joy of being useful, then left behind | Moon panel. Photos `as17-137-20979` (the real map-and-clamp fender repair), `as15-86-11603` |
+| **1. Moon: the rover** | 3:00 | Unfold next to the Lunar Module. Drive two astronauts to three science stops in one-sixth gravity. A fender breaks and dust rains on you until they tape maps over it. Park. The crew climbs in and lifts off. You tilt your camera up and watch them go | Joy of being useful, then quietly waiting for the crew to return | Moon panel. Photos `as17-137-20979` (the real map-and-clamp fender repair), `as15-86-11603` |
 | *Cutscene 1: Moon to Mars* | 0:30 | | | Year counter 1972 → 2004 |
 | **2. Mars: Opportunity** | 3:30 | Bounce to a stop inside airbags. Roll off. Drive on solar power that depends on sun and dust. A counter says "planned: 90 sols" and keeps going into the thousands. Grind a rock. At sunset, a radio call with old Viking. Then the 2018 dust storm: the sky darkens, the battery drops, the controls fade | Stubborn hope, then a quiet ending | Mars panel, sol counter. Photos `PIA07108` (frost on the rover), `PIA20285` (rock grinding target), `PIA21708` (Orion crater, named after the Apollo 16 lunar module, which links back to chapter 1) |
 | *Cutscene 2: storm to Jezero* | 0:30 | | | Year counter 2018 → 2021 |
-| **3. Mars sky: Ingenuity** | 2:30 | Drop from the rover's belly. Spin up the rotors in very thin air. Three short flights to scout a path, while a counter that said "planned: 5 flights" runs to 72. Last flight over smooth sand ends in a hard landing and a broken blade. The rover drives on | Small and brave, then grounded | Photos `PIA23882`, `PIA23969` (its two real cameras) |
+| **3. Mars sky: Ingenuity** | 2:30 | Drop from the rover's belly. Fight for height, recover from staged dips, and keep helping the rover through three short flights. The counter passes "planned: 5 flights" and reaches 72. On the final vertical flight over featureless sand ripples, she struggles to steady herself until the landing damages her blades. She tries to lift again, then sends the rover onward | Repeated hard-won recoveries, fierce persistence, then loss of flight with pride intact | Photos `PIA23882`, `PIA23969` (its two real cameras) |
 | *Cutscene 3: Mars to deep space* | 0:30 | | | |
 | **Epilogue: Pioneer 10** | 1:15 | Drift. Turn the dish back toward a pale dot, the Sun. Too weak to speak, but you hear the other machines faintly. Then a wall of every real photo you collected, with credits. Last card: "Abandoned, but not forgotten" | Peace | Photos `ARC-1972-AC72-2135`, `ARC-1972-A72-2137` (the plaque) |
 
@@ -64,7 +64,7 @@ Only the Moon rover gets the full factory-to-retirement arc. The others start at
 
 - The machines never meet in person. They are thousands of kilometres and decades apart. All talk is by radio and framed as imagination.
 - Never present an invented line as a real quote. The well-known "my battery is low" line was a journalist's paraphrase, so we do not show it as Opportunity's words.
-- Real events keep their real dates, places and numbers. Anything invented is feelings and dialogue only.
+- Real events keep their real dates, places and numbers. Feelings, dialogue, compressed time, player controls and staged flight recoveries are dramatized. Ingenuity’s struggle is not a claim of repeated historical engine failures; the factual basis and sources are in STORY.md chapter 3.
 
 ## 5. Camera and cutscenes
 
@@ -170,7 +170,7 @@ Every one of these already exists as a small working stub in the skeleton. Every
 **Mohammed: story, feel and testing**
 
 1. Hour 0: check the drafted story and dialogue intents in `STORY.md` sections 1–3, change what is wrong, and lock them. He has the final say on the cut list.
-2. Choose the Arabic register. Abdullatif writes the final Arabic and English from the intent table.
+2. Arabic register approved on 14 Nov: simple Modern Standard Arabic. Abdullatif and Mohammed maintain the Arabic and English from the intent table.
 3. Tune the feel in the tweak panel: rover speed and bounce, battery drain, flight power, chapter lengths.
 4. Play every milestone build from start to end. Keep one list in `TESTLOG.md`, sorted into blocker, ugly, nice-to-have.
 5. Own the 5–7 minute pitch and the slides.
