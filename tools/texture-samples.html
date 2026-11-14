@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA texture samples</title>
+<!-- A review page, not part of the game. Open http://localhost:5173/tools/texture-samples.html
+     It shows candidate ground textures on the real Moon and Mars terrain, lit as in the game.
+     "Made by code" textures are drawn here from noise. "Ready-made" ones are CC0 photo textures
+     from Poly Haven, loaded straight from their site for this preview only: nothing is saved in
+     the repository until the team chooses one. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: auto 1fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  #info { color: #9aa3b0; }
+  .cell { position: relative; border: 1px solid #2c3442; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .swatch { position: absolute; right: 5px; bottom: 5px; width: 76px; height: 76px; border: 1px solid #000a; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 90px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> ground textures</span>
+    <span class="set">Source: <button data-source="code" class="on">Made by code</button><button data-source="photo">Ready-made (CC0)</button></span>
+    <span class="set" id="tintSet">Colour: <button data-tint="ours" class="on">Our palette</button><button data-tint="own">Photo's own</button></span>
+    <span class="set">Size: <button data-size="256">256 Low</button><button data-size="512" class="on">512 Medium</button><button data-size="1024">1024 High</button></span>
+    <span class="set">View: <button data-view="game" class="on">Game camera</button><button data-view="close">Close-up</button><button data-view="top">From above</button></span>
+    <span id="info"></span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { heightAt } from '../src/world/terrain.js';
+
+// ---------- repeatable, tileable noise ----------
+function hash(ix, iy, seed) {
+  let h = (ix * 374761393 + iy * 668265263 + seed * 1442695041) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+const smooth = (t) => t * t * (3 - 2 * t);
+// u, v from 0 to 1. `px` and `py` bumps across the tile; it wraps round, so the tile repeats cleanly.
+function noise(u, v, px, py, seed) {
+  const x = u * px, y = v * py, ix = Math.floor(x), iy = Math.floor(y), fx = smooth(x - ix), fy = smooth(y - iy);
+  const w = (a, p) => ((a % p) + p) % p;
+  const a = hash(w(ix, px), w(iy, py), seed), b = hash(w(ix + 1, px), w(iy, py), seed);
+  const c = hash(w(ix, px), w(iy + 1, py), seed), d = hash(w(ix + 1, px), w(iy + 1, py), seed);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+function layers(u, v, p, n, seed) { let s = 0, a = 0.5, t = 0; for (let i = 0; i < n; i++) { s += noise(u, v, p, p, seed + i * 17) * a; t += a; p *= 2; a *= 0.5; } return s / t; }
+const steps = (v, n, soft) => { const x = v * n, f = Math.floor(x), r = x - f; return (f + smooth(Math.min(1, Math.max(0, (r - 0.5) / soft + 0.5)))) / n; };
+
+// ---------- made by code: each returns a brightness around 1 that multiplies the ground colour ----------
+const grain = (u, v) => 0.95 + (layers(u, v, 40, 3, 3) - 0.5) * 0.18;
+const patches = (u, v) => 0.84 + steps(layers(u, v, 5, 3, 11), 5, 0.35) * 0.28 + (layers(u, v, 64, 2, 5) - 0.5) * 0.07;
+function pebbles(u, v, base) {
+  let m = base;
+  const P = 22, x = u * P, y = v * P, cx = Math.floor(x), cy = Math.floor(y);
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+    const gx = ((cx + i) % P + P) % P, gy = ((cy + j) % P + P) % P;
+    if (hash(gx, gy, 91) < 0.62) continue;
+    const px = cx + i + 0.2 + hash(gx, gy, 92) * 0.6, py = cy + j + 0.2 + hash(gx, gy, 93) * 0.6, r = 0.07 + hash(gx, gy, 94) * 0.13;
+    const dx = x - px, dy = y - py;
+    if (Math.hypot(dx, dy) < r) m = 0.78 + 0.34 * Math.max(0, (-dx - dy) / (r * 1.6));              // the stone, lit from the upper left
+    else if (Math.hypot(dx - r * 0.7, dy - r * 0.7) < r) m *= 0.82;                                 // its shadow
+  }
+  return m;
+}
+const CODE = [
+  { key: 'A', name: 'Plain colour', note: 'What the game has now.' },
+  { key: 'B', name: 'Fine grain', note: 'Quiet, even dust.', fn: (u, v) => 0.95 + (layers(u, v, 48, 3, 3) - 0.5) * 0.22 },
+  { key: 'C', name: 'Painted patches', note: 'Broad soft tones, like brushed paint.', fn: patches },
+  { key: 'D', name: 'Grain and pebbles', note: 'Dust with small lit stones.', fn: (u, v) => pebbles(u, v, grain(u, v)) },
+  { key: 'E', name: 'Patches and pebbles', note: 'C and D together.', fn: (u, v) => pebbles(u, v, patches(u, v)) },
+];
+// ---------- ready-made: CC0 photo textures from polyhaven.com, 1k diffuse maps ----------
+const PH = (id) => `https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/${id}/${id}_diff_1k.jpg`;
+const PHOTO = {
+  moon: [CODE[0],
+    { key: 'F', name: 'gravelly_sand', note: 'Poly Haven, CC0. Sand with grit.', url: PH('gravelly_sand') },
+    { key: 'G', name: 'sand_01', note: 'Poly Haven, CC0. Trampled fine sand.', url: PH('sand_01') },
+    { key: 'H', name: 'rocks_ground_05', note: 'Poly Haven, CC0. Soil with pebbles.', url: PH('rocks_ground_05') },
+    { key: 'I', name: 'gray_rocks', note: 'Poly Haven, CC0. Broken grey rock.', url: PH('gray_rocks') }],
+  mars: [CODE[0],
+    { key: 'F', name: 'gravelly_sand', note: 'Poly Haven, CC0. Sand with grit.', url: PH('gravelly_sand') },
+    { key: 'G', name: 'sand_01', note: 'Poly Haven, CC0. Trampled fine sand.', url: PH('sand_01') },
+    { key: 'H', name: 'rocks_ground_05', note: 'Poly Haven, CC0. Soil with pebbles.', url: PH('rocks_ground_05') },
+    { key: 'J', name: 'red_laterite_soil_stones', note: 'Poly Haven, CC0. Red soil with stones.', url: PH('red_laterite_soil_stones') }],
+};
+
+// Every candidate becomes size x size pixels of RGBA. Code ones are grey; photos are grey ("our
+// palette": only their detail is kept, the colour stays ours) or keep their own colour.
+const images = new Map();
+function loadImage(url) {
+  if (!images.has(url)) images.set(url, new Promise((ok, fail) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => fail(new Error('could not load ' + url)); i.src = url; }));
+  return images.get(url);
+}
+async function pixelsFor(variant, size, tint) {
+  if (!variant.fn && !variant.url) return null;
+  const data = new Uint8ClampedArray(size * size * 4);
+  if (variant.fn) {
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const m = Math.max(0, Math.min(1, variant.fn((x + 0.5) / size, (y + 0.5) / size) * 0.9)), g = Math.pow(m, 1 / 2.2) * 255, o = (y * size + x) * 4;
+      data[o] = data[o + 1] = data[o + 2] = g; data[o + 3] = 255;
+    }
+    return { data, grey: true };
+  }
+  const img = await loadImage(variant.url);
+  const c = new OffscreenCanvas(size, size), g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0, size, size);
+  const src = g.getImageData(0, 0, size, size).data;
+  if (tint === 'own') { data.set(src); return { data, grey: false }; }
+  // Keep only how light or dark each pixel is, and centre it so the ground colour is not shifted.
+  let sum = 0; const lum = new Float32Array(size * size);
+  for (let i = 0; i < lum.length; i++) { const l = (0.2126 * src[i * 4] + 0.7152 * src[i * 4 + 1] + 0.0722 * src[i * 4 + 2]) / 255; lum[i] = l; sum += l; }
+  const mean = sum / lum.length;
+  for (let i = 0; i < lum.length; i++) { const v = Math.max(0, Math.min(1, 0.82 + (lum[i] - mean) * 1.5)) * 255; data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = v; data[i * 4 + 3] = 255; }
+  return { data, grey: true };
+}
+function textureFrom(px, size) {
+  const tex = new THREE.DataTexture(new Uint8Array(px.data.buffer), size, size);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 4;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ---------- two small pieces of the real terrain, lit as proposed for the game ----------
+const WORLDS = [
+  { id: 'moon', label: 'Moon', hero: 'lrv', at: [-10, 22], yaw: -0.5, ground: 0x8b8d92, rock: 0x74767b, sky: 0x000000,
+    sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3], fog: null },
+  { id: 'mars', label: 'Mars', hero: 'opportunity', at: [6, 20], yaw: 0.2, ground: 0xb0623a, rock: 0x86482b, sky: 0xd8a878,
+    sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240] },
+];
+const TILE_METRES = 8; // one copy of the texture covers this much ground
+const loader = new GLTFLoader();
+const models = Object.fromEntries(await Promise.all(WORLDS.map(async (w) => [w.hero, (await loader.loadAsync(`../public/models/${w.hero}.glb`)).scene])));
+
+function buildScene(world, px, size) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(world.sky);
+  if (world.fog) scene.fog = new THREE.Fog(world.sky, ...world.fog);
+  const sun = new THREE.DirectionalLight(world.sun[0], world.sun[1]);
+  sun.position.set(...world.sun[2]).multiplyScalar(60);
+  scene.add(sun, new THREE.HemisphereLight(world.fill[0], world.fill[1], world.fill[2]));
+  const [cx, cz] = world.at, S = 70, N = 56;
+  const geo = new THREE.PlaneGeometry(S, S, N, N); geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i) + cx, z = pos.getZ(i) + cz;
+    pos.setXYZ(i, x, heightAt(world.id, x, z), z);
+    uv.setXY(i, x / TILE_METRES, z / TILE_METRES);
+  }
+  geo.computeVertexNormals();
+  const map = px ? textureFrom(px, size) : null, own = px && !px.grey;
+  scene.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: own ? 0xffffff : world.ground, flatShading: true, roughness: 1, map })));
+  const rockGeo = new THREE.IcosahedronGeometry(1, 0), rockMat = new THREE.MeshStandardMaterial({ color: own ? 0xbbbbbb : world.rock, flatShading: true, roughness: 1, map });
+  let s = 7; const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+  for (let i = 0; i < 16; i++) {
+    const x = cx + (rnd() - 0.5) * 34, z = cz + (rnd() - 0.5) * 34, k = 0.25 + rnd() * 0.9;
+    if (Math.hypot(x - cx, z - cz) < 3) continue;
+    const r = new THREE.Mesh(rockGeo, rockMat); r.scale.set(k, k * 0.6, k); r.position.set(x, heightAt(world.id, x, z) + k * 0.15, z); r.rotation.y = rnd() * 3; scene.add(r);
+  }
+  const hero = models[world.hero].clone(true);
+  hero.position.set(cx, heightAt(world.id, cx, cz) + 0.3, cz); hero.rotation.y = world.yaw; scene.add(hero);
+  return { scene, map, centre: hero.position.clone(), yaw: world.yaw };
+}
+
+// ---------- page ----------
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid'), info = document.getElementById('info');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+const cells = [];
+for (let i = 0; i < 10; i++) { const cell = document.createElement('div'); cell.className = 'cell'; cell.innerHTML = '<div class="tag"></div><div class="note"></div><canvas class="swatch" width="76" height="76"></canvas>'; grid.appendChild(cell); cells.push(cell); }
+const state = { source: 'code', tint: 'ours', size: 512, view: 'game' };
+let built = [], run = 0;
+
+async function rebuild() {
+  const mine = ++run, t0 = performance.now();
+  info.textContent = 'building…';
+  document.getElementById('tintSet').style.visibility = state.source === 'photo' ? 'visible' : 'hidden';
+  const list = WORLDS.flatMap((world) => (state.source === 'code' ? CODE : PHOTO[world.id]).map((variant) => ({ world, variant })));
+  let next;
+  try { next = await Promise.all(list.map(async ({ world, variant }) => ({ world, variant, px: await pixelsFor(variant, state.size, state.tint) }))); }
+  catch (err) { info.textContent = 'Could not load the ready-made textures (no internet?): ' + err.message; return; }
+  if (mine !== run) return; // a newer click won
+  for (const b of built) { b.map?.dispose(); b.scene.traverse((o) => { o.geometry?.dispose(); }); }
+  built = next.map(({ world, px }) => buildScene(world, px, state.size));
+  next.forEach(({ world, variant, px }, i) => {
+    cells[i].querySelector('.tag').innerHTML = `<b>${world.label} ${variant.key}</b> · ${variant.name}`;
+    cells[i].querySelector('.note').textContent = variant.note;
+    // The flat swatch: one copy of the texture, in the colour it will have on the ground.
+    const c = cells[i].querySelector('.swatch'), g = c.getContext('2d'), out = g.createImageData(76, 76), col = new THREE.Color(world.ground);
+    const base = [Math.pow(col.r * 0.9, 1 / 2.2) * 255, Math.pow(col.g * 0.9, 1 / 2.2) * 255, Math.pow(col.b * 0.9, 1 / 2.2) * 255];
+    for (let y = 0; y < 76; y++) for (let x = 0; x < 76; x++) {
+      const o = (y * 76 + x) * 4, sx = Math.floor((x / 76) * state.size), sy = Math.floor((y / 76) * state.size), si = (sy * state.size + sx) * 4;
+      for (let k = 0; k < 3; k++) {
+        if (!px) out.data[o + k] = base[k];
+        else if (!px.grey) out.data[o + k] = px.data[si + k];
+        else out.data[o + k] = Math.pow([col.r, col.g, col.b][k] * Math.pow(px.data[si] / 255, 2.2), 1 / 2.2) * 255;
+      }
+      out.data[o + 3] = 255;
+    }
+    g.putImageData(out, 0, 0);
+  });
+  info.textContent = `${state.size} × ${state.size} px · one copy per ${TILE_METRES} m of ground · built in ${Math.round(performance.now() - t0)} ms`;
+  draw();
+}
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 3000);
+function draw() {
+  const W = innerWidth, H = innerHeight; renderer.setSize(W, H, false);
+  renderer.setScissor(0, 0, W, H); renderer.setViewport(0, 0, W, H); renderer.setClearColor(0x10141b); renderer.clear();
+  built.forEach((b, i) => {
+    const r = cells[i].getBoundingClientRect(), c = b.centre, f = new THREE.Vector3(Math.sin(b.yaw), 0, Math.cos(b.yaw));
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    camera.aspect = r.width / r.height; camera.fov = state.view === 'close' ? 42 : 55; camera.updateProjectionMatrix();
+    if (state.view === 'game') { camera.position.set(c.x - f.x * 7, c.y + 3, c.z - f.z * 7); camera.lookAt(c.x + f.x * 4, c.y + 0.6, c.z + f.z * 4); }
+    else if (state.view === 'close') { camera.position.set(c.x - f.x * 3.4 + 1.8, c.y + 1.0, c.z - f.z * 3.4); camera.lookAt(c.x + f.x * 1.2, c.y - 0.25, c.z + f.z * 1.2); }
+    else { camera.position.set(c.x, c.y + 24, c.z - 5); camera.lookAt(c.x, c.y, c.z + 2); }
+    renderer.render(b.scene, camera);
+  });
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = key === 'size' ? +btn.dataset.size : btn.dataset[key];
+  if (key === 'view') draw(); else rebuild();
+}));
+addEventListener('resize', draw);
+await rebuild();
+window.samples = { state, rebuild, draw };
+</script>
+</body>
+</html>
