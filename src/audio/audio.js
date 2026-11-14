@@ -1,52 +1,71 @@
 // Sound. Owner: Set C.
 //
+//   audio.speak(who, text)        a machine says a line in its own Morse "voice" (see VOICES below)
+//   audio.beep(who)               a short sample of a voice: lrv | opportunity | viking | ingenuity | pioneer
+//   audio.play('tick')            a one-shot sound (list in SOUNDS below)
 //   audio.setWorld('moon')        background for a world: factory | moon | mars | space | null (silence)
 //   audio.setWind(0..1)           wind strength on Mars; 1 = the 2018 dust storm
-//   audio.play('tick')            a one-shot sound (list in SOUNDS below)
 //   audio.loop('rotor', true)     start or stop a looping sound: rotor | hum
 //   audio.loopLevel('rotor', 0.5) how hard a loop works (rotor speed, motor load), 0..1
 //   audio.music('drive')          a music cue: drive | storm | ending | null to fade out
-//   audio.speak(who, text)        a machine says a line in its own voice (see "voices" below)
-//   audio.beep(who)               a short sample of a voice: lrv | opportunity | viking | ingenuity | pioneer
 //   audio.setBoost(2)             overall loudness, 1 = normal, up to 4
 //
 // Every sound is made in code (Web Audio), so nothing needs a licence and nothing downloads.
-// A file in public/audio/<name>.mp3 can later replace any one-shot: see FILES below.
-// The Moon has no air, so setWorld('moon') plays nothing from outside: only the rover's own hum and beeps.
 // Sound is never allowed to break the game: every public call is wrapped in try/catch.
+//
+// ---------- the mix ----------
+// Every sound goes into one of five buses. Each bus has a level in decibels (dB) that matches its role:
+// things the player must notice are loud, things that set the mood sit underneath.
+//
+//   bus        dB    what goes there                                   why
+//   event       0    launch, crash, landing, airbag bounce, breaking   story moments: the loudest things in the game
+//   voice      -3    the machines talking (Morse)                      the player must hear who speaks
+//   ui         -9    task done, discovery, memory photo, parking       feedback: clear, but under the voices
+//   music     -14    drive, storm, ending                              mood: always under the voices
+//   ambience  -20    Mars wind, factory room, deep-space drone          background: felt more than heard
+//
+// The Moon has no air, so setWorld('moon') plays nothing from outside: only the machine's own sounds.
+// The plan files (PLAN.md, STORY.md) set the rules above but give no dB numbers; this table is ours.
+// The sound test page measures each sound so the levels can be checked.
 
-// The signal chain, in order:
-//   every sound -> master (gain) -> glue (gentle compressor) -> boost (gain) -> limiter -> analyser -> speakers
-// The old chain used a compressor on its default settings (ratio 12), which squashed everything back down
-// and made the game too quiet. Now the compressor is gentle, and a limiter at the end only stops clipping.
-// boost: 1 = normal, up to 4 for quiet speakers. audio.setBoost(2) or the slider on the sound test page.
+export const MIX_DB = { event: 0, voice: -3, ui: -9, music: -14, ambience: -20 };
+const dbToGain = (db) => Math.pow(10, db / 20);
+
 let ac = null;
 let master = null;
 let boost = null;
 let analyser = null;
 let boostLevel = 1.5;
+const bus = {};
+
+// The signal chain: sound -> bus (dB level) -> master -> glue (gentle compressor) -> boost -> limiter -> speakers
 function context() {
   if (!ac) {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     master = ac.createGain();
-    master.gain.value = 1.6;
+    master.gain.value = 1;
     const glue = ac.createDynamicsCompressor();
-    glue.threshold.value = -18;
-    glue.knee.value = 12;
-    glue.ratio.value = 3;
+    glue.threshold.value = -14;
+    glue.knee.value = 10;
+    glue.ratio.value = 2.5;
     glue.attack.value = 0.005;
-    glue.release.value = 0.2;
+    glue.release.value = 0.25;
     boost = ac.createGain();
     boost.gain.value = boostLevel;
     const limiter = ac.createDynamicsCompressor();
-    limiter.threshold.value = -2;
+    limiter.threshold.value = -1.5;
     limiter.knee.value = 0;
     limiter.ratio.value = 20;
     limiter.attack.value = 0.001;
-    limiter.release.value = 0.1;
+    limiter.release.value = 0.08;
     analyser = ac.createAnalyser();
     analyser.fftSize = 2048;
     master.connect(glue).connect(boost).connect(limiter).connect(analyser).connect(ac.destination);
+    for (const [name, db] of Object.entries(MIX_DB)) {
+      bus[name] = ac.createGain();
+      bus[name].gain.value = dbToGain(db);
+      bus[name].connect(master);
+    }
   }
   if (ac.state === 'suspended') ac.resume();
   return ac;
@@ -63,20 +82,25 @@ export function setBoost(level) {
 
 // ---------- building blocks ----------
 
-function tone(freq, at, length, { type = 'triangle', volume = 0.08, to = null, out = null } = {}) {
+// One oscillator note with its own envelope. slide: pitch multiplier reached at the end.
+function osc(out, at, freq, len, { type = 'sine', vol = 0.5, slide = 1, attack = 0.005, release = null, detune = 0 } = {}) {
   const c = context();
-  const start = c.currentTime + at;
-  const osc = c.createOscillator();
-  const gain = c.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  if (to) osc.frequency.exponentialRampToValueAtTime(to, start + length);
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + Math.min(0.02, length / 4));
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
-  osc.connect(gain).connect(out ?? master);
-  osc.start(start);
-  osc.stop(start + length + 0.05);
+  const t = c.currentTime + at;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = type;
+  o.detune.value = detune;
+  o.frequency.setValueAtTime(freq, t);
+  if (slide !== 1) o.frequency.exponentialRampToValueAtTime(freq * slide, t + len);
+  const rel = release ?? Math.min(0.06, len * 0.4);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.max(0.002, Math.min(attack, len / 2)));
+  g.gain.setValueAtTime(vol, t + Math.max(attack, len - rel));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o.connect(g).connect(out);
+  o.start(t);
+  o.stop(t + len + 0.05);
+  return o;
 }
 
 let noiseBuffer = null;
@@ -93,40 +117,73 @@ function noise() {
   return src;
 }
 
-// A burst of filtered noise: thuds, dust, rumble.
-function burst(at, length, { freq = 400, q = 0.8, volume = 0.3, type = 'lowpass' } = {}) {
+// Filtered noise with an envelope: thuds, dust, static, clicks, roar.
+function hiss(out, at, len, { freq = 400, q = 0.8, vol = 0.5, type = 'lowpass', attack = 0.003, sweepTo = null } = {}) {
   const c = context();
-  const start = c.currentTime + at;
+  const t = c.currentTime + at;
   const src = noise();
-  const filter = c.createBiquadFilter();
-  filter.type = type;
-  filter.frequency.value = freq;
-  filter.Q.value = q;
-  const gain = c.createGain();
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
-  src.connect(filter).connect(gain).connect(master);
-  src.start(start);
-  src.stop(start + length + 0.05);
+  const f = c.createBiquadFilter();
+  f.type = type;
+  f.frequency.setValueAtTime(freq, t);
+  if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, t + len);
+  f.Q.value = q;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.max(0.002, attack));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  src.connect(f).connect(g).connect(out);
+  src.start(t, Math.random() * 1.5);
+  src.stop(t + len + 0.05);
 }
 
-// ---------- voices: each machine "speaks" its line in its own sound ----------
+// A soft saturation curve: makes a tone sound like old electronics.
+let crunchCurve = null;
+function crunch() {
+  if (!crunchCurve) {
+    crunchCurve = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) {
+      const x = (i / 1023) * 2 - 1;
+      crunchCurve[i] = Math.tanh(x * 3.5) * 0.9;
+    }
+  }
+  const s = context().createWaveShaper();
+  s.curve = crunchCurve;
+  s.oversample = '2x';
+  return s;
+}
+
+// A long, dark reverb (made from decaying noise): the space around Pioneer.
+let spaceVerb = null;
+function reverb() {
+  const c = context();
+  if (!spaceVerb) {
+    const seconds = 4.5;
+    const buf = c.createBuffer(2, c.sampleRate * seconds, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.6);
+    }
+    spaceVerb = buf;
+  }
+  const conv = c.createConvolver();
+  conv.buffer = spaceVerb;
+  return conv;
+}
+
+// ---------- voices: the machines talk to each other in Morse code ----------
 //
-// audio.speak(who, text) turns the words of a line into a burst of sound. The same text always gives the
-// same sound, and a longer line gives a longer burst. Each machine has its own recipe, so a player can tell
-// who is talking with eyes closed:
+// Real machines talk over radio networks. To keep it simple, every machine here "talks" in Morse code:
+// the English text of its line, letter by letter, as dots and dashes. What makes each one recognisable is
+// its signature: its speed, its pitch and the kind of sound it makes.
 //
-//   lrv          Moon rover. Bright, bouncy chirps that slide upward, one per syllable. Happy and quick.
-//   opportunity  Mars rover. Real Morse code of the English line: steady dots and dashes on one clean tone.
-//   viking       The old lander. Low, slow, buzzy hums with a shaky vibrato, each falling at the end, plus radio crackle.
-//   ingenuity    The helicopter. Very fast, very high blips, like a nervous little bird.
-//   pioneer      The far probe. A few long, soft, gliding tones with an echo, as if from very far away.
+//   machine      speed (dot)  pitch           signature
+//   ingenuity    35 ms        very high       thin, nervous, fastest of all
+//   lrv          55 ms        high, melodic   bright chirps that hop between notes: young and cheerful
+//   opportunity  70 ms        middle, steady  a clean radio tone, like a classic Morse operator: patient
+//   viking       105 ms       low-middle      an old telegraph: relay clicks, crackle, mains hum, wobbly pitch
+//   pioneer      170 ms       very deep       heavy, slow moans that bend in pitch, inside a huge echo
 //
-// A "?" makes the last sound rise, a "!" makes the line louder. The English text is used, because each
-// letter maps to a fixed sound (and Morse needs Latin letters). The pitch range and rhythm of each machine
-// are far apart on purpose: high/fast (Ingenuity), mid/bouncy (LRV), mid/steady (Opportunity),
-// low/slow (Viking), long/echoing (Pioneer).
+// The same text always makes the same sound. A "?" adds a rising tone at the end, a "!" makes it louder.
 
 const MORSE = {
   a: '.-', b: '-...', c: '-.-.', d: '-..', e: '.', f: '..-.', g: '--.', h: '....', i: '..', j: '.---',
@@ -134,136 +191,135 @@ const MORSE = {
   u: '..-', v: '...-', w: '.--', x: '-..-', y: '-.--', z: '--..',
   0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-', 5: '.....', 6: '-....', 7: '--...', 8: '---..', 9: '----.',
 };
-// Musical steps (a pentatonic scale), so every voice sounds pleasant whatever the letters are.
-const SCALE = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
+const SCALE = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3];
 
-function words(text) {
-  return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
-}
-// Rough syllables: groups of vowels. "everything" -> 3.
-function syllables(word) {
-  return Math.max(1, (word.match(/[aeiouy]+/g) || []).length);
-}
-const code = (s, i) => s.charCodeAt(i % s.length) || 97;
-
-// One voice note: an oscillator with its own envelope, an optional pitch slide and vibrato.
-function note(out, at, freq, len, { type = 'triangle', vol = 0.3, slide = 1, vibrato = 0, vibratoRate = 6, attack = 0.01 } = {}) {
-  const c = context();
-  const t = c.currentTime + at;
-  const osc = c.createOscillator();
-  const g = c.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, t);
-  if (slide !== 1) osc.frequency.exponentialRampToValueAtTime(freq * slide, t + len);
-  if (vibrato) {
-    const lfo = c.createOscillator();
-    const depth = c.createGain();
-    lfo.frequency.value = vibratoRate;
-    depth.gain.value = vibrato;
-    lfo.connect(depth).connect(osc.frequency);
-    lfo.start(t);
-    lfo.stop(t + len + 0.05);
+// Turns text into Morse timing: [{ at, len, letter }], stopping after `cap` seconds.
+function morse(text, dot, cap) {
+  const out = [];
+  let t = 0;
+  let letter = 0;
+  const words = String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    for (const ch of w) {
+      const m = MORSE[ch];
+      if (!m) continue;
+      for (const sym of m) {
+        const len = sym === '.' ? dot : dot * 3;
+        out.push({ at: t, len, letter, ch });
+        t += len + dot;
+      }
+      t += dot * 2;
+      letter++;
+      if (t > cap) return { notes: out, end: t };
+    }
+    t += dot * 4;
   }
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(vol, t + Math.min(attack, len / 3));
-  g.gain.setValueAtTime(vol, t + len * 0.7);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-  osc.connect(g).connect(out);
-  osc.start(t);
-  osc.stop(t + len + 0.05);
+  return { notes: out, end: t };
 }
 
-// Each recipe schedules its notes into `out` and returns how long the line lasts, in seconds.
-const VOICE_RECIPES = {
-  // Moon rover: one upward chirp per syllable, hopping around the scale.
-  lrv(out, text, loud) {
-    let t = 0;
-    const base = 560;
-    for (const w of words(text).slice(0, 10)) {
-      for (let s = 0; s < Math.min(3, syllables(w)); s++) {
-        const step = SCALE[code(w, s * 3) % SCALE.length];
-        note(out, t, base * step, 0.085, { type: 'triangle', vol: 0.32 * loud, slide: 1.18 });
-        t += 0.11;
+const VOICES = {
+  ingenuity: {
+    dot: 0.035, cap: 1.8,
+    play(out, notes, loud) {
+      const hp = context().createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 900;
+      hp.connect(out);
+      for (const n of notes) {
+        const jitter = 1 + ((n.ch.charCodeAt(0) % 5) - 2) * 0.03;
+        osc(hp, n.at, 1650 * jitter, n.len, { type: 'square', vol: 0.32 * loud, attack: 0.002 });
       }
-      t += 0.07;
-    }
-    return t;
+    },
   },
 
-  // Mars rover: the English line in real Morse code. Dot 70 ms, dash 3 dots.
-  opportunity(out, text, loud) {
-    const dot = 0.065;
-    let t = 0;
-    for (const w of words(text)) {
-      for (const ch of w) {
-        const m = MORSE[ch];
-        if (!m) continue;
-        for (const sym of m) {
-          const len = sym === '.' ? dot : dot * 3;
-          note(out, t, 740, len, { type: 'sine', vol: 0.4 * loud, attack: 0.004 });
-          note(out, t, 1480, len, { type: 'sine', vol: 0.08 * loud, attack: 0.004 }); // a little brightness
-          t += len + dot;
+  lrv: {
+    dot: 0.055, cap: 2.2,
+    play(out, notes, loud) {
+      for (const n of notes) {
+        const f = 820 * SCALE[n.ch.charCodeAt(0) % SCALE.length];
+        osc(out, n.at, f, n.len, { type: 'triangle', vol: 0.7 * loud, slide: 1.1, attack: 0.004 });
+        osc(out, n.at, f * 2, n.len, { type: 'sine', vol: 0.15 * loud, slide: 1.1, attack: 0.004 });
+      }
+    },
+  },
+
+  opportunity: {
+    dot: 0.07, cap: 2.6,
+    play(out, notes, loud) {
+      for (const n of notes) {
+        osc(out, n.at, 700, n.len, { type: 'sine', vol: 0.45 * loud, attack: 0.005 });
+        osc(out, n.at, 1400, n.len, { type: 'sine', vol: 0.12 * loud, attack: 0.005 });
+      }
+    },
+  },
+
+  // An old telegraph receiver: a buzzy tone through a narrow, tinny radio filter, slightly overdriven,
+  // with a slow wobble in pitch (old parts), a relay click at every symbol, crackle and mains hum under it.
+  viking: {
+    dot: 0.105, cap: 3.2,
+    play(out, notes, loud, end) {
+      const c = context();
+      const radio = c.createBiquadFilter();
+      radio.type = 'bandpass';
+      radio.frequency.value = 1100;
+      radio.Q.value = 1.6;
+      const drive = crunch();
+      const pre = c.createGain();
+      pre.gain.value = 1.8;
+      const post = c.createGain();
+      post.gain.value = 1.6; // the narrow radio filter takes away a lot of level; give it back
+      pre.connect(drive).connect(radio).connect(post).connect(out);
+      // Wobble: one slow LFO shared by every note through a constant source.
+      const wobble = c.createOscillator();
+      const wobbleDepth = c.createGain();
+      wobble.frequency.value = 0.9;
+      wobbleDepth.gain.value = 9;
+      wobble.connect(wobbleDepth);
+      const t0 = c.currentTime;
+      wobble.start(t0);
+      wobble.stop(t0 + end + 0.5);
+      for (const n of notes) {
+        const o = osc(pre, n.at, 440, n.len, { type: 'square', vol: 0.65 * loud, attack: 0.008 });
+        wobbleDepth.connect(o.frequency);
+        hiss(out, n.at, 0.012, { type: 'bandpass', freq: 3200, q: 2, vol: 0.5 * loud }); // relay click
+      }
+      // Mains hum and crackle under the whole message.
+      osc(out, 0, 60, end + 0.3, { type: 'sawtooth', vol: 0.07 * loud, attack: 0.1, release: 0.2 });
+      hiss(out, 0, end + 0.3, { type: 'bandpass', freq: 2400, q: 0.7, vol: 0.06 * loud, attack: 0.1 });
+      for (let i = 0; i < end * 7; i++) {
+        hiss(out, (i * 0.137 + (i % 3) * 0.05) % end, 0.006, { type: 'highpass', freq: 2000, vol: 0.25 * loud });
+      }
+    },
+  },
+
+  // Very deep and heavy: layered low tones that bend down and back up (like something huge breathing
+  // far away), with a soft attack, under a long dark echo. The harmonics are there so small speakers
+  // still carry it; the low layer is felt on headphones.
+  pioneer: {
+    dot: 0.17, cap: 4,
+    play(out, notes, loud, end) {
+      const c = context();
+      const lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 900;
+      const verb = reverb();
+      const wet = c.createGain();
+      wet.gain.value = 0.9;
+      const dry = c.createGain();
+      dry.gain.value = 0.75;
+      lp.connect(dry).connect(out);
+      lp.connect(verb).connect(wet).connect(out);
+      for (const n of notes) {
+        for (const [mult, vol] of [[1, 0.6], [2, 0.32], [3, 0.16], [4, 0.08]]) {
+          const o = osc(lp, n.at, 78 * mult, n.len + 0.12, { type: 'sine', vol: vol * loud, attack: 0.06, release: 0.12 });
+          const t = c.currentTime + n.at;
+          o.frequency.setValueAtTime(78 * mult, t);
+          o.frequency.exponentialRampToValueAtTime(78 * mult * 0.86, t + (n.len + 0.12) * 0.5);
+          o.frequency.exponentialRampToValueAtTime(78 * mult * 0.97, t + n.len + 0.12);
         }
-        t += dot * 2;
-        if (t > 2.6) return t; // keep lines short: about the first 2.6 seconds of Morse is enough
       }
-      t += dot * 4;
-    }
-    return t;
-  },
-
-  // Old Viking: slow, low buzz, shaky (vibrato), each hum falling at the end, with radio crackle at the start.
-  viking(out, text, loud) {
-    const c = context();
-    burst(0, 0.18, { freq: 2600, type: 'bandpass', q: 0.8, volume: 0.12 * loud });
-    const filter = c.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1400;
-    filter.connect(out);
-    let t = 0.12;
-    const all = words(text);
-    let n = 0;
-    for (const w of all) {
-      const step = [1, 9 / 8, 4 / 5, 1][code(w, 0) % 4];
-      note(filter, t, 165 * step, 0.26, { type: 'sawtooth', vol: 0.3 * loud, slide: 0.88, vibrato: 7, vibratoRate: 5 });
-      t += 0.33;
-      if (++n >= 7) break;
-    }
-    return t;
-  },
-
-  // Ingenuity: rapid high square blips, one per letter, nervous and quick.
-  ingenuity(out, text, loud) {
-    let t = 0;
-    const letters = words(text).join('').slice(0, 26);
-    for (let i = 0; i < letters.length; i++) {
-      const step = SCALE[code(letters, i) % SCALE.length];
-      note(out, t, 1150 * step, 0.035, { type: 'square', vol: 0.22 * loud, attack: 0.002 });
-      t += 0.05 + ((code(letters, i) % 3) * 0.01);
-    }
-    return t;
-  },
-
-  // Pioneer: a few long gliding tones, soft attack, echoing as if from far away.
-  pioneer(out, text, loud) {
-    const c = context();
-    const delay = c.createDelay(1);
-    delay.delayTime.value = 0.28;
-    const feedback = c.createGain();
-    feedback.gain.value = 0.4;
-    delay.connect(feedback).connect(delay);
-    delay.connect(out);
-    const dry = c.createGain();
-    dry.connect(out);
-    dry.connect(delay);
-    let t = 0;
-    for (const w of words(text).slice(0, 4)) {
-      const step = SCALE[code(w, 1) % 4];
-      note(dry, t, 330 * step, 0.5, { type: 'sine', vol: 0.4 * loud, slide: 1.12, attack: 0.12 });
-      note(dry, t, 660 * step, 0.5, { type: 'sine', vol: 0.08 * loud, slide: 1.12, attack: 0.12 });
-      t += 0.6;
-    }
-    return t + 0.6; // room for the echo to fade
+      osc(lp, 0, 39, end + 0.6, { type: 'sine', vol: 0.35 * loud, attack: 0.3, release: 0.5 }); // sub layer
+    },
   },
 };
 
@@ -279,73 +335,161 @@ export const VOICE_SAMPLES = {
 // Starts a line. Returns { duration, stop() } so the dialogue can cut it when the player skips ahead.
 function speak(who, text) {
   const c = context();
-  const recipe = VOICE_RECIPES[who] ?? VOICE_RECIPES.lrv;
+  const v = VOICES[who] ?? VOICES.opportunity;
   const out = c.createGain();
-  out.connect(master);
-  const loud = /!/.test(text) ? 1.25 : 1;
-  let duration = recipe(out, text || VOICE_SAMPLES[who] || 'hello', loud);
-  // A question rises at the end: one extra rising note in the machine's own register.
-  if (/\?\s*$/.test(text)) {
-    const end = { lrv: 700, opportunity: 740, viking: 190, ingenuity: 1500, pioneer: 400 }[who] ?? 600;
-    const type = { opportunity: 'sine', viking: 'sawtooth', ingenuity: 'square', pioneer: 'sine' }[who] ?? 'triangle';
-    note(out, duration, end, 0.16, { type, vol: (who === 'ingenuity' ? 0.22 : 0.3) * loud, slide: 1.35 });
-    duration += 0.2;
+  out.connect(bus.voice);
+  const line = text || VOICE_SAMPLES[who] || 'hello';
+  const loud = /!/.test(line) ? 1.2 : 1;
+  const { notes, end } = morse(line, v.dot, v.cap);
+  v.play(out, notes, loud, end);
+  let duration = end;
+  // A question rises at the end, in the machine's own register.
+  if (/\?\s*$/.test(line)) {
+    const f = { ingenuity: 1650, lrv: 820, opportunity: 700, viking: 440, pioneer: 78 }[who] ?? 700;
+    const type = { ingenuity: 'square', lrv: 'triangle', viking: 'square' }[who] ?? 'sine';
+    const target = who === 'viking' ? out : out;
+    osc(target, end, f, v.dot * 4, { type, vol: (who === 'viking' ? 0.25 : 0.5) * loud, slide: 1.35, attack: 0.01 });
+    duration += v.dot * 4 + 0.1;
   }
+  if (who === 'pioneer') duration += 1.2; // the echo keeps going
   let stopped = false;
   return {
     duration,
     stop() {
       if (stopped) return;
       stopped = true;
-      const now = c.currentTime;
-      out.gain.setTargetAtTime(0, now, 0.03);
-      setTimeout(() => out.disconnect(), 300);
+      out.gain.setTargetAtTime(0, c.currentTime, 0.04);
+      setTimeout(() => out.disconnect(), 400);
     },
   };
 }
 
 // ---------- one-shot sounds ----------
+// Each one is built to sound like what it means, and they are made different on purpose:
+//   tick      task done         two bright bell notes going up (a "ding-ding" of success)
+//   discover  discovery card    a fast sparkling run upward with a soft shimmer (an "aha")
+//   memory    memory photo      a camera shutter (click-clack) and a warm low chord
+//   park      neat parking      two identical short beeps, like a car's parking sensor
+//   land      landing thud      a heavy low drop with a puff of dust
+//   bounce    airbag bounce     a rubbery "boing" that wobbles in pitch, with a soft thump
+//   crack     something breaks  a sharp snap with a metallic ping
+//   crash     hard crash        a big hit, metal rattling, then a low rumble
+//   rumble    launch            a long roar that builds, with crackle and a deep shake (about 6 s)
+//   powerdown machine stops     electronics winding down, a falling whine, then a last click
+//   static    radio static      a burst of radio noise before a call
+
+// Per-sound trim in dB inside its bus, set by measuring each sound on the sound test page so that
+// sounds of the same role land at the same loudness (RMS, with boost 1.5):
+//   events about -10 dB (launch about -8), voices about -10, interface about -17, music about -24,
+//   Mars wind about -32 (the storm about -18).
+const TRIM_DB = { land: 8, crack: 5, crash: 7, static: 9, discover: 5, powerdown: -7, bounce: 0, tick: 0, memory: 1, park: -1, rumble: 0 };
+function trim(busName, name) {
+  const g = context().createGain();
+  g.gain.value = dbToGain(TRIM_DB[name] ?? 0);
+  g.connect(bus[busName]);
+  return g;
+}
+
+function bell(out, at, f, vol) {
+  osc(out, at, f, 0.9, { type: 'sine', vol, attack: 0.003, release: 0.85 });
+  osc(out, at, f * 2.76, 0.4, { type: 'sine', vol: vol * 0.25, attack: 0.003, release: 0.38 });
+  osc(out, at, f * 5.4, 0.15, { type: 'sine', vol: vol * 0.1, attack: 0.002, release: 0.14 });
+}
 
 const SOUNDS = {
-  tick:    () => { tone(880, 0, 0.07); tone(1320, 0.06, 0.12); },                       // a mission task is done
-  discover:() => { [660, 880, 1100].forEach((f, i) => tone(f, i * 0.08, 0.25, { type: 'sine', volume: 0.06 })); }, // discovery card
-  memory:  () => { tone(523, 0, 0.5, { type: 'sine', volume: 0.06 }); tone(784, 0.12, 0.6, { type: 'sine', volume: 0.05 }); }, // memory photo
-  park:    () => { tone(700, 0, 0.08); tone(1050, 0.1, 0.16); },                       // a neat park at a stop
-  land:    () => { burst(0, 0.35, { freq: 180, volume: 0.35 }); },                       // landing thud (inside the machine, so also on the Moon)
-  bounce:  () => { burst(0, 0.25, { freq: 260, volume: 0.3 }); tone(90, 0, 0.2, { type: 'sine', volume: 0.12 }); }, // airbag bounce
-  crack:   () => { burst(0, 0.12, { freq: 2500, type: 'bandpass', q: 2, volume: 0.35 }); tone(300, 0, 0.15, { type: 'square', to: 120, volume: 0.05 }); }, // fender or blade breaks
-  crash:   () => { burst(0, 0.6, { freq: 220, volume: 0.45 }); burst(0.02, 0.2, { freq: 1800, type: 'bandpass', volume: 0.2 }); },
-  rumble:  () => { burst(0, 6, { freq: 90, volume: 0.5 }); },                            // launch
-  powerdown: () => { tone(600, 0, 1.4, { type: 'sine', to: 80, volume: 0.07 }); },       // the end of a machine
-  static:  () => { burst(0, 0.8, { freq: 3000, type: 'bandpass', q: 0.6, volume: 0.08 }); }, // radio before the Viking call
+  tick: () => { const o = trim('ui', 'tick'); bell(o, 0, 1046, 0.55); bell(o, 0.11, 1568, 0.55); },
+  discover: () => {
+    const o = trim('ui', 'tick');
+    [784, 988, 1175, 1568, 1976].forEach((f, i) => osc(o, i * 0.05, f, 0.32, { type: 'triangle', vol: 0.35, attack: 0.003, release: 0.28 }));
+    osc(o, 0.2, 2637, 0.9, { type: 'sine', vol: 0.12, attack: 0.15, release: 0.6 });
+    osc(o, 0.2, 1318, 0.9, { type: 'sine', vol: 0.18, attack: 0.15, release: 0.6 });
+  },
+  memory: () => {
+    const o = trim('ui', 'memory');
+    hiss(o, 0, 0.025, { type: 'highpass', freq: 1800, vol: 0.9 });
+    hiss(o, 0.09, 0.04, { type: 'bandpass', freq: 1200, q: 1.5, vol: 0.8 });
+    [262, 330, 392].forEach((f) => osc(o, 0.16, f, 1.1, { type: 'sine', vol: 0.22, attack: 0.08, release: 0.8 }));
+  },
+  park: () => { const o = trim('ui', 'park'); osc(o, 0, 1320, 0.09, { type: 'square', vol: 0.3 }); osc(o, 0.16, 1320, 0.09, { type: 'square', vol: 0.3 }); },
+  land: () => {
+    const o = trim('event', 'park');
+    const t = osc(o, 0, 140, 0.45, { type: 'sine', vol: 0.9, slide: 0.3, attack: 0.003, release: 0.35 });
+    osc(o, 0, 280, 0.2, { type: 'triangle', vol: 0.35, slide: 0.3, attack: 0.003 });
+    hiss(o, 0, 0.5, { type: 'lowpass', freq: 900, vol: 0.5, sweepTo: 200 });
+    return t;
+  },
+  bounce: () => {
+    const o = trim('event', 'bounce');
+    const b = osc(o, 0, 220, 0.5, { type: 'sine', vol: 0.75, attack: 0.003, release: 0.4 });
+    const t = context().currentTime;
+    b.frequency.setValueAtTime(220, t);
+    b.frequency.exponentialRampToValueAtTime(110, t + 0.08);
+    b.frequency.exponentialRampToValueAtTime(260, t + 0.22);
+    b.frequency.exponentialRampToValueAtTime(150, t + 0.5);
+    hiss(o, 0, 0.18, { type: 'lowpass', freq: 500, vol: 0.6 });
+  },
+  crack: () => {
+    const o = trim('event', 'crack');
+    hiss(o, 0, 0.06, { type: 'highpass', freq: 2500, vol: 1 });
+    osc(o, 0, 2350, 0.5, { type: 'sine', vol: 0.3, attack: 0.001, release: 0.45 });
+    osc(o, 0, 3710, 0.35, { type: 'sine', vol: 0.2, attack: 0.001, release: 0.3 });
+    osc(o, 0.01, 180, 0.12, { type: 'square', vol: 0.25, slide: 0.5 });
+  },
+  crash: () => {
+    const o = trim('event', 'crash');
+    osc(o, 0, 120, 0.6, { type: 'sine', vol: 1, slide: 0.35, attack: 0.002, release: 0.5 });
+    hiss(o, 0, 0.9, { type: 'lowpass', freq: 2200, vol: 0.9, sweepTo: 250 });
+    [1830, 2710, 3390, 4420, 2150].forEach((f, i) => osc(o, 0.02 + i * 0.045, f, 0.4, { type: 'sine', vol: 0.18, attack: 0.001, release: 0.38 }));
+    hiss(o, 0.25, 1.6, { type: 'lowpass', freq: 220, vol: 0.5, attack: 0.1 });
+  },
+  rumble: () => {
+    const o = trim('event', 'rumble');
+    const c = context();
+    const t = c.currentTime;
+    // Roar: noise that opens up and grows for 4 s, then holds.
+    const src = noise();
+    const f = c.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(200, t);
+    f.frequency.exponentialRampToValueAtTime(1600, t + 4);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(1.0, t + 4);
+    g.gain.setValueAtTime(1.0, t + 5.4);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 6.5);
+    src.connect(f).connect(g).connect(o);
+    src.start(t);
+    src.stop(t + 6.6);
+    // Deep shake under it, and crackle on top.
+    osc(o, 0, 55, 6.4, { type: 'sawtooth', vol: 0.5, slide: 0.75, attack: 2.5, release: 1 });
+    osc(o, 0, 41, 6.4, { type: 'sine', vol: 0.7, attack: 2, release: 1 });
+    for (let i = 0; i < 70; i++) hiss(o, 1 + (i * 0.073) % 5, 0.02, { type: 'bandpass', freq: 1500 + (i % 7) * 300, q: 1, vol: 0.35 });
+  },
+  powerdown: () => {
+    const o = trim('event', 'powerdown');
+    const c = context();
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(3000, c.currentTime);
+    lp.frequency.exponentialRampToValueAtTime(120, c.currentTime + 1.6);
+    lp.connect(o);
+    osc(lp, 0, 880, 1.6, { type: 'sawtooth', vol: 0.45, slide: 0.12, attack: 0.01, release: 0.5 });
+    osc(lp, 0, 1320, 1.2, { type: 'sine', vol: 0.2, slide: 0.15, attack: 0.01 });
+    hiss(o, 1.62, 0.02, { type: 'bandpass', freq: 1800, q: 2, vol: 0.6 });
+  },
+  static: () => {
+    const o = trim('event', 'static');
+    hiss(o, 0, 0.9, { type: 'bandpass', freq: 2600, q: 0.5, vol: 0.4, attack: 0.02 });
+    for (let i = 0; i < 9; i++) hiss(o, i * 0.09 + (i % 2) * 0.03, 0.01, { type: 'highpass', freq: 2500, vol: 0.6 });
+  },
 };
-
-// Replace a one-shot with a real file by adding it here: name -> path. Missing files fall back to the code sound.
-const FILES = {};
-const fileCache = {};
-async function playFile(name) {
-  const c = context();
-  if (!fileCache[name]) {
-    fileCache[name] = fetch(FILES[name]).then((r) => r.arrayBuffer()).then((b) => c.decodeAudioData(b));
-  }
-  const src = c.createBufferSource();
-  src.buffer = await fileCache[name];
-  src.connect(master);
-  src.start();
-}
 
 // ---------- loops: world background, wind, hum, rotor ----------
 
 const loops = {};
-
-function makeLoop(build) {
-  const c = context();
-  const gain = c.createGain();
-  gain.gain.value = 0;
-  gain.connect(master);
-  const parts = build(c, gain);
-  return { gain, ...parts, on: false };
-}
+const LOOP_BUS = { wind: 'ambience', room: 'ambience', drone: 'ambience', hum: 'event', rotor: 'event' };
+// Level of each loop inside its bus (0..1).
+const LOOP_LEVEL = { wind: 0.9, room: 0.5, drone: 0.7, hum: 0.12, rotor: 0.25 };
 
 const LOOP_BUILDERS = {
   // Thin Mars wind: band-passed noise that slowly breathes. The storm makes it louder and lower.
@@ -367,14 +511,13 @@ const LOOP_BUILDERS = {
   // Soft electric room tone for the factory.
   room: (c, out) => {
     const o = c.createOscillator();
-    o.type = 'sine';
-    o.frequency.value = 60;
+    o.frequency.value = 120;
     const src = noise();
     const f = c.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = 300;
+    f.frequency.value = 400;
     const g = c.createGain();
-    g.gain.value = 0.25;
+    g.gain.value = 0.6;
     o.connect(out);
     src.connect(f).connect(g).connect(out);
     o.start(); src.start();
@@ -384,9 +527,8 @@ const LOOP_BUILDERS = {
   drone: (c, out) => {
     const a = c.createOscillator();
     const b = c.createOscillator();
-    a.type = b.type = 'sine';
-    a.frequency.value = 55;
-    b.frequency.value = 55.4;
+    a.frequency.value = 110;
+    b.frequency.value = 110.6;
     a.connect(out); b.connect(out);
     a.start(); b.start();
     return {};
@@ -395,41 +537,42 @@ const LOOP_BUILDERS = {
   hum: (c, out) => {
     const o = c.createOscillator();
     o.type = 'sawtooth';
-    o.frequency.value = 70;
+    o.frequency.value = 90;
     const f = c.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = 400;
+    f.frequency.value = 600;
     o.connect(f).connect(out);
     o.start();
-    return { osc: o, base: 70, range: 90 };
+    return { osc: o, base: 90, range: 110 };
   },
-  // Rotor buzz for Ingenuity: a fast pulsing tone.
+  // Rotor buzz for Ingenuity.
   rotor: (c, out) => {
     const o = c.createOscillator();
     o.type = 'sawtooth';
     o.frequency.value = 40;
     const f = c.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = 900;
+    f.frequency.value = 1200;
     o.connect(f).connect(out);
     o.start();
-    return { osc: o, base: 30, range: 70 };
+    return { osc: o, base: 30, range: 80 };
   },
 };
 
-const LOOP_VOLUME = { wind: 0.12, room: 0.03, drone: 0.03, hum: 0.04, rotor: 0.07 };
-
-function setLoop(name, on, volume = LOOP_VOLUME[name]) {
+function setLoop(name, on, level = LOOP_LEVEL[name]) {
   if (!LOOP_BUILDERS[name]) return;
+  const c = context();
   if (!loops[name]) {
     if (!on) return;
-    loops[name] = makeLoop(LOOP_BUILDERS[name]);
+    const gain = c.createGain();
+    gain.gain.value = 0;
+    gain.connect(bus[LOOP_BUS[name]]);
+    loops[name] = { gain, ...LOOP_BUILDERS[name](c, gain), on: false };
   }
   const l = loops[name];
-  const c = context();
   l.on = on;
   l.gain.gain.cancelScheduledValues(c.currentTime);
-  l.gain.gain.setTargetAtTime(on ? volume : 0, c.currentTime, on ? 0.4 : 0.6);
+  l.gain.gain.setTargetAtTime(on ? level : 0, c.currentTime, on ? 0.4 : 0.6);
 }
 
 // What each world plays in the background.
@@ -471,15 +614,15 @@ function startMusic(name) {
   musicGain = c.createGain();
   musicGain.gain.value = 0;
   musicGain.gain.setTargetAtTime(1, c.currentTime, 1.2);
-  musicGain.connect(master);
+  musicGain.connect(bus.music);
   const out = musicGain;
   const beat = 60 / cue.bpm;
   let step = 0;
   const playStep = () => {
     const chord = cue.chords[Math.floor(step / 4) % cue.chords.length];
-    if (step % 4 === 0) chord.forEach((f) => tone(f, 0, beat * 4, { type: 'sine', volume: 0.025, out }));
+    if (step % 4 === 0) chord.forEach((f) => osc(out, 0, f, beat * 4, { type: 'sine', vol: 0.18, attack: 0.3, release: 0.8 }));
     const note = cue.melody[step % cue.melody.length];
-    if (note) tone(note, 0, beat * 0.9, { type: cue.wave, volume: 0.03, out });
+    if (note) osc(out, 0, note, beat * 0.9, { type: cue.wave, vol: 0.3, attack: 0.02, release: 0.3 });
     step++;
   };
   playStep();
@@ -494,19 +637,16 @@ function safe(fn) {
 }
 
 // For interface files that do not receive `audio`: import { sfx } from '../audio/audio.js'
-export const sfx = safe((name) => {
-  if (FILES[name]) playFile(name).catch(() => SOUNDS[name]?.());
-  else SOUNDS[name]?.();
-});
+export const sfx = safe((name) => { context(); SOUNDS[name]?.(); });
+
+let windLevel = 0;
 
 export function createAudio() {
   return {
     play: sfx,
-    // A machine says a line: audio.speak('viking', 'Who is driving around up there?') -> { duration, stop() }
     speak: (who, text) => {
       try { return speak(who, text); } catch (err) { console.warn('sound:', err); return { duration: 0, stop() {} }; }
     },
-    // Short voice sample, kept for older code: the machine's sample line.
     beep: safe((who) => { speak(who, VOICE_SAMPLES[who] ?? 'hello'); }),
     setBoost: safe(setBoost),
     setWorld: safe((name) => {
@@ -519,7 +659,8 @@ export function createAudio() {
       const l = loops.wind;
       if (!l || !l.on) return;
       const c = context();
-      l.gain.gain.setTargetAtTime(LOOP_VOLUME.wind * (1 + windLevel * 3), c.currentTime, 0.5);
+      // The storm pushes the wind from the background up to about the level of the voices (x7, about +17 dB).
+      l.gain.gain.setTargetAtTime(LOOP_LEVEL.wind * (1 + windLevel * 6), c.currentTime, 0.5);
       l.filter.frequency.setTargetAtTime(500 - windLevel * 250, c.currentTime, 0.5);
     }),
     loop: safe((name, on) => setLoop(name, !!on)),
@@ -536,5 +677,3 @@ export function createAudio() {
     }),
   };
 }
-
-let windLevel = 0;
