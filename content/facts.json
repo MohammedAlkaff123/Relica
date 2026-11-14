@@ -4,30 +4,305 @@
     "factory": {
       "label": "Earth",
       "place": "Assembly building",
-      "gravity": { "value": 9.82, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "note": "Fact sheet: surface gravity (mean) 9.820 m/s²" },
-      "temperature": { "text": "about 20 °C, clean room", "verified": false, "source": "", "note": "No NASA page found for the clean room temperature. Earth's average is 15 °C (earthfact.html)" },
-      "pressure": { "text": "1 atmosphere (1,014 mbar)", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "note": "Fact sheet: surface pressure 1014 mb" }
+      "gravity": {
+        "value": 9.82,
+        "unit": "m/s²",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
+        "note": "Fact sheet: surface gravity (mean) 9.820 m/s²"
+      },
+      "temperature": {
+        "text": "about 20 °C, clean room",
+        "verified": false,
+        "source": "",
+        "note": "No NASA page found for the clean room temperature. Earth's average is 15 °C (earthfact.html)"
+      },
+      "pressure": {
+        "text": "1 atmosphere (1,014 mbar)",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
+        "note": "Fact sheet: surface pressure 1014 mb"
+      }
     },
     "moon": {
       "label": "The Moon",
       "place": "Taurus–Littrow valley",
-      "gravity": { "value": 1.62, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: surface gravity 1.62 m/s², 0.165 of Earth (one-sixth)" },
-      "temperature": { "text": "about +117 °C day, −178 °C night", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: diurnal range at the equator 95 K to 390 K. The old draft said −130 °C at night, which was wrong" },
-      "pressure": { "text": "almost none (3 × 10⁻¹⁵ bar)", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: surface pressure (night) 3 x 10^-15 bar" }
+      "gravity": {
+        "value": 1.62,
+        "unit": "m/s²",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+        "note": "Fact sheet: surface gravity 1.62 m/s², 0.165 of Earth (one-sixth)"
+      },
+      "temperature": {
+        "text": "about +117 °C day, −178 °C night",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+        "note": "Fact sheet: diurnal range at the equator 95 K to 390 K. The old draft said −130 °C at night, which was wrong"
+      },
+      "pressure": {
+        "text": "almost none (3 × 10⁻¹⁵ bar)",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+        "note": "Fact sheet: surface pressure (night) 3 x 10^-15 bar"
+      }
     },
     "mars": {
       "label": "Mars",
       "place": "Surface",
-      "gravity": { "value": 3.73, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: surface gravity (mean) 3.73 m/s². The old draft said 3.71" },
-      "temperature": { "text": "about −59 °C on average", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: average temperature ~214 K (−59 C)" },
-      "pressure": { "text": "about 6 mbar, under 1% of Earth", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: 6.36 mb at mean radius, 4.0 to 8.7 mb by season. Earth is 1014 mb, so about 0.6%" }
+      "gravity": {
+        "value": 3.73,
+        "unit": "m/s²",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+        "note": "Fact sheet: surface gravity (mean) 3.73 m/s². The old draft said 3.71"
+      },
+      "temperature": {
+        "text": "about −59 °C on average",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+        "note": "Fact sheet: average temperature ~214 K (−59 C)"
+      },
+      "pressure": {
+        "text": "about 6 mbar, under 1% of Earth",
+        "verified": true,
+        "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+        "note": "Fact sheet: 6.36 mb at mean radius, 4.0 to 8.7 mb by season. Earth is 1014 mb, so about 0.6%"
+      }
     },
     "space": {
       "label": "Deep space",
       "place": "Beyond the planets",
-      "gravity": { "value": 0, "unit": "m/s² (drifting)", "verified": false, "source": "", "note": "A game simplification: the probe is in free fall. Not a measured number" },
-      "temperature": { "text": "about −270 °C (2.7 K)", "verified": true, "source": "https://science.nasa.gov/mission/cobe/science/", "note": "COBE measured the cosmic background at 2.725 K" },
-      "pressure": { "text": "vacuum", "verified": false, "source": "", "note": "No NASA page with a number found yet" }
+      "gravity": {
+        "value": 0,
+        "unit": "m/s² (drifting)",
+        "verified": false,
+        "source": "",
+        "note": "A game simplification: the probe is in free fall. Not a measured number"
+      },
+      "temperature": {
+        "text": "about −270 °C (2.7 K)",
+        "verified": true,
+        "source": "https://science.nasa.gov/mission/cobe/science/",
+        "note": "COBE measured the cosmic background at 2.725 K"
+      },
+      "pressure": {
+        "text": "vacuum",
+        "verified": false,
+        "source": "",
+        "note": "No NASA page with a number found yet"
+      }
+    }
+  },
+  "missions": {
+    "_readme": "Owner: Set C (task C-8). Every mission claim in PLAN.md section 12 and every (verify) in STORY.md, checked on 14 Nov 2026. Only claims with verified: true may appear in the game. 'note' says what changed or what to be careful with.",
+    "lrv_missions": {
+      "claim": "The Lunar Roving Vehicle was used on Apollo 15, 16 and 17, in 1971 and 1972",
+      "value": "Apollo 15, 16, 17 · 1971–1972",
+      "verified": true,
+      "source": "https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo_lrv.html",
+      "note": "Also in the pack: 0102627"
+    },
+    "a17_place_date": {
+      "claim": "Apollo 17 landed in the Taurus–Littrow valley in December 1972",
+      "value": "Taurus–Littrow · Dec 1972",
+      "verified": true,
+      "source": "https://www.nasa.gov/history/50-years-ago-apollo-17-lands-at-taurus-littrow/"
+    },
+    "a17_fender": {
+      "claim": "A rear fender broke on the first moonwalk; the crew built a new one from four maps, duct tape and clamps",
+      "value": "Fender repaired with maps and clamps",
+      "verified": true,
+      "source": "https://www.hq.nasa.gov/alsj/a17/A17NewFender.html",
+      "note": "Photo as17-137-20979 (12 Dec 1972) shows the repair. A hammer knocked part of the fender off during EVA-1. The idea for the repair came from Mission Control"
+    },
+    "moon_dust_arcs": {
+      "claim": "With no air on the Moon, dust kicked up by the wheels flies in arcs and falls back; it does not hang in clouds",
+      "value": "Ballistic dust, over 2 m high from the Apollo 17 rover",
+      "verified": true,
+      "source": "https://www.nasa.gov/wp-content/uploads/2015/06/exploration_rover_concepts_grc.pdf",
+      "note": "NASA rover paper: lifted particles do not remain suspended; each follows a ballistic trajectory"
+    },
+    "rover_filmed_liftoff": {
+      "claim": "The rover's TV camera, aimed from Mission Control, filmed the Apollo 17 lunar module lift-off",
+      "value": "Lift-off filmed from the rover, December 1972",
+      "verified": true,
+      "source": "https://www.nasa.gov/history/50-years-ago-apollo-17-heads-home-to-earth/",
+      "note": "Ed Fendell at Mission Control aimed the camera remotely. The rover was parked at the VIP site so the world could watch. The exact date (14 Dec) was not on the page; use 'December 1972'"
+    },
+    "opportunity_landing": {
+      "claim": "Opportunity landed in January 2004 at Meridiani Planum, inside a small crater called Eagle, after bouncing on airbags",
+      "value": "Jan 2004 · Meridiani Planum · Eagle crater",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/",
+      "note": "NASA gives 24 Jan 2004 (US time), which is 25 Jan in UTC. Use 'January 2004'"
+    },
+    "opportunity_planned": {
+      "claim": "Opportunity was designed for 90 sols",
+      "value": "90 sols (about 3 months)",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/"
+    },
+    "opportunity_spherules": {
+      "claim": "The small round pebbles ('blueberries') are hematite that formed in water",
+      "value": "Hematite spherules formed in water",
+      "verified": true,
+      "source": "https://astrobiology.nasa.gov/news/check-type-iron-blueberries/",
+      "note": "Say 'formed in water'. The exact way they formed is still discussed"
+    },
+    "opportunity_wind_cleaning": {
+      "claim": "Wind cleaned dust off Opportunity's solar panels and gave it more power",
+      "value": "Wind cleaning events",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/",
+      "note": "Mission page: the wind had cleaned much of the dust off the rover's solar panels. Driving through whirlwinds on purpose is a game idea, not a real event"
+    },
+    "opportunity_sol_4712": {
+      "claim": "Opportunity was still working on sol 4,712 (26 April 2017), next to Orion crater on the rim of Endeavour crater",
+      "value": "Sol 4,712 · April 2017",
+      "verified": true,
+      "source": "https://images.nasa.gov/details/PIA21708",
+      "note": "In the pack: PIA21706, PIA21707, PIA21708"
+    },
+    "orion_crater_name": {
+      "claim": "Orion crater on Mars was named after the Apollo 16 lunar module",
+      "value": "Named after the Apollo 16 lunar module",
+      "verified": true,
+      "source": "https://images.nasa.gov/details/PIA21708"
+    },
+    "opportunity_last_contact": {
+      "claim": "Opportunity's last signal was on 10 June 2018, during a planet-wide dust storm",
+      "value": "10 June 2018",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/"
+    },
+    "opportunity_end": {
+      "claim": "NASA declared the mission over on 13 February 2019",
+      "value": "13 Feb 2019",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/"
+    },
+    "opportunity_distance": {
+      "claim": "Opportunity drove about 45 km",
+      "value": "45.16 km (28.06 miles)",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mer-opportunity/"
+    },
+    "viking_launch": {
+      "claim": "Viking 1 launched on 20 August 1975",
+      "value": "20 Aug 1975",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/viking-1/"
+    },
+    "viking_landing": {
+      "claim": "The Viking 1 lander touched down on 20 July 1976 in Chryse Planitia",
+      "value": "20 July 1976 · Chryse Planitia",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/viking-1/"
+    },
+    "viking_planned": {
+      "claim": "The Viking landers were designed to work for about 90 days",
+      "value": "About 90 days",
+      "verified": true,
+      "source": "https://www3.jpl.nasa.gov/missions/past/viking.html",
+      "note": "Some NASA pages say 'a minimum of 90 days'"
+    },
+    "viking_end": {
+      "claim": "The Viking 1 lander worked until November 1982, more than six years",
+      "value": "Until 11 Nov 1982 · over 6 years",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/viking-1/",
+      "note": "So the line 'I gave them six years' is right"
+    },
+    "ingenuity_arrival": {
+      "claim": "Ingenuity reached Mars on 18 February 2021, attached under the Perseverance rover, in Jezero crater",
+      "value": "18 Feb 2021 · Jezero crater",
+      "verified": true,
+      "source": "https://www.nasa.gov/solar-system/6-things-to-know-about-nasas-ingenuity-mars-helicopter/"
+    },
+    "ingenuity_cameras": {
+      "claim": "Ingenuity has two cameras on its underside",
+      "value": "Two cameras underneath",
+      "verified": true,
+      "source": "https://images.nasa.gov/details/PIA23969"
+    },
+    "ingenuity_first_flight": {
+      "claim": "First flight on 19 April 2021: it climbed to 3 m, hovered for 30 seconds and landed",
+      "value": "19 Apr 2021 · 3 m · 30 s hover",
+      "verified": true,
+      "source": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/",
+      "note": "The first powered, controlled flight on another planet"
+    },
+    "ingenuity_shadow": {
+      "claim": "Ingenuity photographed its own shadow while hovering on its first flight",
+      "value": "Shadow photo from the first flight",
+      "verified": true,
+      "source": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/"
+    },
+    "ingenuity_planned": {
+      "claim": "Ingenuity was planned for up to 5 test flights over 30 days",
+      "value": "Up to 5 flights in 30 days",
+      "verified": true,
+      "source": "https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/"
+    },
+    "ingenuity_total": {
+      "claim": "Ingenuity made 72 flights in almost three years; the last was on 18 January 2024",
+      "value": "72 flights · last 18 Jan 2024",
+      "verified": true,
+      "source": "https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/"
+    },
+    "ingenuity_last_flight": {
+      "claim": "On flight 72 the ground was steep, featureless sand ripples; the navigation system lost track, the landing was hard and the rotor blades broke",
+      "value": "Featureless sand ripples · all four blades broke",
+      "verified": true,
+      "source": "https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/",
+      "note": "STORY.md says 'smooth sand' and 'a blade tip snaps'. NASA says 'featureless sand ripples', and all four blades broke about a third of the way from the tip"
+    },
+    "ingenuity_battery": {
+      "claim": "Flights were short: the solar panel charged the batteries for about one 90-second flight per Martian day",
+      "value": "About 90 s per flight (design)",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/",
+      "note": "Later flights lasted up to about 2–3 minutes"
+    },
+    "mars_thin_air": {
+      "claim": "The air on Mars is less than 1% as thick as Earth's",
+      "value": "About 0.6% of Earth",
+      "verified": true,
+      "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "note": "6.36 mbar against Earth's 1014 mbar. Say 'less than 1%', not 'about 1%'"
+    },
+    "pioneer_builder": {
+      "claim": "Pioneer 10 was built by TRW and delivered to Cape Kennedy in February 1972",
+      "value": "Built by TRW · Feb 1972",
+      "verified": true,
+      "source": "https://images.nasa.gov/details/ARC-1972-AC72-2134",
+      "note": "In the pack: ARC-1972-AC72-2134, ARC-1973-AC73-9019"
+    },
+    "pioneer_plaque": {
+      "claim": "Pioneer 10 carries a plaque that shows where and when it came from",
+      "value": "The Pioneer plaque",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/pioneer-10/"
+    },
+    "pioneer_launch": {
+      "claim": "Pioneer 10 launched on 2 March 1972, the same year as Apollo 17",
+      "value": "2 Mar 1972",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/pioneer-10/",
+      "note": "So 'the same year as a little rover on the Moon' is right"
+    },
+    "pioneer_jupiter": {
+      "claim": "Pioneer 10 flew past Jupiter in December 1973",
+      "value": "Closest approach 4 Dec 1973",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/pioneer-10/"
+    },
+    "pioneer_last_signal": {
+      "claim": "Pioneer 10's last signal reached Earth on 23 January 2003",
+      "value": "23 Jan 2003",
+      "verified": true,
+      "source": "https://science.nasa.gov/mission/pioneer-10/"
     }
   }
 }
