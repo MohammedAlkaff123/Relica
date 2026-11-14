@@ -31,3 +31,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdulkarim | Claude Code | B-2: script that builds the Moon rover model from simple shapes (tools/models/build_lrv.mjs), shaped after the NASA pack photos; checked by eye in the game |
 | 14 Nov | Abdulkarim | Claude Code | B-6: props (createProp) for the Lunar Module, astronaut, Perseverance, airbags, lander petals, marker, flight ring, rocks, pebbles and sample box; checked by eye |
 | 14 Nov | Abdulkarim | Claude Code | B-4: head and eye turning (lookAt, lookBack) in character.js; checked by eye on the Moon rover, Opportunity, Viking and Ingenuity |
+| 14 Nov | Abdulkarim | Claude Code | B-8: effects (wheel dust, fender dust shower, dust storm, lift-off burst, rotor dust) and the blade break; each one checked by eye in a test scene |
