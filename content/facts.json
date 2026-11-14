@@ -1,33 +1,33 @@
 {
-  "_readme": "Owner: Set C. One place for every real-world number. The HUD shows these and the physics uses the same gravity. Set \"verified\": true and fill \"source\" with the NASA page only after you have checked the number yourself.",
+  "_readme": "Owner: Set C. One place for every real-world number. The HUD shows these and the physics uses the same gravity. Set \"verified\": true and fill \"source\" with the NASA page only after you have checked the number yourself. Checked on 14 Nov 2026 against the NASA planetary fact sheets (nssdc.gsfc.nasa.gov).",
   "worlds": {
     "factory": {
       "label": "Earth",
       "place": "Assembly building",
-      "gravity": { "value": 9.81, "unit": "m/s²", "verified": false, "source": "" },
-      "temperature": { "text": "about 20 °C, clean room", "verified": false, "source": "" },
-      "pressure": { "text": "1 atmosphere", "verified": false, "source": "" }
+      "gravity": { "value": 9.82, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "note": "Fact sheet: surface gravity (mean) 9.820 m/s²" },
+      "temperature": { "text": "about 20 °C, clean room", "verified": false, "source": "", "note": "No NASA page found for the clean room temperature. Earth's average is 15 °C (earthfact.html)" },
+      "pressure": { "text": "1 atmosphere (1,014 mbar)", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "note": "Fact sheet: surface pressure 1014 mb" }
     },
     "moon": {
       "label": "The Moon",
       "place": "Taurus–Littrow valley",
-      "gravity": { "value": 1.62, "unit": "m/s²", "verified": false, "source": "" },
-      "temperature": { "text": "about +120 °C sun, −130 °C night", "verified": false, "source": "" },
-      "pressure": { "text": "practically zero", "verified": false, "source": "" }
+      "gravity": { "value": 1.62, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: surface gravity 1.62 m/s², 0.165 of Earth (one-sixth)" },
+      "temperature": { "text": "about +117 °C day, −178 °C night", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: diurnal range at the equator 95 K to 390 K. The old draft said −130 °C at night, which was wrong" },
+      "pressure": { "text": "almost none (3 × 10⁻¹⁵ bar)", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "note": "Fact sheet: surface pressure (night) 3 x 10^-15 bar" }
     },
     "mars": {
       "label": "Mars",
       "place": "Surface",
-      "gravity": { "value": 3.71, "unit": "m/s²", "verified": false, "source": "" },
-      "temperature": { "text": "about −60 °C on average", "verified": false, "source": "" },
-      "pressure": { "text": "about 6 mbar, under 1% of Earth", "verified": false, "source": "" }
+      "gravity": { "value": 3.73, "unit": "m/s²", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: surface gravity (mean) 3.73 m/s². The old draft said 3.71" },
+      "temperature": { "text": "about −59 °C on average", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: average temperature ~214 K (−59 C)" },
+      "pressure": { "text": "about 6 mbar, under 1% of Earth", "verified": true, "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "note": "Fact sheet: 6.36 mb at mean radius, 4.0 to 8.7 mb by season. Earth is 1014 mb, so about 0.6%" }
     },
     "space": {
       "label": "Deep space",
       "place": "Beyond the planets",
-      "gravity": { "value": 0, "unit": "m/s² (drifting)", "verified": false, "source": "" },
-      "temperature": { "text": "near absolute zero", "verified": false, "source": "" },
-      "pressure": { "text": "vacuum", "verified": false, "source": "" }
+      "gravity": { "value": 0, "unit": "m/s² (drifting)", "verified": false, "source": "", "note": "A game simplification: the probe is in free fall. Not a measured number" },
+      "temperature": { "text": "about −270 °C (2.7 K)", "verified": true, "source": "https://science.nasa.gov/mission/cobe/science/", "note": "COBE measured the cosmic background at 2.725 K" },
+      "pressure": { "text": "vacuum", "verified": false, "source": "", "note": "No NASA page with a number found yet" }
     }
   }
 }
