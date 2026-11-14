@@ -114,7 +114,8 @@ Either test on the venue network early, or download the four files listed in `in
 - No NASA logos or insignia on models or in the interface.
 - No AI-generated images or video (they would need a watermark).
 - Nobody under 18 seen or heard. `nasa_data/.../viking_landers/NHQ201707210014.jpg` shows a child: never use it.
-- Every use of AI goes in [AI_USE.md](AI_USE.md).
+- AI tools leave no trace of themselves in the work: no co-author or "generated with" lines in commits or pull requests. The rule for the tools is in [AGENTS.md](AGENTS.md).
+- Every use of AI goes in [AI_USE.md](AI_USE.md), our disclosure log. The challenge requires it.
 - A number that is not verified against a NASA page does not ship. `content/facts.json` tracks this.
 
 ## Credits

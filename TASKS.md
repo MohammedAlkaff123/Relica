@@ -15,7 +15,12 @@ Read [STORY.md](STORY.md) first. It says what the game is. This file says who bu
 - **Hour 0, everyone (30 minutes).** Read STORY.md and your own section here. Run the game with `python serve.py`. Press 1–5 to see every chapter. Tell the directors anything you disagree with now, not at hour 12.
 - **Stay in your folders.** If you need a change in someone else's file, ask them. This is what keeps five people from breaking each other's work.
 - **Pull before you push**, commit small and often, and never push something that stops the game from starting.
-- **Log AI use** in `AI_USE.md` every time, with your name.
+- **AI tools leave no trace of themselves in the work.** The rule is written for the tools in `AGENTS.md` (Claude Code reads it through `CLAUDE.md`). If your tool does not read that file, paste the rule into its instructions:
+  - Commits are authored by you alone. No "Co-Authored-By", "Generated with" or similar lines in commit messages or pull requests.
+  - No chat logs or prompt dumps in the repo.
+  - Code comments and tool config files (`.claude/`, `CLAUDE.md`, `AGENTS.md`) stay.
+  - Check `git log` before every push.
+- **Log AI use** in `AI_USE.md` every time, with your name. This is the one place AI is named, because the challenge requires us to disclose it.
 - **Understand your own part.** A judge may ask any of you how your piece works.
 - **Stuck for 20 minutes?** Say so in the group chat. Do not lose an hour quietly.
 
