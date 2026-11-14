@@ -107,24 +107,36 @@ export default makeChapter({
       await s.photo('PIA23882');
 
       // Flights 2 and 3: scout the road and mark the dangers. The route bends around each mark.
+      await s.card('Beyond the five-flight demonstration', 'Now an aerial scout for Perseverance · الآن تستكشف الطريق لبيرسيفيرانس');
+      ctx.hud.setStat('phase', 'Extended mission · compressed scouting route');
       await s.say('ch3_scout');
       const places = placesOf('jezero');
       const at = (name) => { const p = places.find((q) => q.name === name); return p ? [p.x, p.z, p.r] : [0, 50, 10]; };
       const dangers = DANGERS.map((d) => ({ ...d, at: at(d.place), marked: false }));
       const route = makeRoute(s, [ROVER_START, ...ROAD_ORDER.map((n) => at(n).slice(0, 2)), DEST]);
-      let marked = 0;
+      let marked = 0, recoveryTime = 0, recovered = false;
+      const stopRecovery = s.every((dt) => {
+        if (recovered || flight !== 6 || !heli.flying) return;
+        recoveryTime += dt;
+        const pulse = recoveryTime < 3 ? 0 : Math.sin(Math.min(1,(recoveryTime-3)/4)*Math.PI);
+        heli.drift.tilt = pulse*.18; heli.drift.x = pulse*.7;
+        if (pulse>.6) s.hero.setEmotion('scared');
+        if (recoveryTime>=7) { recovered=true;heli.drift.tilt=heli.drift.x=0;s.hero.setEmotion('happy');s.say('ch3_recover',{keepControls:true}).catch(()=>{}); }
+      });
       for (const f of [2, 3]) {
-        flight = f;
+        flight = f + 4;
         showFlight();
         heli.battery = 1;
         s.unlockControls();
         for (const d of dangers.filter((x) => x.flight === f)) {
           await s.goTo(d.at[0], d.at[1], `Fly over ${d.name}`, { radius: 6 });
-          ctx.hud.setObjective(`Press E above ${d.name} to mark it`);
+          ctx.navigation.set(d.at[0], d.at[1], d.name, { radius: 6, arrival: 'Press E: report the hazard' });
+          ctx.hud.setObjective(`Press E above ${d.name} to report it to the rover`);
           await s.until(() => {
             const p = heli.position;
             return heli.flying && ctx.input.pressed('KeyE') && Math.hypot(p.x - d.at[0], p.z - d.at[1]) < Math.max(8, d.at[2]);
           });
+          ctx.navigation.clear();
           d.marked = true;
           s.prop('flag', d.at[0], d.at[1]);
           route.avoid(d.at[0], d.at[1], d.at[2]);
@@ -150,6 +162,7 @@ export default makeChapter({
       m.discover('ingenuity_72');
       flight = MISSION.total - 1;
       showFlight();
+      stopRecovery(); heli.drift.tilt=heli.drift.x=0;
       route.dispose();
     } else {
       await s.fade(true, 0);
@@ -169,7 +182,7 @@ export default makeChapter({
     s.hero.setEmotion('happy');
     s.unlockControls();
     s.goTo(FAR[0], FAR[1], 'Last flight: scout the smooth sand ahead', { radius: 4 }).catch(() => {});
-    let air = 0;
+    let air = 0, lastPush = null;
     await s.until((dt) => {
       if (heli.flying || air > 0) air += dt; // counts from take-off, even if it lands again
       if (air > 10) {
@@ -177,6 +190,7 @@ export default makeChapter({
         heli.drift.x = 2.6 * k; heli.drift.z = -1.2 * k; heli.drift.tilt = 0.45 * k;
         if (k > 0.3) s.hero.setEmotion('scared');
       }
+      if (air > 12 && !lastPush) lastPush=s.say('ch3_last_push',{keepControls:true});
       if (air > 16) heli.noLift = true;
       return heli.noLift && !heli.flying;
     });
@@ -188,17 +202,18 @@ export default makeChapter({
     s.sound('crash');
     s.sound('crack');
     s.hero.setEmotion('sad');
+    s.lockControls();
+    if(lastPush) await lastPush;
     await s.shot('last_flight');
+    s.unlockControls();
+    ctx.hud.setObjective('Space: try to lift off again');
+    await s.until(()=>ctx.input.pressed('Space'));
     await s.say('ch3_crash');
 
     // On the sand. Space only makes the rotor twitch. Nothing else.
-    let tries = 0, down = false;
-    await s.until(() => {
-      const now = ctx.input.down('Space');
-      if (now && !down) tries++;
-      down = now;
-      return tries >= 2;
-    });
+    ctx.hud.setObjective('Space: try once more · Enter: let the rover continue');
+    await s.until(() => ctx.input.pressed('Space', 'Enter'));
+    ctx.hud.setObjective('');
     await s.wait(1.5);
 
     // Far away, the big rover turns its head, then drives on.
@@ -218,6 +233,7 @@ export default makeChapter({
     const heli = s.controller;
     if (!heli) return;
     if (!heli.flying && !heli.broken && heli.spin === 0) heli.battery = Math.min(1, heli.battery + dt / 20); // sun recharges on the ground
+    if (heli.recharging && s.controls) ctx.hud.setObjective(`Solar recharge: ${Math.round(heli.battery * 100)}% · lift resumes at 35%`);
     const alt = heli.altitude.toFixed(1) + ' m';
     if (alt !== s.altShown) { s.altShown = alt; ctx.hud.setStat('altitude', alt); }
     const pct = Math.round(heli.battery * 100);
@@ -238,6 +254,7 @@ function makePad(s, x, z) {
 // Resolves with { battery } at the moment of landing.
 async function land(s, ctx, pad, text) {
   const heli = s.controller;
+  ctx.navigation.set(pad.x, pad.z, 'Landing pad', { radius: 2.6, arrival: 'Let go of Space to land' });
   ctx.hud.setObjective(text);
   await s.until(() => {
     const p = heli.position;
@@ -249,6 +266,7 @@ async function land(s, ctx, pad, text) {
     }
     return onPad && !heli.flying && heli.speed < 0.6;
   });
+  ctx.navigation.clear();
   const battery = heli.battery;
   ctx.hud.setObjective('');
   s.hero.setEmotion('happy');

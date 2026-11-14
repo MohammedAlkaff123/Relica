@@ -17,8 +17,8 @@
       "ar": "رحلوا عنها… ولم ينسوها."
     },
     "truth": {
-      "en": "The conversations are imagined. The machines, the places, the dates and the photos are real.",
-      "ar": "تخيّلنا هذه الحوارات. أمّا الآلات والأماكن والتواريخ والصور فحقيقية."
+      "en": "The voices and playable scenes are imagined. Mission history and photos come from NASA sources.",
+      "ar": "الأصوات والمشاهد التفاعلية متخيّلة. تاريخ المهمات والصور من مصادر ناسا."
     }
   },
   "credits": [
@@ -61,7 +61,7 @@
     {
       "heading": "Facts",
       "lines": [
-        "Every number and date is checked against a NASA page. The links are in content/facts.json"
+        "Mission facts and NASA sources are listed in content/facts.json. Controls and compressed timelines are storytelling devices."
       ]
     },
     {

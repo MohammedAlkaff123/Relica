@@ -1,4 +1,4 @@
-// Epilogue: Pioneer 10. 1:15. No physics, the probe just drifts. Beat sheet: STORY.md section 2.
+// Epilogue: Pioneer 10. A 1973 Jupiter memory, then an imagined listening scene. Target 1:35.
 // Owner: Set A.
 //
 // a dish in the dark -> A/D turn it to find the Sun, now only a bright star (faint voices grow as it
@@ -10,6 +10,9 @@
 // Mission "Listen" (STORY.md section 8): find the Sun, hold the signal.
 import { makeChapter } from './_stage.js';
 import { mission } from './_mission.js';
+import { photographJupiter } from './_pioneerPhoto.js';
+import { rememberTheMachines } from './_remembrance.js';
+import { el } from '../ui/dom.js';
 
 const ALIGN = (5 * Math.PI) / 180; // must point within 5 degrees
 const VOICES = ['lrv', 'viking', 'opportunity', 'ingenuity'];
@@ -31,13 +34,20 @@ export default makeChapter({
     const dir = s.env.sunDirection;
     s.sunYaw = dir ? Math.atan2(dir.x, dir.z) : 2.3;
     if (!dir) s.prop('sun').position.set(Math.sin(s.sunYaw) * 900, 30, Math.cos(s.sunYaw) * 900);
-    ctx.hud.setStat('date', 'Today');
     s.spinRate = 0;
+    await photographJupiter(s, ctx);
+    ctx.hud.setStat('date', 'Last signal: 2003');
     const m = mission(ctx, 'epilogue'); // tasks: 0 find the Sun, 1 hold the signal
 
     s.hero.setEmotion('sleepy');
     await s.do(ctx.card.chapter('epilogue'));
     await s.say('ep_drift');
+
+    const fiction = el('div', 'fiction-label', document.getElementById('ui'));
+    el('span', '', fiction, 'Imagined conversation');
+    const ar = el('span', '', fiction, 'حوار متخيّل');
+    ar.lang = 'ar'; ar.dir = 'rtl';
+    s.onDispose(() => fiction.remove());
 
     s.hero.setEmotion('curious');
     s.unlockControls();
@@ -62,18 +72,16 @@ export default makeChapter({
     ctx.hud.setObjective('');
     s.hero.setEmotion('happy');
     m.done(1);
-    s.hero.talk(true);
     // As each voice arrives: where that machine rests today. Plays with the voices if it exists.
-    await Promise.all([s.shot('where_they_are'), s.say('ep_voices')]);
-    s.hero.talk(false);
+    await rememberTheMachines(s, ctx);
     s.hero.setEmotion('sleepy');
     await s.say('ep_last');
     ctx.audio.music?.('ending');
     s.onDispose(() => ctx.audio.music?.(null));
     await s.shot('ending');
-    await s.photo('ARC-1972-AC72-2135');
-    await s.do(ctx.memory.wall());
+    fiction.remove();
     await s.do(ctx.card.ending());
+    await s.do(ctx.memory.wall());
     await s.do(ctx.card.credits());
     ctx.hud.setObjective('The end. Press 1 to play again');
   },

@@ -1,11 +1,87 @@
 {
-  "_readme": "Owner: Moayad. Placeholder shot: rise out of the storm, pan across Mars, zoom toward Jezero.",
+  "_readme": "Owner: Moayad. Authored camera; metres relative to the anchor, seconds, degrees. Named look targets follow the bound object. cut keys change instantly.",
   "letterbox": true,
-  "years": [2018, 2021],
+  "local": true,
   "keys": [
-    { "t": 0,   "pos": [2.5, 1.2, -4],  "look": [0, 0.8, 0],     "fov": 55, "shake": 1.2 },
-    { "t": 3.0, "pos": [2.5, 14, -10],  "look": [0, 6, 40],      "fov": 55, "shake": 0.8 },
-    { "t": 5.5, "pos": [2.5, 16, -10],  "look": [-60, 2, 80],    "fov": 45, "shake": 0.7 },
-    { "t": 8.0, "pos": [2.5, 16, -10],  "look": [-60, 2, 80],    "fov": 8,  "shake": 0.25 }
+    {
+      "t": 0,
+      "pos": [
+        -2,
+        1,
+        -3
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 45,
+      "shake": 1.2
+    },
+    {
+      "t": 3,
+      "pos": [
+        -2,
+        12,
+        -3
+      ],
+      "look": [
+        0,
+        8,
+        20
+      ],
+      "fov": 45,
+      "shake": 0.8
+    },
+    {
+      "t": 5.5,
+      "pos": [
+        -2,
+        30,
+        -3
+      ],
+      "look": [
+        50,
+        26,
+        90
+      ],
+      "fov": 45,
+      "shake": 0.6
+    },
+    {
+      "t": 8,
+      "pos": [
+        -2,
+        30,
+        -3
+      ],
+      "look": [
+        50,
+        26,
+        90
+      ],
+      "fov": 8,
+      "shake": 0.1
+    },
+    {
+      "t": 10,
+      "pos": [
+        -2,
+        30,
+        -3
+      ],
+      "look": [
+        50,
+        26,
+        90
+      ],
+      "fov": 8,
+      "shake": 0,
+      "black": 1
+    }
+  ],
+  "years": [
+    2018,
+    2021
   ]
 }

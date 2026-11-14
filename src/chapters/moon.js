@@ -55,6 +55,7 @@ function addSampleBox(s, n) {
   b.position.set(0, s.hero.half[1] * 0.5 + 0.14 + (n - 1) * 0.3, -s.hero.half[2] + 0.3);
   b.rotation.set(0, (n % 2) * 0.15, 0);
   s.mission.progress(1, n, 3);
+  s.counter('sample boxes', n, 3);
 }
 
 async function climbOn(stage, crew) {
@@ -72,7 +73,8 @@ export default makeChapter({
 
   async script(s, ctx, opts) {
     const lm = s.prop('lunarModule', LM[0], LM[1], 0);
-    // The crew waits beside the rover, one each side, facing it. Two steps and they are aboard.
+    s.actors.lunarModule = lm;
+    // The crew waits beside the rover, one each side, facing it.
     const crew = [s.prop('astronaut', START[0] - 2, START[1] + 0.2, Math.PI / 2), s.prop('astronaut', START[0] + 2, START[1] + 0.2, -Math.PI / 2)];
     ctx.hud.setStat('date', 'Dec 1972');
     s.driven = 0;
@@ -108,7 +110,7 @@ export default makeChapter({
       s.lockControls();
       s.hero.setEmotion('curious');
       await climbOff(s, crew);
-      ctx.hud.setObjective('The crew is collecting samples');
+      ctx.hud.setObjective('The crew is collecting lunar geology samples');
       s.hero.lookAt?.(crew[0]); // the rover's eyes follow them
       const p = s.hero.object.position;
       await Promise.all(crew.map((c, i) => s.moveTo(c, p.x + (i ? 5 : -4), p.z + 6, 3)));
@@ -116,6 +118,7 @@ export default makeChapter({
       ctx.hud.setObjective('');
       s.hero.lookAt?.(null);
       await climbOn(s, crew);
+      await s.hold('KeyE', 1.5, 'Hold E: secure the crew’s rock samples for the return trip');
       addSampleBox(s, 1);
     } else {
       // Pitch jump: start right after stop 1, crew aboard.
@@ -127,7 +130,8 @@ export default makeChapter({
       await s.wait(0.1); // let physics move the model to the new spot before measuring from it
     }
 
-    // Leaving stop 1, the rear fender breaks (real: Apollo 17, 12 Dec 1972).
+    // Compressed staging: the real fender broke at the lander during EVA 1;
+    // the map-and-clamp replacement was fitted before EVA 2.
     s.unlockControls();
     const stop2 = park(s, ctx, STOP2, 'Drive on to science stop 2', 2);
     await s.until(() => Math.hypot(s.hero.object.position.x - STOP1[0], s.hero.object.position.z - STOP1[1]) > 10);
@@ -169,6 +173,7 @@ export default makeChapter({
     s.hero.setEmotion('happy');
     await s.say('ch1_fixed');
     await climbOn(s, crew);
+    await s.hold('KeyE', 1.5, 'Hold E: secure the second geology sample box');
     addSampleBox(s, 2);
 
     // The long free drive: the happiest moment in the game.
@@ -176,7 +181,7 @@ export default makeChapter({
     s.onDispose(() => ctx.audio.music?.(null));
     s.controller.speedScale = 1.35;
     s.unlockControls();
-    await park(s, ctx, STOP3, 'Free drive to the last science stop', 3);
+    await park(s, ctx, STOP3, 'Carry the crew to the last geology site', 3);
     s.lockControls();
     s.hero.setEmotion('curious');
     await climbOff(s, crew);
@@ -184,6 +189,7 @@ export default makeChapter({
     await s.wait(3);
     ctx.hud.setObjective('');
     await climbOn(s, crew);
+    await s.hold('KeyE', 1.5, 'Hold E: secure the last geology samples');
     addSampleBox(s, 3);
     s.controller.speedScale = 1;
 
@@ -200,14 +206,14 @@ export default makeChapter({
 
     // Lift-off. Only the top half goes. The rover watches it leave.
     const ascent = lm.getObjectByName('ascent') ?? lm;
+    s.actors.ascent = ascent;
     let up = 0;
     s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
     s.fx.liftoff?.(ascent);
     s.hero.lookAt?.(ascent); // the rover's camera follows it up
     s.hero.setEmotion('sad');
-    await Promise.all([s.shot('moon_liftoff'), s.wait(6)]);
+    await s.do(ctx.cinematics.conversation('moon_liftoff', 'ch1_left_behind', s.hero.object, { lrv: s.hero.object, ascent }, ctx.dialogue));
     s.mission.discover('rover_filmed');
-    await s.say('ch1_left_behind');
     await s.wait(2);
     await s.shot('moon_to_mars');
     ctx.next();

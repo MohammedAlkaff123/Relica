@@ -39,6 +39,12 @@ export function createHeli({ body, hero, world, tuning, input }) {
     const alt = altitude();
     const airborne = alt > 0.08;
 
+    // A depleted battery must be able to recharge even if Space stays held.
+    // Otherwise each tiny solar charge restarts the rotor and is immediately spent.
+    if (!airborne && !heli.broken && !heli.noLift && heli.battery <= 0.01) heli.recharging = true;
+    if (heli.recharging && heli.battery >= 0.35) heli.recharging = false;
+    if (heli.recharging) lift = 0;
+
     // Rotor spin-up. On the ground it has to reach full speed before it lifts.
     if (heli.broken) {
       if (lift && twitch <= 0) twitch = 0.5;
@@ -83,6 +89,7 @@ export function createHeli({ body, hero, world, tuning, input }) {
 
   const heli = {
     battery: 1,
+    recharging: false,
     spin: 0,
     drift: { x: 0, z: 0, tilt: 0 },
     noLift: false,

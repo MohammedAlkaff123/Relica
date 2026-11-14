@@ -1,5 +1,5 @@
 {
-  "_readme": "Owner: Set C. Discovery cards (STORY.md section 8): one sentence shown at the bottom of the screen for four seconds when a lesson lands, then saved for the end screen. Eight at most. Every card points at a verified claim in facts.json -> missions (or worlds) through 'fact', and keeps the NASA page in 'source'. Chapters call hud.discover('moon_gravity').",
+  "_readme": "Owner: Set C. Discovery cards (STORY.md section 8): one sentence shown at the bottom of the screen for four seconds when a lesson lands, then saved for the end screen. Every card points at a verified claim in facts.json -> missions (or worlds) through 'fact', and keeps the NASA page in 'source'. Chapters call hud.discover('moon_gravity').",
   "moon_gravity": {
     "en": "Moon gravity is one-sixth of Earth's.",
     "ar": "جاذبية القمر سُدس جاذبية الأرض.",
@@ -47,5 +47,29 @@
     "ar": "كان المقرر أن تطير إنجينويتي ٥ رحلات. لكنها أكملت ٧٢ رحلة.",
     "fact": "missions.ingenuity_total",
     "source": "https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/"
+  },
+  "jarosite_water": {
+    "en": "Jarosite in Opportunity’s outcrop records exposure to acidic water.",
+    "ar": "وجود الجاروسيت في الصخور التي فحصتها أوبورتيونيتي يسجّل تعرّضها لماء حمضي.",
+    "fact": "missions.jarosite_water",
+    "source": "https://science.nasa.gov/photojournal/mineral-tells-tale-of-watery-past/"
+  },
+  "ripples_water": {
+    "en": "Fine cross-lamination in Opportunity’s rock images supports ancient flowing water.",
+    "ar": "تدعم الطبقات الدقيقة المتقاطعة في صور أوبورتيونيتي وجود ماء جارٍ قديمًا.",
+    "fact": "missions.ripples_water",
+    "source": "https://science.nasa.gov/photojournal/ripples-in-rocks-point-to-water/"
+  },
+  "opportunity_storm": {
+    "en": "In June 2018, a dust storm blocked sunlight; Opportunity’s last contact was June 10.",
+    "ar": "في يونيو ٢٠١٨ حجبت عاصفة غبار ضوء الشمس. كان آخر اتصال بأوبورتيونيتي يوم ١٠ يونيو.",
+    "fact": "missions.opportunity_storm",
+    "source": "https://science.nasa.gov/resource/opportunitys-last-message/"
+  },
+  "viking_first": {
+    "en": "Viking 1 made the first successful U.S. Mars landing in 1976 and investigated the soil for signs of life.",
+    "ar": "حقّقت فايكنغ ١ أول هبوط أمريكي ناجح على المريخ عام ١٩٧٦، وفحصت التربة بحثًا عن دلائل الحياة.",
+    "fact": "missions.viking_first",
+    "source": "https://science.nasa.gov/astrobiology/missions/viking-project/"
   }
 }

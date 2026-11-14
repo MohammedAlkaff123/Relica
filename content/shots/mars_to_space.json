@@ -1,9 +1,83 @@
 {
-  "_readme": "Owner: Moayad. Placeholder shot: lie on the sand beside Ingenuity, look up with it, long zoom into the sky.",
+  "_readme": "Owner: Moayad. Authored camera; metres relative to the anchor, seconds, degrees. Named look targets follow the bound object. cut keys change instantly.",
   "letterbox": true,
+  "local": true,
   "keys": [
-    { "t": 0,   "pos": [1.6, 0.25, -1.6], "look": [0, 0.3, 0],   "fov": 50, "shake": 0.5 },
-    { "t": 3.0, "pos": [1.6, 0.25, -1.6], "look": [-4, 40, 30],  "fov": 50, "shake": 0.9 },
-    { "t": 8.0, "pos": [1.6, 0.25, -1.6], "look": [-4, 40, 30],  "fov": 5,  "shake": 0.2 }
+    {
+      "t": 0,
+      "pos": [
+        1.5,
+        0.3,
+        2
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 50,
+      "shake": 0
+    },
+    {
+      "t": 3,
+      "pos": [
+        1.5,
+        0.3,
+        2
+      ],
+      "look": [
+        0,
+        0.4,
+        0
+      ],
+      "fov": 50,
+      "shake": 0
+    },
+    {
+      "t": 6,
+      "pos": [
+        1.5,
+        1,
+        2
+      ],
+      "look": [
+        25,
+        70,
+        90
+      ],
+      "fov": 50,
+      "shake": 0.6
+    },
+    {
+      "t": 11,
+      "pos": [
+        1.5,
+        1,
+        2
+      ],
+      "look": [
+        25,
+        70,
+        90
+      ],
+      "fov": 5,
+      "shake": 0
+    },
+    {
+      "t": 12,
+      "pos": [
+        1.5,
+        1,
+        2
+      ],
+      "look": [
+        25,
+        70,
+        90
+      ],
+      "fov": 5,
+      "shake": 0,
+      "black": 1
+    }
   ]
 }

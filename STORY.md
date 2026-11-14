@@ -1,26 +1,28 @@
 # RELICA: story lock, dialogue and shot list
 
-This is the hour 0–1 work, drafted for the directors to check. Mohammed checks sections 1–3, Moayad checks sections 4–6. Change anything that does not match what you see in your heads, then tell the team it is locked.
+> Current implementation status (14 Nov): see [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md) and [TESTLOG.md](TESTLOG.md). Camera and mission changes requested by the directors are implemented; art acceptance, novice testing, rehearsal and submission remain explicit human steps. Earlier hour estimates and paper chapter timings are planning history.
+
+This document preserves the story intent and shot descriptions. The implementation and remaining acceptance work are tracked in DIRECTORS_HANDOFF.md.
 
 Every real-world claim marked **(verify)** must be confirmed by Abdullatif on a NASA page before it stays in the game.
 
-**Mohammed's approved direction (14 Nov):** simple Modern Standard Arabic; the Factory opening establishes an innocent, trusting Moon rover through playful wheel discovery and a worker's silent, reassuring gesture; the Moon rover waits with quiet hope; Ingenuity is a fighter who repeatedly recovers and pushes beyond expectations until the final landing takes away her ability to fly. These decisions are settled. The remaining story review and Moayad's shot approval are still open.
+**Mohammed's approved direction (14 Nov):** simple Modern Standard Arabic; the Factory opening establishes an innocent, trusting Moon rover through playful wheel discovery and a worker's silent, reassuring gesture; the Moon rover waits with quiet hope; Ingenuity is a fighter who repeatedly recovers and pushes beyond expectations until the final landing takes away her ability to fly. The two revised Viking replies are also approved. Pioneer’s endurance, a Jupiter photo task, discreet fiction framing and the final service tributes are also approved directions. The mission-first Opportunity staging and authored cameras are now implemented for review.
 
 ## 1. The vision
 
-A machine is built for one job. It is loved while it is useful. It does far more than anyone asked. Then the people leave, and it stays exactly where it stopped.
+A machine wakes with a purpose. We experience the care it receives, the work it does and the discoveries it makes. Some travel far beyond their planned missions. Eventually the crew leaves, communication falls silent or flight becomes impossible. The work and the machines remain; Pioneer keeps travelling.
 
 We do not tell the player facts about these machines. We let the player be one: wake up, be needed, keep going, be left. The facts arrive because the player lived them.
 
 **Tone.** Toy Story for the fear of being left by the people you exist for. Wall-E for the lonely worker who keeps going and says almost nothing. The eyes and the antenna do the acting.
 
-**The ending is not sad.** Each machine is found by the next one, and all of them are found by the player. That is the meaning of "not forgotten".
+**The implemented ending holds grief and pride together.** The player has witnessed each machine's work. In an imagined listening scene, their separate voices are heard together by Pioneer. No machine is physically rescued or meets a later one. Being remembered is the meaning of "not forgotten".
 
 ### Rules of this world
 
 1. Machines and humans never talk to each other. Humans have no faces and no voices.
 2. Machines speak rarely and in short lines. If a look can say it, cut the line.
-3. Machines only talk to each other by radio, and those conversations are imagined. The end card says so.
+3. The machines' conversations use imagined radio voices. Frame Viking's call as imagined when it begins, and identify Pioneer's listening scene with a readable corner label. The end card also distinguishes fiction from mission history; none of these exchanges is a recorded transmission.
 4. The places, dates, mission totals and photos are real. Player controls, compressed time and staged recoveries are storytelling devices; they must not be presented as recorded mission events.
 
 ### Three motifs that hold the game together
@@ -29,11 +31,11 @@ We do not tell the player facts about these machines. We let the player be one: 
 |---|---|
 | **Looking up** | Every chapter ends with the hero looking up at the sky. The camera follows that look and finds the next machine. This is the cutscene idea from the brief, used as the spine of the story |
 | **Planned and done** | Each HUD carries a small "planned" number that is quietly passed: 90 sols, 5 flights. Nobody comments on it. The counter just keeps going |
-| **"I'm still here"** | The last line of every chapter is the same sentence, said by a different machine. In the epilogue all of them say it at once, and the final card answers them |
+| **"I'm still here"** | The Moon rover, Opportunity and Ingenuity each end with this line. The Factory opens the Moon rover's story without repeating it. In the implemented epilogue the four remembered voices, including Viking, speak one at a time; Pioneer answers them |
 
 ## 2. Beat sheet
 
-Times are from the start of each part. "Call" is what the code triggers.
+Times are nominal targets from the start of each part. "Call" names the intended trigger, not proof that it is wired. Chapter budgets include their short character moments and ending shots; the three interplanetary transitions are counted separately. Never cut off a subtitle to meet a timestamp. Manual reading and photo browsing can extend a playthrough.
 
 ### Opening: the factory (0:45)
 
@@ -44,7 +46,7 @@ Times are from the start of each part. "Call" is what the code triggers.
 | 0:25 | Two workers in hooded suits carefully fold it for transport. Before closing the panel, one briefly rests a gloved hand on its frame. The rover follows the hand with its eyes, then softens | none | scared → curious, reassured | dialogue `ch0_fold` before the reassuring gesture |
 | 0:35 | Black. Only the eyes. Launch vibrations build and the rover braces. The rumble fades into silence and floating; fear gives way to curiosity | none | scared → curious | shot `launch` |
 
-**Approved opening direction:** the rover is innocent and trusting. Keep the existing three dialogue lines; the gloved hand adds care without words, a visible face or a human reply. Its later choice to wait on the Moon grows from that trust. The gesture is fictional character staging. Fit it within the existing 0:25–0:35 beat and keep the whole opening at 45 seconds. Moayad translates the gesture and eye response into shots; gameplay and camera implementation remain pending.
+**Approved opening direction:** the rover is innocent and trusting. Keep the existing three dialogue lines; the gloved hand adds care without words, a visible face or a human reply. Its later choice to wait on the Moon grows from that trust. The gesture is fictional character staging. Fit it within the existing 0:25–0:35 beat and keep the whole opening at 45 seconds. The shots and chapter timing are implemented. The worker’s specific reassuring hand action remains an animation follow-up; basic figure movement is integrated.
 
 ### Chapter 1: the Moon (3:00)
 
@@ -55,14 +57,14 @@ Apollo 17, Taurus–Littrow, December 1972.
 | 0:00 | The rover unfolds beside the Lunar Module. Earth hangs in a black sky. Two astronauts climb on | none | happy | shot `moon_arrival`, dialogue `ch1_intro` |
 | 0:15 | Drive to science stop 1. The first hill throws the rover into the air, slowly | drive, hop | happy | objective, HUD distance |
 | 0:50 | Stop 1. The astronauts collect rocks. The rover's eyes follow them | wait 8 s | curious | |
-| 1:00 | Leaving stop 1, the rear fender breaks **(real)**. Dust fountains over everyone. Driving is slow and blind | drive through its own dust | scared, then sad | dust shower on, dialogue `ch1_dust` |
+| 1:00 | Leaving stop 1, the rear fender breaks **(historical damage and repair; placement in this drive is compressed staging)**. Dust fountains over everyone. Driving is slow and blind | drive through its own dust | scared, then sad | dust shower on, dialogue `ch1_dust` |
 | 1:40 | Stop 2. The astronauts tape maps over the wheel **(real)**. The rover follows their hands with its eyes, recalling the care it received in the Factory | wait | happy | memory `as17-137-20979`, dialogue `ch1_fixed`, dust off |
 | 1:55 | The long free drive to stop 3. Music comes in. Top speed, big floating hops. This is the happiest moment in the game | drive | happy | |
 | 2:25 | Stop 3 is the last one. The astronauts walk away toward the Lunar Module | none | curious | controls off |
 | 2:35 | The rover turns its eye to the lander. The top half lifts off without a sound. The eye tilts up to follow it **(real: the rover's camera filmed the lift-off, verify)**. It asks whether the crew will return. Hold a pause with no answer, then let it look toward where they boarded and quietly choose to wait | none | curious → sad, still hopeful | first two lines of `ch1_left_behind`, shot `moon_liftoff` |
 | 2:50 | Alone. Wide shot. "I'm still here." It looks up | none | sad | final line of `ch1_left_behind` once, then cutscene `moon_to_mars` |
 
-**Approved Moon direction:** needed → worried → cared for → joyful → quietly waiting. Preserve the happiest free drive before the departure. The repair eye-line echoes the Factory gesture; both are fictional character performance. Keep the three existing farewell lines in order, with an unanswered pause after "Will you come back?" and the final motif reserved for the wide shot. Fit these beats within the existing three-minute chapter. Moayad stages the eye-lines and pause in CAM-1; chapter/dialogue timing integration remains pending. The Factory and Moon story reviews are approved; Opportunity and the epilogue still need review.
+**Approved Moon direction:** needed → worried → cared for → joyful → quietly waiting. Preserve the happiest free drive before the departure. The repair eye-line echoes the Factory gesture; both are fictional character performance. Keep the three existing farewell lines in order, with an unanswered pause after "Will you come back?" and the final motif reserved for the wide shot. Fit these beats within the existing three-minute chapter. The departure now uses three reader-paced camera poses; its chapter/dialogue integration is implemented. The Factory and Moon story reviews are approved. The two Viking replies are approved; the implemented Opportunity science tasks and epilogue below are ready for play review.
 
 ### Chapter 2: Mars, Opportunity (3:30)
 
@@ -77,9 +79,15 @@ Meridiani Planum, 2004 to 2018.
 | 1:00 | Long drive. Dust settles on the panels and the battery sinks. A gust of wind cleans them and the battery jumps **(verify)** | drive, watch the battery | sad → happy | HUD battery |
 | 1:30 | Sol counter in the thousands. Grind a rock | hold E | curious | memory `PIA20285` |
 | 2:00 | A crater on the rim. It was named after a Moon lander **(real, in the pack)** | drive to the viewpoint | curious | memory `PIA21708`, dialogue `ch2_orion` |
-| 2:15 | Sunset. Radio static. An old voice | Enter through the lines | curious → sad | dialogue `ch2_viking_call`, cut-away to Viking |
-| 2:50 | The sky turns brown. The Sun becomes a dim dot. The battery falls and the wheels slow, however hard the player holds W | drive, slower and slower | sleepy | storm 0 → 1, dialogue `ch2_storm` |
-| 3:20 | Stopped. "I'm still here." It looks up into the brown | none | sleepy | cutscene `storm_to_jezero` |
+| 2:15 | Sunset. Radio static. An old voice acknowledges loneliness, reminds Opportunity that discoveries endure, and encourages it to keep exploring | Enter through the lines | curious → sad → curious | dialogue `ch2_viking_call`, cut-away to Viking |
+| 2:50 | After a compressed journey toward Perseverance Valley, the sky turns brown. The Sun becomes a dim dot. The battery falls and the wheels slow, however hard the player holds W; the eyes still search ahead | drive, slower and slower | sleepy, still curious | storm 0 → 1; first line of `ch2_storm` |
+| 3:20 | Stopped. The eyes make one last search, then look up into the brown. "I'm still here." | none | sleepy | final line of `ch2_storm` once, then cutscene `storm_to_jezero` |
+
+**Approved Viking dialogue (14 Nov):** acknowledge that silence can hurt, then encourage Opportunity to continue discovering. Keep Viking older and slower; his final line offers encouragement before the storm rather than a farewell or an instruction to rest. Preserve the six-line conversation and existing chapter duration. These are imagined character lines, not historical radio messages. The two dialogue revisions are approved; the remaining chapter review and camera/performance integration are still open.
+
+**Proposed Opportunity direction:** a patient explorer whose curiosity outlasts its movement. Keep the playful landing, discoveries and passing sol counter. Viking acknowledges loneliness and sends it back to exploring; the storm interrupts that renewed hope. Preserve control while speed drains away, then let the final eye movement and motif carry the ending. No extra farewell speech, score penalty or restart prompt for the scripted storm ending.
+
+**Accuracy and staging:** the last communication was on 10 June 2018; NASA declared the mission ended in February 2019. Perseverance Valley is the final setting, while the earlier Orion view is a separate discovery moment. The final drive, visibly fading battery and radio conversation are dramatic compression. Viking stopped operating in 1982; his conversation with Opportunity is imagined. Sources: [NASA Opportunity mission](https://science.nasa.gov/mission/mer-opportunity/) and [NASA Viking 1 mission](https://science.nasa.gov/mission/viking-1/).
 
 ### Chapter 3: the Mars sky, Ingenuity (2:30)
 
@@ -99,21 +107,34 @@ Jezero crater, 2021 to 2024.
 
 **Play direction for Ziad:** build the recoveries into the existing three flights, within the chapter's current time budget. A dip gives a clear rotor/tilt cue and enough height to recover with the established controls. Restore lift visibly when the player responds; keep these earlier flights recoverable and repeatable. The danger should feel real without relying on surprise control lockouts or random crashes. Keep player control through the final struggle, then hand off to the loss-of-flight cutscene when the landing makes the damage irreversible. No game-over or retry prompt at that story ending.
 
-**Performance direction for Moayad:** let the viewer see both effort and recovery. The camera stays readable while the ground approaches; it settles when she regains height. Save the sustained stillness for the damaged rotor and her next attempt to lift. The exact `last_flight` shot timings in section 5 still need CAM-1 revision to match this approved story beat; camera files are not changed by DIR-1.
+**Performance direction for Moayad:** let the viewer see both effort and recovery. The camera stays readable while the ground approaches; it settles when she regains height. Save the sustained stillness for the damaged rotor and her next attempt to lift. Section 5 proposes a `last_flight` aftermath shot beginning at touchdown so the earlier struggle remains playable. Moayad still needs to approve and author that shot. Play `ch3_goodbye` once; `ch3_grounded` is a legacy alias, not another goodbye.
 
 **Accuracy:** NASA records up to five planned test flights and 72 completed flights. The first real flight held a stable 3 m hover for 30 seconds; the 3-second task and staged dips here are game compression and invented drama. Flight 72 was a brief vertical test, not a long scouting run. NASA's investigation identifies poor surface tracking and sideways motion at touchdown as the likely accident sequence; all four blades were damaged. Do not imply repeated real engine failures or that she simply ran out of determination.
 
 Sources: [NASA/JPL first-flight report](https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/) and [NASA accident investigation](https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/). See also `content/facts.json` → `missions.ingenuity_first_flight`, `ingenuity_planned`, `ingenuity_total`, `ingenuity_last_flight`.
 
-### Epilogue: Pioneer 10 (1:15)
+### Epilogue: Pioneer 10 (1:35 target)
+
+**Approved direction:** Pioneer is a fighter too: a patient explorer who kept working far beyond expectations. Let the player do a piece of his real job before meeting the quiet listener. His endurance is shown as useful work over passing years, not invented repeated equipment failures. The inter-machine listening remains welcome fiction, marked discreetly in the corner: **“Imagined conversation / حوار متخيّل”**. Keep that label readable, away from subtitles, and retain the end-card note. Exact staging and timings remain a production proposal.
 
 | Time | Beat | Player | Hero emotion | Call |
 |---|---|---|---|---|
-| 0:00 | A dish in the dark. One slow blink | none | sleepy | dialogue `ep_drift` |
-| 0:15 | Turn the dish to find the Sun, now only a bright star | A and D | curious | |
-| 0:30 | Lined up. Signal rings arrive, coming inward this time. One voice at a time: the Moon rover, Viking, Opportunity, Ingenuity. Each says the same three words | hold still | happy | dialogue `ep_voices` |
-| 0:50 | "I hear you." | none | sleepy, content | dialogue `ep_last` |
-| 0:58 | Card: **Abandoned, but not forgotten.** Then the wall of real photos. Then: "The conversations are imagined. The machines, the places, the dates and the photos are real." | Enter | | shot `ending`, memory wall, credits |
+| 0:00 | A clearly dated memory: Jupiter, December 1973. Pioneer approaches the giant planet, ready to do his job | Enter through the short card | curious | chapter `epilogue_photo` |
+| 0:05 | Frame Jupiter, capture an image, then turn toward the Earth marker and send it home. A scan fills the image; a quiet confirmation acknowledges useful work | A/D aim; Space captures only when aligned; hold Earth alignment for 2 seconds to send | curious → happy | mission `epilogue_photo` |
+| 0:28 | Years pass. The planned 21-month mission becomes decades of service. The last signal is dated 2003. Transition clearly into the imagined reunion | none | determined → sleepy | compressed time passage, chapter `epilogue`, dialogue `ep_drift` |
+| 0:36 | Turn toward the distant Sun. Familiar tones emerge as the player finds the direction of home | A and D; hold still | curious | mission `epilogue`; corner fiction label begins |
+| 0:46 | Remember the Moon rover, Viking, Opportunity and Ingenuity where their stories ended. One voice at a time says “I'm still here” | hold still, then scene control | happy | `ep_voices`, `where_they_are` aligned to its four lines |
+| 1:02 | Back to Pioneer. “I hear you. All of you.” A quiet pause | none | happy, content | `ep_last` once |
+| 1:08 | Pull back slowly. No additional voice or task completion sound | none | sleepy, peaceful | shot `ending` (15 s) |
+| 1:23 | “Abandoned, but not forgotten.” Continue to real photos with a tribute beneath each machine's image, then credits | Enter at the player's pace | | ending card, tribute/photo wall, credits |
+
+**Photo task implementation:** added after Set A merged at `9542f7529249512711758e568f74b8ea89671d7e`. The epilogue calls `_pioneerPhoto.js`, uses the new `epilogue_photo` mission, then switches to the existing listening tasks without changing their indexes. A live viewfinder captures a thumbnail from the game renderer; it is labelled as a game image and kept separate from NASA memories. Within a forgiving aiming cone, Space captures once; outside it the prompt helps the player reframe and no task completes. Only a captured image can be sent. Hold Earth alignment for two continuous seconds, then confirm transmission once. Restart clears capture/send state; leaving the chapter cancels pending work. Keep this in the 1973 memory, before the later listening scene. Do not represent it as a new photograph taken after loss of contact, or point the imaging instrument at the Sun. The input, aiming, scan and transmission delay are simplified gameplay, not an instrument simulator. A simple banded Jupiter is included. Moayad and Abdulkarim can refine its visual presentation during their look review.
+
+**Delivery:** the four voices remain sequential, never a loud chorus. Use the voice signatures already heard. Stay with each speaker until the line finishes. Pioneer has one final answer. Keep the ending card before optional photo browsing. The scene's accepted fictional framing does not need another explanatory speech.
+
+**Service tributes:** the final photo wall always includes one verified tribute for each of the five machines, even in a chapter-select demonstration. These are distinct from collected memories. Preserve each image's original caption and NASA credit. Use planned versus achieved figures where supported: Pioneer 21 months / over 30 years; Ingenuity up to 5 / 72 flights; Opportunity 90 sols / over 14 Earth years and 45.16 km; Viking 90 days / over six years. Honor Apollo 17's rover with its 35.7 km of service without inventing a lifespan comparison. English and Arabic copies and source links live beside each image in `content/memories.json`.
+
+**Accuracy:** Pioneer received commands from Earth and returned images and science data; it was not a relay for this cast. Its 21-month planned mission lasted over 30 years: the final telemetry arrived in April 2002, and the last signal on 23 January 2003. The imaging task evokes its real Jupiter work; the later conversations are imagined. Sources: [NASA Pioneer 10](https://science.nasa.gov/mission/pioneer-10/) and [NASA's 2001 contact report](https://science.nasa.gov/missions/pioneer/nasa-establishes-contact-with-famed-pioneer-10-spacecraft/).
 
 ## 3. Dialogue: intent for every line
 
@@ -139,8 +160,8 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | | opportunity | curious | Introduces itself by its limit | "Opportunity. They gave me ninety days." |
 | | viking | happy | The parallel **(verify: 90-day plan, about 6 years of work)** | "They gave me ninety too. I gave them six years." |
 | | opportunity | sad | The real question of the game | "Does it hurt, when they stop calling?" |
-| | viking | sleepy | The answer of the game | "No. You keep watch. Someone always comes after." |
-| | viking | happy | Blessing | "Rest, little one. You did more than they asked." |
+| | viking | sleepy | Acknowledges loneliness; discoveries endure | "Sometimes… but what we discovered remains." |
+| | viking | happy | Encourages continued exploration before the storm | "Keep going, little one. There's still more to discover." |
 | `ch2_storm` | opportunity | sleepy | Notices the dark without fear | "The sky is turning brown." |
 | | opportunity | sleepy | Motif line, whispered | "I'm still here." |
 | `ch3_intro` | ingenuity | scared | Feels the difficulty, chooses to try | "The air is thin… but I’ll try." |
@@ -154,8 +175,8 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | | ingenuity | sad | Motif line | "I'm still here." |
 | `ep_drift` | pioneer | sleepy | Time and distance | "I left in 1972. I never stopped." |
 | | pioneer | sleepy | Ties to chapter 1 **(verify both dates)** | "The same year as a little rover on the Moon." |
-| `ep_voices` | lrv, viking, opportunity, ingenuity | happy | One line each, overlapping at the end | "I'm still here." |
-| `ep_last` | pioneer | happy | It cannot answer, but it listens | "I hear you. I can't answer. But I hear you." |
+| `ep_voices` | lrv, viking, opportunity, ingenuity | happy | Proposed reunion: one line each, sequential, with room to listen | "I'm still here." |
+| `ep_last` | pioneer | happy | Answer in the imagined scene: every voice was heard | "I hear you. All of you." |
 
 **Arabic register approved by Mohammed:** simple Modern Standard Arabic, with short, natural sentences. Use one register for all machines; Viking sounds older and slower. Ingenuity uses a feminine voice and keeps her resolve in both languages. Determination is carried by performance and the existing emotions; no new emotion API is required.
 
@@ -188,7 +209,7 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 
 ## 5. Shot list
 
-Camera positions are described from the machine: behind, in front, left, right.
+Camera positions are described from the machine: behind, in front, left, right. The revised `moon_liftoff`, `last_flight` and `where_they_are` staging has authored shot data and chapter integration. These tables describe intent; exact delivered camera behavior is in `content/shots/`.
 
 ### `opening_wake` (8 s)
 
@@ -210,13 +231,15 @@ Camera positions are described from the machine: behind, in front, left, right.
 |---|---|---|---|---|
 | 1 | 0–6 | Wide and low. Lander on the left, Earth high on the right, the folded rover in the centre | Slow push in while the rover unfolds. Handheld calm | Arrival |
 
-### `moon_liftoff` (15 s)
+### `moon_liftoff` (reader-paced three-shot farewell)
 
 | # | Time | Shot | Move | We feel |
 |---|---|---|---|---|
-| 1 | 0–4 | Over the rover's shoulder. The lander is small and far away | Still. Handheld calm | Waiting |
-| 2 | 4–7 | Close on the rover's eye from the front | The eye tilts up. The camera does not move | Understanding |
-| 3 | 7–15 | Very wide. The rover is tiny at the bottom left. The top of the lander rises out of frame at the top right | Locked off. No sway. No sound. Hold three full seconds after it is gone | Left behind |
+| 1 | 0–5 | Over the rover's shoulder; the lander's ascent stage rises | Follow its eye-line. "Will you come back?" | Trust reaching after the crew |
+| 2 | 5–10 | Close on the eye as it returns toward the empty boarding place | Still. Leave an unanswered pause, then "…I'll wait here." | Hope becoming waiting |
+| 3 | 10–15 | Wide; rover small in the landscape | Hold the empty sky. No second call of the farewell group | Space left by the crew |
+
+At the chapter's 2:50 wide hold, play only the final "I'm still here" line, then begin `moon_to_mars`. Dialogue completion controls the hold; a fixed timer must not advance past unread words. There is no audible rocket in the lunar vacuum; machine voice and music are expressive scoring.
 
 ### `moon_to_mars` (10 s). Cutscene 1
 
@@ -240,7 +263,7 @@ Camera positions are described from the machine: behind, in front, left, right.
 | Opportunity | Side profile against the sunset, medium | Handheld alive |
 | Viking | Straight on from low down. Beard and eyebrows fill the frame. A different, paler sunset behind | Locked off. A very slow push in across the whole call |
 
-Label in the corner during Viking's shots: `RADIO · CHRYSE PLANITIA`.
+Fiction label during the call (implemented in Arabic and English; location is given in the preceding card): `IMAGINED RADIO · CHRYSE PLANITIA` / `حوار متخيّل · سهل كريس`. The label distinguishes the fictional conversation from historical radio recordings.
 
 ### Storm (gameplay camera, 30 s)
 
@@ -261,13 +284,17 @@ No cut. As the storm level rises from 0 to 1: zoom narrows 55° → 45°, sway r
 |---|---|---|---|---|
 | 1 | 0–6 | Ground level under the big rover | The small machine drops a hand's width and wobbles. The big wheels roll back out of frame. Two eyes open | Tiny and alone |
 
-### `last_flight` (8 s)
+### `last_flight` (8 s; touchdown aftermath)
+
+The chapter owns the controllable struggle and the single touchdown event. Start this shot at touchdown; never replay the approach or impact after the player already landed.
 
 | # | Time | Shot | Move | We feel |
 |---|---|---|---|---|
-| 1 | 0–5 | Chase camera, close | The horizon tips further and further. Sway grows | Losing control |
-| 2 | 5–6 | Impact | One hard jolt, then stillness | |
-| 3 | 6–8 | Close on the broken blade tip, the eyes soft behind it | Slow settle. Handheld calm | It is over |
+| 1 | 0–1 | Touchdown, seen from the player's existing view | One brief jolt, then settle. No extra scripted drop | The recovery did not come |
+| 2 | 1–4 | Damaged rotor blades, with the eyes visible behind | Slow move that reveals the damage | She can no longer fly |
+| 3 | 4–8 | At eye level beside her | Hold still; she remains alert | Her resolve remains |
+
+After this shot, restore Space for the attempt to lift. Play `ch3_crash` with the first attempt, not before it. Provide a visible continuation prompt after that attempt; the story must not require an unexplained number of key presses. The rotor twitch is fictional expressive performance. NASA's likely accident sequence damaged all four blades; do not present a single missing tip as the complete historical damage.
 
 ### `mars_to_space` (12 s). Cutscene 3
 
@@ -275,14 +302,14 @@ No cut. As the storm level rises from 0 to 1: zoom narrows 55° → 45°, sway r
 |---|---|---|---|---|
 | 1 | 0–3 | The camera lies on the sand beside Ingenuity, at eye level | Still. Both look at the same horizon | Company |
 | 2 | 3–6 | Tilt up together into the night sky | Sway alive | |
-| 3 | 6–12 | One faint point that moves against the stars | The longest zoom in the game, 50° → 5°. Sway fades to nothing | Awe |
+| 3 | 6–12 | One faint point that moves against the stars | The longest zoom in the game, 50° → 5°. Sway fades to nothing, then dissolve into the clearly labelled December 1973 Jupiter memory. This is a flashback, not chronological travel from 2024 | Awe |
 
 ### `ending` (15 s)
 
 | # | Time | Shot | Move | We feel |
 |---|---|---|---|---|
 | 1 | 0–8 | Pioneer 10, three-quarter front | Slow half orbit. No sway | Peace |
-| 2 | 8–15 | Same | Pull back and back until it is one dot among the stars. Fade to the card | Scale |
+| 2 | 8–15 | Same | Pull back until it is one dot among the stars. Leave a quiet hold, then fade to the ending card before the photo wall | Scale and remembrance |
 
 ## 6. The 30-second video
 
@@ -333,16 +360,22 @@ Each mission is built on one fun mechanic, and that mechanic is also the lesson.
 | Longest jump (bonus) | Air-time record on screen | One-sixth gravity: the same hop that barely left the factory floor lasts three seconds here |
 | Drive blind to stop 2 | After the fender breaks, follow a beeping marker through your own dust | With no air, dust flies in clean arcs and never hangs in clouds **(verify)** |
 
-### Chapter 2: "Follow the water"
+### Chapter 2: "Find evidence of ancient water"
 
-**The fun:** managing sunlight. The battery is your life, dust is the enemy, and whirlwinds are your friends.
+The player investigates three independent clues before making later mission photographs. Routes and instrument interactions are compressed for the game.
 
-| Task | How it plays | What the player learns by doing it |
+| Task | Player action | Historical distinction |
 |---|---|---|
-| Climb out of the crater | First drive | |
-| Find 3 signs of water | Hold E to study the round pebbles, the layered rock and the view from the rim. Each one fills a third of a "water" badge | What the mission was looking for, and that it found it **(verify)** |
-| Keep the battery alive | Dust dims the panels as you drive. Whirlwinds wander the plain; drive through one and the panels are swept clean **(verify)** | Solar power on Mars, and why a 90-day rover lasted years |
-| Reach the rim | The long drive, with the sol counter passing 90 | Planned and done |
+| Hematite spheres | Park and hold E to examine the blueberries | Evidence of water-altered rock |
+| Jarosite | Park, grind and analyze the outcrop | A mineral recording contact with acidic water |
+| Cross-lamination | Park and scan inclined layers | Evidence of ripples formed by flowing water |
+| Keep photographing | Frame Potts, then Orion; Space captures, then fades to the real record | Potts is January 2016; Orion is April 2017, not the 2004 water discovery |
+| Transmit the record | Hold E to send science to Earth | The rover’s work returns knowledge |
+| Battery bonus | Drive through a cleaning whirlwind | Simplified dust/solar management; never a required random encounter |
+
+Viking’s historical memory follows: frame the sol-12 view (1 August 1976), then deliver a sample to the biology experiment. It did not confirm life. Its first successful U.S. Mars landing is stated in the card and tribute. A labelled imagined conversation then cuts between Viking and Opportunity in separate places.
+
+The June 2018 storm blocks sunlight. Power, speed and the camera’s space diminish gradually. The early storm lines retain driving control; “I’m still here” follows the stop and is read before the transition.
 
 ### Chapter 3: "Be the eyes"
 
@@ -354,16 +387,21 @@ Each mission is built on one fun mechanic, and that mechanic is also the lesson.
 | Scout the road: mark 3 dangers | Fly over a sand trap, a boulder field and a cliff edge, and press E above each to mark it. The big rover's route bends around every mark | Why a helicopter was useful to a rover |
 | Land with battery to spare | Reach the pad before the bar empties | Flights were short because the battery was small **(verify)** |
 
-### Epilogue: "Listen"
+### Epilogue: "Photograph Jupiter", then "Listen"
+
+The first three tasks occur in the dated 1973 memory (`epilogue_photo`); the final two belong to the later imagined scene (`epilogue`).
 
 | Task | How it plays |
 |---|---|
+| Frame Jupiter | A/D brings the planet inside a forgiving capture frame |
+| Capture the image | Space captures once when aligned; a scan fills the image |
+| Send the image to Earth | After capture, hold alignment with the Earth marker for two seconds |
 | Find the Sun | Turn the dish with A and D |
-| Hold the signal | Keep it lined up while the voices arrive |
+| Hold still and listen | Keep the dish pointed toward the Sun while the imagined voices arrive |
 
 ### Discovery cards
 
-When a lesson lands, one sentence appears at the bottom of the screen for four seconds and is saved to a list the player can read at the end. No pop-up, no pause. Eight at most in the whole game:
+When a lesson lands, one sentence appears at the bottom of the screen for four seconds and is saved to a list the player can read at the end. No pop-up, no pause. The initial eight cards below are joined by sourced jarosite, cross-lamination, Viking and storm cards in `content/discoveries.json`:
 
 1. Moon gravity is one-sixth of Earth's.
 2. The Moon has no air: no wind, no sound, and dust that falls straight back.
@@ -380,7 +418,7 @@ Every card needs a verified source before it goes in.
 
 Short moments that make the player care, placed where the game would otherwise go straight from one task to the next.
 
-**Rules for all of them:** eight seconds at most. Never two in a row, except at chapter ends. The player gets the controls back within ten seconds. Escape always skips.
+**Pacing intent:** ordinary inserts are eight seconds at most and fit inside their existing chapter beats. Do not stack them before returning control, except at chapter ends. The reunion `where_they_are` is the explicit exception at 16 seconds nominal. Readable subtitles take priority over fixed duration. Escape cancels the camera presentation and restores the follow camera. Dialogue remains readable and advances with Enter; R and chapter jumps cancel the entire scene.
 
 | Id | Where | Length | What we see | Why it is there |
 |---|---|---|---|---|
@@ -392,8 +430,8 @@ Short moments that make the player care, placed where the game would otherwise g
 | `viking_wakes` | Chapter 2, before the call | 6 s | A dust-covered lander, perfectly still. One eyelid cracks open. Dust slides off a long eyebrow | Meeting the old one properly |
 | `first_shadow` | Chapter 3, at 3 metres on flight 1 | 5 s | Straight down: a tiny helicopter shadow on red sand **(verify: it photographed its own shadow)** | "I'm flying" |
 | `flights_montage` | Chapter 3, the counter passing 5 | 6 s | Four quick flights in different light, the counter jumping each cut | Planned and done |
-| `where_they_are` | Epilogue, during the voices | 12 s | As each voice arrives, cut to that machine where it rests today: the rover parked on the Moon, Viking under dust, Opportunity on the rim, Ingenuity on the sand. Three seconds each, locked off | The payoff of the whole game. Every one of them is still there |
+| `where_they_are` | Epilogue, during the voices | 16 s nominal | One machine per line: the Moon rover, Viking, Opportunity in Perseverance Valley, Ingenuity on the sand. Four seconds each as a starting point; hold longer for a line if needed. These are imagined views of their final settings, not live footage | We remember each one before Pioneer answers |
 
-This adds about 55 seconds, which takes the game to roughly 13:30. To stay near 12 minutes, shorten the driving between stops, not these moments.
+Count these inserts once, inside the chapter budgets: `earth_goodbye` is the Factory hand gesture already described at 0:25, `moon_pat` belongs to the repair, and `where_they_are` belongs to the epilogue voices. The old five-chapter 11:52 paper total predates the added photo/science tasks. Use the current measurements and remaining human timing checks in TESTLOG.md. Aim for a measured 12–13 minute first playthrough, allowing reading time. Photo-wall and credits browsing are untimed. Shorten repetitive travel if the measured run exceeds the target; preserve the recoveries, unanswered pause and closing voices.
 
-If time runs short, cut in this order: `mars_tracks`, `flights_montage`, `earth_goodbye`, `moon_pat`. Never cut `viking_wakes` or `where_they_are`.
+If production time runs short, simplify camera moves for `mars_tracks` and reuse one setup for `mars_day`. Keep the Factory hand gesture, the repair response, the visible 5 → 72 achievement and the final four voices; those carry the reviewed story. `flights_montage` can use a fixed view and counter, but must not erase Ingenuity's accomplishments. Exact camera choices remain with Moayad.

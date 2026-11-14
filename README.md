@@ -6,6 +6,9 @@ Built for the NASA Space Apps 2026 challenge "Abandoned but not Forgotten".
 - [PLAN.md](PLAN.md): the overall plan, rules, tech and timeline
 - [STORY.md](STORY.md): the story beat by beat, every dialogue line's intent, the shot list
 - [TASKS.md](TASKS.md): who does what, with hand-off times
+- [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md): delivered camera/mission work and each teammate’s next steps
+- [TESTLOG.md](TESTLOG.md): functional results and remaining human checks
+- [pitch/](pitch/): seven-slide deck, speaker script and 30-second review montage
 
 Set A is Ziad, Set B is Abdulkarim, Set C is Abdullatif. The camera file `src/core/followCamera.js` belongs to Moayad.
 
@@ -29,16 +32,17 @@ The page needs internet, because Three.js, Rapier and lil-gui load from a CDN (s
 | W A S D or arrows | Drive or fly |
 | Space | Hop (rovers), climb (helicopter) |
 | Enter or click | Continue a card, a dialogue line or a memory photo |
-| E | Finish the current chapter (placeholder until real goals exist) |
+| E | Hold for instrument/sample actions, or press to report a scouting hazard, when prompted |
+| A/D and W/S in a photo task | Frame the historical view; Space captures when aligned |
+| R | Restart the current chapter |
+| 6 / 7 / 8 / 9 | Jump to fender repair / Viking memory and call / dust storm / flight 72 |
 | 1 2 3 4 5 | Jump to a chapter: opening, Moon, Mars, Mars sky, epilogue |
 | Escape | Skip a cutscene |
 | ` (under Escape) | Show or hide the tuning panel. Add `#dev` to the address to start with it open |
 
 ## What exists right now
 
-A skeleton that plays from the title card to the ending with boxes for characters:
-every system in the plan has a small working version, and every chapter is a stub you can finish with E.
-Each file starts with a comment that says who owns it and lists its TODOs.
+Five playable chapters with mission objectives, NASA models, camera-relative navigation, authored cutscenes, bilingual dialogue, historical photo framing/reveals, and service tributes. The Viking conversation is a reader-paced cutscene between two locations. Run `?test&speed=8` for the automated playthrough. The remaining art and human review work is listed in DIRECTORS_HANDOFF.md; basic jointed astronaut animation is integrated; task-specific gestures still need a pass.
 
 ## Folders
 
@@ -101,8 +105,7 @@ ctx.audio.loop('rotor', true)            // looping: rotor | hum, with ctx.audio
 ctx.audio.music('drive')                 // drive | storm | ending | null
 ```
 
-All the text the player reads lives in `content/` (dialogue, missions, discoveries, memories, chapters,
-credits), with Arabic and English side by side. Change text there, not in the code.
+Main dialogue, missions, discoveries, memories and cards live in `content/` with Arabic and English side by side. Some chapter objective/status strings remain in chapter code and need the final localization pass.
 
 A character:
 
@@ -111,8 +114,7 @@ hero.setEmotion('sad')   // curious | happy | scared | sad | sleepy
 hero.talk(true)          // signal rings from the antenna
 ```
 
-After every `await` inside a chapter, check `if (!stage.alive) return;`.
-The player may have jumped to another chapter while you were waiting.
+Use stage helpers or `await stage.do(promise)` for asynchronous chapter work. They cancel with `Gone` on restart/chapter change. Register temporary scene/UI cleanup with `stage.onDispose`.
 
 ## Changing feel without code
 
@@ -162,7 +164,7 @@ filled by copying from one place.
 3. Open http://localhost:5173 in a current desktop browser (Chrome, Edge or Firefox).
 4. Press Enter to start. W A S D to drive or fly, Space to hop or climb, Enter to continue.
 
-The game also runs from the GitHub Pages link of this repository with no install at all.
+Once the repository owner enables GitHub Pages, the same static files can run from the public play link. Pages was not enabled in the repository snapshot checked for this handoff.
 
 ## Tools used
 
@@ -189,8 +191,9 @@ Every real-world number, date and photo in the game comes from NASA.
 | The same photos | `nasa_data/` (the full pack) | Reference images for every 3D model |
 
 The memory photos shown in the game: `S71-16722`, `as17-137-20979`, `PIA20285`, `PIA07108`, `PIA21708`,
-`PIA23882`, `PIA23969`, `ARC-1972-AC72-2135`, `ARC-1972-A72-2137`. Each one was checked by eye: nobody under 18,
-and no NASA logo left in frame after cropping.
+`PIA23882`, `PIA23969`, `ARC-1972-AC72-2135`, `ARC-1972-A72-2137`, `PIA10738` and `AC73-9341`. Some are collected in the story; the service wall also shows the cast without unlocking uncollected memories. Original credits and crop settings remain in the data. The new Jupiter sequence is NASA/ARC.
+
+`content/photo_tasks.json` records the camera/reference composition for Potts, Orion and Viking. Stylized scenes fade to the original images after capture. Pioneer’s December 1973 image task reveals the real Jupiter encounter sequence. These are interpretive recreations, and the later conversations are explicitly imagined.
 
 Each fact in `content/facts.json` carries the link of the NASA page it was checked against. A fact without a
 source is marked `"verified": false` and shows an orange "?" in the game.
@@ -217,3 +220,4 @@ used. The idea, the story and the choices are the team's own, and each team memb
   [lil-gui](https://lil-gui.georgealways.com) (MIT)
 - Fonts: Space Grotesk, IBM Plex Mono, IBM Plex Sans Arabic (SIL Open Font License), Google Fonts
 - Sounds: generated in code. Any sound file added later is listed here with its source and licence
+

@@ -32,7 +32,7 @@
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "كل شي هنا خفيف",
+      "ar": "كلّ شيء هنا خفيف.",
       "en": "Everything is so light here."
     },
     {
@@ -40,6 +40,12 @@
       "emotion": "happy",
       "ar": "تمسّكا! سأحملكما.",
       "en": "Hold on. I'll carry you."
+    },
+    {
+      "who": "lrv",
+      "emotion": "curious",
+      "en": "You study the rocks. I’ll carry the samples home.",
+      "ar": "ستجدان حكاية القمر في الصخور. وأنا أحمل العيّنات معكما."
     }
   ],
   "ch1_dust": [
@@ -87,9 +93,9 @@
     },
     {
       "who": "opportunity",
-      "emotion": "happy",
-      "ar": "إذن، لنكتشف كل شيء!",
-      "en": "Then let's see everything."
+      "emotion": "curious",
+      "en": "Did water once flow here? The rocks remember.",
+      "ar": "هل جرى الماء هنا يومًا؟ الصخور تحفظ الدليل."
     }
   ],
   "ch2_sol90": [
@@ -116,6 +122,12 @@
       "en": "Who is driving around up there?"
     },
     {
+      "who": "viking",
+      "emotion": "happy",
+      "en": "Viking 1. America’s first successful Mars landing. 1976.",
+      "ar": "أنا فايكنغ ١. حقّقت أول هبوط أمريكي ناجح على المريخ عام ١٩٧٦."
+    },
+    {
       "who": "opportunity",
       "emotion": "curious",
       "ar": "أنا أوبورتيونيتي. أعطوني تسعين يومًا.",
@@ -136,14 +148,14 @@
     {
       "who": "viking",
       "emotion": "sleepy",
-      "ar": "لا. تبقى تراقب… وهناك دائمًا من يأتي بعدك.",
-      "en": "No. You keep watch. Someone always comes after."
+      "ar": "أحيانًا… لكن ما اكتشفناه يبقى.",
+      "en": "Sometimes… but what we discovered remains."
     },
     {
       "who": "viking",
       "emotion": "happy",
-      "ar": "استرح يا صغيري. أعطيتَ أكثر مما طلبوا.",
-      "en": "Rest, little one. You did more than they asked."
+      "ar": "واصل يا صغيري. ما زال هناك ما تكتشفه.",
+      "en": "Keep going, little one. There's still more to discover."
     }
   ],
   "ch2_storm": [
@@ -156,8 +168,8 @@
     {
       "who": "opportunity",
       "emotion": "sleepy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "en": "The dust is hiding the Sun. My panels can’t recharge.",
+      "ar": "الغبار يحجب الشمس. ألواحي لا تستطيع شحن البطارية."
     }
   ],
   "ch3_intro": [
@@ -274,8 +286,8 @@
     {
       "who": "pioneer",
       "emotion": "happy",
-      "ar": "أسمعكم. لا أستطيع الردّ… لكنني أسمعكم.",
-      "en": "I hear you. I can't answer. But I hear you."
+      "ar": "أسمعكم… أسمعكم جميعًا.",
+      "en": "I hear you. All of you."
     }
   ],
   "ch3_recover": [
@@ -292,6 +304,28 @@
       "emotion": "scared",
       "ar": "هيا… قليلًا بعد.",
       "en": "Come on… a little more."
+    }
+  ],
+  "ch2_water": [
+    {
+      "who": "opportunity",
+      "emotion": "happy",
+      "en": "Three clues. This dry place has a watery past.",
+      "ar": "ثلاثة أدلّة. لهذا المكان الجاف ماضٍ عرف الماء."
+    },
+    {
+      "who": "opportunity",
+      "emotion": "curious",
+      "en": "I’ll send the evidence home. Then keep looking.",
+      "ar": "سأرسل الأدلّة إلى الأرض، ثم أواصل البحث."
+    }
+  ],
+  "ch2_storm_presence": [
+    {
+      "who": "opportunity",
+      "emotion": "sleepy",
+      "ar": "ما زلتُ هنا.",
+      "en": "I'm still here."
     }
   ]
 }

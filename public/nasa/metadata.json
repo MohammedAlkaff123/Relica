@@ -953,6 +953,16 @@
         "page": "https://images.nasa.gov/details/ARC-1982-AC82-0178",
         "image_url": "https://images-assets.nasa.gov/image/ARC-1982-AC82-0178/ARC-1982-AC82-0178~medium.jpg",
         "local_file": "nasa_data\\pioneer_10_11\\ARC-1982-AC82-0178.jpg"
+      },
+      {
+        "nasa_id": "AC73-9341",
+        "title": "Pioneer 10 at Jupiter",
+        "description": "Historical sequence of Jupiter images sent by Pioneer 10 during its December 1973 flyby.",
+        "date_created": "1973-12-04T00:00:00Z",
+        "center": "ARC",
+        "page": "https://science.nasa.gov/resource/pioneer-10-at-jupiter/",
+        "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/09/6/668761main_ac73-9341-1.jpg?fit=clip&w=1600",
+        "local_file": "nasa_data\\pioneer_10_11\\AC73-9341.jpg"
       }
     ]
   },

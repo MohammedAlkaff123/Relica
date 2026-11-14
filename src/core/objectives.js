@@ -34,11 +34,12 @@ function makeMarker(radius) {
   return group;
 }
 
-export function createObjectives({ scene, hud, world, getHero, getSpeed = () => 0 }) {
+export function createObjectives({ scene, hud, world, navigation, getHero, getSpeed = () => 0 }) {
   let current = null; // { x, z, radius, text, resolve, marker, shown }
   let time = 0;
 
   function clearCurrent() {
+    navigation?.clear();
     if (!current) return;
     scene.remove(current.marker);
     current.marker.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); });
@@ -53,13 +54,14 @@ export function createObjectives({ scene, hud, world, getHero, getSpeed = () => 
       const marker = makeMarker(radius);
       marker.position.set(x, heightAt(world, x, z), z);
       scene.add(marker);
+      navigation?.set(x, z, text, { radius, arrival: park ? 'Stop here' : 'You are here' });
       return new Promise((resolve) => {
         current = { x, z, radius, text, resolve, marker, showDistance, park, shown: '' };
       });
     },
     get active() { return !!current; },
     // Change the words of the current goal without moving it.
-    setText(text) { if (current) current.text = text; },
+    setText(text) { if (current) { current.text = text; navigation?.set(current.x, current.z, text, { radius: current.radius }); } },
     update(dt) {
       time += dt;
       if (!current) return;

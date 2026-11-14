@@ -1,0 +1,62 @@
+{
+  "PIA20285": {
+    "set": "potts",
+    "title": "Opportunity · front hazard camera",
+    "date": "5 January 2016 · sol 4,248",
+    "subject": "the tool against the rock",
+    "position": [
+      0,
+      1.1,
+      3.8
+    ],
+    "target": [
+      0,
+      0.3,
+      -1.7
+    ],
+    "fov": 72,
+    "aspect": 1.293,
+    "source": "https://science.nasa.gov/photojournal/mars-rover-opportunity-at-rock-abrasion-target-potts/",
+    "composition": "Low wide-angle view; arm from left; downward instrument at center; wheel lower right; rising rock slope behind."
+  },
+  "PIA21708": {
+    "set": "orion",
+    "title": "Opportunity · Orion crater panorama",
+    "date": "26 April 2017 · sol 4,712",
+    "subject": "the shallow crater",
+    "position": [
+      0,
+      3.5,
+      14
+    ],
+    "target": [
+      0,
+      -0.4,
+      0
+    ],
+    "fov": 55,
+    "aspect": 6.37,
+    "source": "https://science.nasa.gov/photojournal/mars-rover-opportunitys-view-of-orion-crater/",
+    "composition": "Wide, shallow oval depression, low far rim, near sand and wheel tracks on left; represents a stitched Pancam sweep."
+  },
+  "PIA10738": {
+    "set": "viking",
+    "title": "Viking 1 · Camera 2",
+    "date": "1 August 1976 · sol 12",
+    "subject": "the exposed soil beside the lander",
+    "position": [
+      0,
+      3,
+      3
+    ],
+    "target": [
+      0,
+      0,
+      -0.4
+    ],
+    "fov": 60,
+    "aspect": 3.406,
+    "source": "https://science.nasa.gov/photojournal/mars-surface-near-viking-lander-1-footpad/",
+    "composition": "Downward view without sky, rocks on right and lander sampler-housing struts on left; matches NASA published horizontal flip, not native camera orientation."
+  }
+}

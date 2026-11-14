@@ -9,6 +9,7 @@ import { loadJSON } from './core/content.js';
 import { fadeTo } from './core/fade.js';
 import { createCinematics } from './cinematics/cinematic.js';
 import { createPrompt } from './ui/prompt.js';
+import { createNavigation } from './ui/navigation.js';
 import { createHud } from './ui/hud.js';
 import { createCard } from './ui/card.js';
 import { createDialogue } from './ui/dialogue.js';
@@ -39,18 +40,19 @@ async function boot() {
   const characters = new Map(); // id -> character currently on stage
 
   const hud = createHud(root, facts);
+  const navigation = createNavigation(root, game.camera);
   const card = createCard(root, prompt);
-  const dialogue = await createDialogue(root, prompt, audio, (id) => characters.get(id));
-  const memory = await createMemory(root, prompt);
   const followCam = createFollowCamera(game.camera, tuning);
-  const cinematics = createCinematics({ camera: game.camera, followCam, tuning, root });
+  const dialogue = await createDialogue(root, prompt, audio, (id) => characters.get(id), followCam);
+  const memory = await createMemory(root, prompt);
+  const cinematics = createCinematics({ camera: game.camera, followCam, tuning, root, audio, getCharacter: (id) => characters.get(id) });
   const tweak = createTweak(tuning);
 
   // Everything a chapter may use. See README "The contracts".
   const ctx = {
-    scene: game.scene, camera: game.camera,
+    scene: game.scene, camera: game.camera, renderer: game.renderer,
     input, physics, facts, tuning, characters,
-    hud, card, dialogue, memory, followCam, cinematics, audio,
+    hud, card, dialogue, memory, followCam, cinematics, audio, navigation,
   };
 
   const list = [opening, moon, mars, sky, epilogue];
@@ -116,6 +118,7 @@ async function boot() {
     physics.step(dt);
     followCam.update(dt);
     cinematics.update(dt);
+    navigation.update(ctx.stage?.hero.object, ctx.stage?.alive && ctx.stage.controls && followCam.enabled);
     input.endFrame();
   }
 

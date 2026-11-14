@@ -1,0 +1,224 @@
+{
+  "done": true,
+  "passes": 41,
+  "fails": 0,
+  "results": [
+    {
+      "status": "pass",
+      "name": "Boot: the game starts with no errors",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-1 physics ground matches heightAt (moon)",
+      "detail": "80 points, largest gap 0.11 m (limit 0.30)"
+    },
+    {
+      "status": "pass",
+      "name": "A-1 physics ground matches heightAt (mars)",
+      "detail": "80 points, largest gap 0.06 m (limit 0.30)"
+    },
+    {
+      "status": "pass",
+      "name": "A-2 speed builds up (not instant)",
+      "detail": "after 0.25 s: 2.8 m/s, after 2.75 s: 5.0 m/s (top 5)"
+    },
+    {
+      "status": "pass",
+      "name": "A-2 speed fades when W is let go",
+      "detail": "0.3 s after: 2.3 m/s, 3.3 s after: 0.00 m/s"
+    },
+    {
+      "status": "pass",
+      "name": "A-2 never flips over",
+      "detail": "largest tilt 8° (limit 35°)"
+    },
+    {
+      "status": "pass",
+      "name": "A-2 never falls through the ground",
+      "detail": "lowest point -0.03 m against the ground (limit -0.30)"
+    },
+    {
+      "status": "pass",
+      "name": "A-2 Space hops: leaves the ground and lands again",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-3 an objective zone fires when the rover enters it",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-3 the zone marker is removed once reached",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-5 stage.wait(1) waits one second of game time",
+      "detail": "1.20 s"
+    },
+    {
+      "status": "pass",
+      "name": "A-5 stage.fade goes to black and back",
+      "detail": "black 1, clear 0"
+    },
+    {
+      "status": "pass",
+      "name": "A-5 lockControls: W does nothing while locked",
+      "detail": "0.00 m/s"
+    },
+    {
+      "status": "pass",
+      "name": "A-5 R restarts the chapter from its start",
+      "detail": "chapter 1, rover at 7.0, 3.0"
+    },
+    {
+      "status": "pass",
+      "name": "A-11 keys 1-5 open each chapter with its title card",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-11 key 6 jumps to the fender (Moon, after stop 1)",
+      "detail": "chapter 1"
+    },
+    {
+      "status": "pass",
+      "name": "A-11 key 7 jumps to the Viking radio call",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-11 key 8 jumps to the dust storm (the rover starts slowing)",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-11 key 9 jumps to flight 72",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "Nothing is left behind after 20 fast chapter jumps",
+      "detail": "objects in the scene: 4 before, 4 after"
+    },
+    {
+      "status": "pass",
+      "name": "A-6 Opening: plays to the end",
+      "detail": "46 game seconds"
+    },
+    {
+      "status": "pass",
+      "name": "A-6 Opening: never needs E to skip",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-6 Opening: mission tasks ticked",
+      "detail": "2 ticked (need 2)"
+    },
+    {
+      "status": "pass",
+      "name": "A-4 + A-15 Moon (Carry the crew): plays to the end",
+      "detail": "159 game seconds"
+    },
+    {
+      "status": "pass",
+      "name": "A-4 + A-15 Moon (Carry the crew): never needs E to skip",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-4 + A-15 Moon (Carry the crew): mission tasks ticked",
+      "detail": "3 ticked (need 3)"
+    },
+    {
+      "status": "pass",
+      "name": "A-15 the air-time record counts jumps",
+      "detail": "best 7.7 s"
+    },
+    {
+      "status": "pass",
+      "name": "A-7 + A-16 Mars (Find evidence of ancient water): plays to the end",
+      "detail": "246 game seconds"
+    },
+    {
+      "status": "pass",
+      "name": "A-7 + A-16 Mars (Find evidence of ancient water): never needs E to skip",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-7 + A-16 Mars (Find evidence of ancient water): mission tasks ticked",
+      "detail": "5 ticked (need 5)"
+    },
+    {
+      "status": "pass",
+      "name": "A-7 the storm stops the rover while W is still held",
+      "detail": "speed at the end: 0.00 m/s"
+    },
+    {
+      "status": "pass",
+      "name": "A-16 three signs of water found",
+      "detail": "3 / 3"
+    },
+    {
+      "status": "pass",
+      "name": "A-8 + A-17 Mars sky (Be the eyes): plays to the end",
+      "detail": "198 game seconds"
+    },
+    {
+      "status": "pass",
+      "name": "A-8 + A-17 Mars sky (Be the eyes): never needs E to skip",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-8 + A-17 Mars sky (Be the eyes): mission tasks ticked",
+      "detail": "3 ticked (need 2)"
+    },
+    {
+      "status": "pass",
+      "name": "A-8 flight 72 ends in the crash, and Space only twitches the rotor",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-9 Epilogue (Photograph Jupiter, then listen): plays to the end",
+      "detail": "60 game seconds"
+    },
+    {
+      "status": "pass",
+      "name": "A-9 Epilogue (Photograph Jupiter, then listen): never needs E to skip",
+      "detail": ""
+    },
+    {
+      "status": "pass",
+      "name": "A-9 Epilogue (Photograph Jupiter, then listen): mission tasks ticked",
+      "detail": "3 ticked (need 2)"
+    },
+    {
+      "status": "pass",
+      "name": "A-9 Jupiter image captured and sent before the listening scene",
+      "detail": ""
+    },
+    {
+      "status": "info",
+      "name": "Automated chapter lengths (dialogue is skipped; this is not a human pacing test)",
+      "detail": "opening 46 s (story target 45 s)\n    moon 159 s (story target 180 s)\n    mars 246 s (story target 270 s)\n    sky 198 s (story target 150 s)\n    epilogue 60 s (story target 95 s)"
+    },
+    {
+      "status": "info",
+      "name": "Discovery cards shown during the test",
+      "detail": "11: moon_gravity, opportunity_90, moon_no_air, fender_maps, rover_filmed, pebbles_water, jarosite_water, ripples_water, viking_first, opportunity_storm, ingenuity_72"
+    },
+    {
+      "status": "pass",
+      "name": "No errors in the console during the whole test",
+      "detail": ""
+    }
+  ],
+  "errors": [],
+  "missing": []
+}

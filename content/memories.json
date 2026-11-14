@@ -1,5 +1,5 @@
 {
-  "_readme": "Owner: Set C. Memory photos by NASA id: memory.show('as17-137-20979'). title = short English title. caption = one sentence in English and Arabic. focus = which part of the photo stays in the 4:3 frame (CSS object-position). zoom = enlarge the photo inside the frame (1 = none). fit: 'contain' shows the whole photo (for panoramas and side-by-side photos). The credit line (year, NASA centre, id) comes from public/nasa/metadata.json. Every photo was checked by eye: no children, and no NASA logo left in frame after cropping.",
+  "_readme": "Owner: Set C. Memory photos by NASA id: memory.show('as17-137-20979'). title = short English title. caption = one sentence in English and Arabic. focus = which part of the photo stays in the 4:3 frame (CSS object-position). zoom = enlarge the photo inside the frame (1 = none). fit: 'contain' shows the whole photo (for panoramas and side-by-side photos). The credit line (year, NASA centre, id) comes from public/nasa/metadata.json. Every photo was checked by eye: no children, and no NASA logo left in frame after cropping. tribute = verified service record, shown bilingually beneath the photo on the final wall. All tribute photos appear there even when a chapter was skipped; they are not marked as collected. Sources stay beside the tribute. Existing captions describe the photograph itself.",
   "S71-16722": {
     "title": "A training rover, 1971",
     "caption": {
@@ -15,14 +15,32 @@
       "ar": "هكذا أصلحوها فعلًا: واقي غبار جديد من خرائط وشريط لاصق ومشابك، ديسمبر ١٩٧٢."
     },
     "focus": "50% 100%",
-    "_check": "The NASA logo on the backpack is at the top of the photo. focus 50% 100% keeps only the lower part, so the logo is out of frame"
+    "_check": "The NASA logo on the backpack is at the top of the photo. focus 50% 100% keeps only the lower part, so the logo is out of frame",
+    "tribute": {
+      "en": "Carried the Apollo 17 crew, tools and samples across 35.7 km of the Moon. The astronauts returned 110.52 kg of lunar material for study on Earth.",
+      "ar": "نقلت طاقم أبولو ١٧ وأدواته وعيّناته عبر ٣٥٫٧ كيلومترًا على القمر. أعاد الروّاد ١١٠٫٥٢ كيلوجرامًا من مواد القمر لدراستها على الأرض.",
+      "sources": [
+        "https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_17a_Summary.htm"
+      ]
+    }
   },
   "PIA20285": {
     "title": "Grinding a rock",
     "caption": {
-      "en": "Opportunity's arm at a rock target on the rim of Endeavour crater, 2016.",
-      "ar": "ذراع أوبورتيونيتي عند صخرة اختيرت للفحص على حافة فوهة إنديفور، ٢٠١٦."
-    }
+      "en": "Opportunity’s low front Hazcam records the Potts target, its arm and the downward-facing microscopic imager. This 2016 investigation came years after its first water discoveries.",
+      "ar": "تصوّر كاميرا أوبورتيونيتي الأمامية المنخفضة هدف بوتس والذراع والمجهر المتجه للأسفل. جرى هذا الفحص عام ٢٠١٦، بعد سنوات من اكتشاف أدلّة الماء الأولى."
+    },
+    "tribute": {
+      "en": "Planned for 90 Martian days. Opportunity explored for more than 14 Earth years and travelled 45.16 km. Found strong evidence that ancient Mars had liquid water; the 2018 dust storm cut off its sunlight.",
+      "ar": "خُطّط لها أن تعمل ٩٠ يومًا مريخيًا. استكشفت أوبورتيونيتي المريخ أكثر من ١٤ سنة أرضية وقطعت ٤٥٫١٦ كيلومترًا. وجدت أدلّة قوية على وجود ماء سائل قديمًا؛ ثم حجبت عاصفة غبار عام ٢٠١٨ ضوء الشمس عنها.",
+      "sources": [
+        "https://science.nasa.gov/mission/mer-opportunity/",
+        "https://science.nasa.gov/resource/meridiani-planum-2/",
+        "https://science.nasa.gov/resource/opportunitys-last-message/"
+      ]
+    },
+    "taken": "5 Jan 2016 · sol 4,248",
+    "fit": "contain"
   },
   "PIA07108": {
     "title": "Frost on Opportunity",
@@ -35,10 +53,11 @@
   "PIA21708": {
     "title": "Orion crater",
     "caption": {
-      "en": "Orion crater on Mars, named after the Apollo 16 lunar module. Seen on sol 4,712.",
-      "ar": "فوهة أوريون على المريخ، سُمّيت باسم مركبة الهبوط القمرية لأبولو ١٦. تظهر هنا في اليوم المريخي ٤٧١٢."
+      "en": "A stitched, approximately true-color Pancam panorama of Orion crater. A record of exploration; the crater photograph alone is not evidence of water.",
+      "ar": "بانوراما مركّبة من كاميرا بانكام لفوهة أوريون بألوان قريبة من الطبيعية. توثّق الاستكشاف، ولا تُعد صورة الفوهة وحدها دليلًا على الماء."
     },
-    "fit": "contain"
+    "fit": "contain",
+    "taken": "26 Apr 2017 · sol 4,712"
   },
   "PIA23882": {
     "title": "Ingenuity, ready to fly",
@@ -46,7 +65,15 @@
       "en": "The real Ingenuity helicopter on Earth, before it went to Mars.",
       "ar": "مروحية إنجينويتي الحقيقية على الأرض، قبل رحلتها إلى المريخ."
     },
-    "focus": "50% 45%"
+    "focus": "50% 45%",
+    "tribute": {
+      "en": "Up to 5 flights planned. Ingenuity completed 72, proving powered flight was possible on another world. Its extended mission scouted terrain for Perseverance.",
+      "ar": "خُطّط لها أن تطير حتى ٥ رحلات. أتمّت إنجينويتي ٧٢ رحلة وأثبتت إمكان الطيران بمحرك على عالم آخر. وفي مهمتها الممتدة استكشفت التضاريس لمركبة بيرسيفيرانس.",
+      "sources": [
+        "https://www.nasa.gov/feature/ingenuity-mars-helicopter-ends-mission/",
+        "https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/"
+      ]
+    }
   },
   "PIA23969": {
     "title": "Its two cameras",
@@ -63,7 +90,14 @@
       "ar": "بايونير ١٠ في كيب كينيدي، فبراير ١٩٧٢، وقد ثُبّتت لوحته في مكانها."
     },
     "focus": "50% 50%",
-    "zoom": 1.15
+    "zoom": 1.15,
+    "tribute": {
+      "en": "A 21-month mission became more than 30 years. Pioneer 10 sent close-up views of Jupiter; its last signal reached Earth in 2003.",
+      "ar": "مهمة خُطّط لها ٢١ شهرًا امتدت أكثر من ٣٠ سنة. أرسل بايونير ١٠ صورًا قريبة للمشتري، ووصلت آخر إشارة منه إلى الأرض عام ٢٠٠٣.",
+      "sources": [
+        "https://science.nasa.gov/mission/pioneer-10/"
+      ]
+    }
   },
   "ARC-1972-A72-2137": {
     "title": "The Pioneer plaque",
@@ -73,5 +107,32 @@
     },
     "focus": "52% 47%",
     "zoom": 2.6
+  },
+  "PIA10738": {
+    "title": "Beside Viking 1's footpad",
+    "caption": {
+      "en": "Viking 1 Camera 2, sol 12. This published view is horizontally flipped; it is not the landing-day photograph.",
+      "ar": "كاميرا ٢ في فايكنغ ١، اليوم المريخي ١٢. هذه الصورة المنشورة معكوسة أفقيًا، وليست صورة يوم الهبوط."
+    },
+    "fit": "contain",
+    "_check": "PIA10738 checked visually on 14 November 2026: lander footpad and rocks; no people or visible NASA logo. Existing repository asset; no new image generated.",
+    "tribute": {
+      "en": "First successful U.S. landing on Mars, 20 July 1976. Planned for 90 days; Viking 1 worked for more than six years, imaging Mars and testing its soil.",
+      "ar": "أول هبوط أمريكي ناجح على المريخ، ٢٠ يوليو ١٩٧٦. خُطّط لها ٩٠ يومًا، فعملت أكثر من ست سنوات، تصوّر المريخ وتفحص تربته.",
+      "sources": [
+        "https://science.nasa.gov/mission/viking/",
+        "https://science.nasa.gov/mission/viking-1/"
+      ]
+    },
+    "taken": "1 Aug 1976"
+  },
+  "AC73-9341": {
+    "title": "Jupiter through Pioneer 10’s eyes",
+    "taken": "December 1973",
+    "fit": "contain",
+    "caption": {
+      "en": "The real Pioneer 10 flyby sequence: Jupiter grows on approach and becomes a crescent on departure. This is a sequence of images, not one exposure.",
+      "ar": "تتابع صور بايونير ١٠ الحقيقي: يكبر المشتري عند الاقتراب ويظهر هلالًا عند الابتعاد. هذه صور متتابعة وليست لقطة واحدة."
+    }
   }
 }

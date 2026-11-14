@@ -1,5 +1,58 @@
 {
-  "camera": { "distance": 7, "height": 3, "lag": 4, "fov": 55, "shakeDeg": 0.5, "shakeSpeed": 0.5 },
-  "rover": { "speed": 5, "accel": 3, "turn": 1.6, "hop": 3 },
-  "heli": { "lift": 7, "speed": 4, "turn": 1.6 }
+  "camera": {
+    "distance": 7,
+    "height": 3,
+    "lag": 4,
+    "fov": 55,
+    "shakeDeg": 0.5,
+    "shakeSpeed": 0.5
+  },
+  "rover": {
+    "speed": 5,
+    "accel": 3,
+    "turn": 1.6,
+    "hop": 3
+  },
+  "heli": {
+    "lift": 7,
+    "speed": 4,
+    "turn": 1.6
+  },
+  "cameraProfiles": {
+    "lrv": {
+      "distance": 7,
+      "height": 3,
+      "lag": 4,
+      "fov": 55,
+      "shakeDeg": 0.3
+    },
+    "opportunity": {
+      "distance": 6,
+      "height": 2.6,
+      "lag": 4,
+      "fov": 55,
+      "shakeDeg": 0.4
+    },
+    "ingenuity": {
+      "distance": 3.5,
+      "height": 1.5,
+      "lag": 7,
+      "fov": 55,
+      "shakeDeg": 0.45
+    },
+    "pioneer": {
+      "distance": 5,
+      "height": 1,
+      "lag": 1.2,
+      "fov": 50,
+      "shakeDeg": 0.03
+    },
+    "viking": {
+      "distance": 4,
+      "height": 1.4,
+      "lag": 4,
+      "fov": 45,
+      "shakeDeg": 0
+    }
+  }
 }
