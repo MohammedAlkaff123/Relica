@@ -290,3 +290,92 @@ No cut. As the storm level rises from 0 to 1: zoom narrows 55° → 45°, sway r
 | Deep space | none | `#02030A` | One small cold light from the Sun's direction | Signal gold `#E3A23C` |
 
 Signal rings and antenna tips are always foil gold, in every world, so the player learns that gold means "a voice".
+
+## 8. Missions: clear tasks that are fun
+
+Every chapter has a named mission and a short task list, shown at the top right of the screen. Each task ticks off with a sound when it is done. The player always knows what to do next and how far along they are.
+
+Each mission is built on one fun mechanic, and that mechanic is also the lesson. The player learns by doing the thing, then one sentence confirms what they just felt.
+
+### Opening: "Wake up"
+
+| Task | How it plays |
+|---|---|
+| Spin your wheels | Hold W on the test stand |
+| Steer left and right | A and D |
+
+### Chapter 1: "Carry the crew"
+
+**The fun:** big slow-motion jumps. Every hill is a ramp, and an air-time counter shows your best jump.
+
+| Task | How it plays | What the player learns by doing it |
+|---|---|---|
+| Take the crew to 3 science stops | Park inside the circle at each stop. A neat park gets a happy beep | |
+| Bring back 3 sample boxes | A box is strapped on at each stop. The stack grows on the back of the rover | The rover's job: carrying more, further |
+| Longest jump (bonus) | Air-time record on screen | One-sixth gravity: the same hop that barely left the factory floor lasts three seconds here |
+| Drive blind to stop 2 | After the fender breaks, follow a beeping marker through your own dust | With no air, dust flies in clean arcs and never hangs in clouds **(verify)** |
+
+### Chapter 2: "Follow the water"
+
+**The fun:** managing sunlight. The battery is your life, dust is the enemy, and whirlwinds are your friends.
+
+| Task | How it plays | What the player learns by doing it |
+|---|---|---|
+| Climb out of the crater | First drive | |
+| Find 3 signs of water | Hold E to study the round pebbles, the layered rock and the view from the rim. Each one fills a third of a "water" badge | What the mission was looking for, and that it found it **(verify)** |
+| Keep the battery alive | Dust dims the panels as you drive. Whirlwinds wander the plain; drive through one and the panels are swept clean **(verify)** | Solar power on Mars, and why a 90-day rover lasted years |
+| Reach the rim | The long drive, with the sol counter passing 90 | Planned and done |
+
+### Chapter 3: "Be the eyes"
+
+**The fun:** delicate flying on a short battery. Every flight is a small dare.
+
+| Task | How it plays | What the player learns by doing it |
+|---|---|---|
+| First flight: hold 3 metres for 3 seconds | Keep the helicopter inside a marked height band | The air is about 1% of Earth's, so staying up takes constant effort **(verify)** |
+| Scout the road: mark 3 dangers | Fly over a sand trap, a boulder field and a cliff edge, and press E above each to mark it. The big rover's route bends around every mark | Why a helicopter was useful to a rover |
+| Land with battery to spare | Reach the pad before the bar empties | Flights were short because the battery was small **(verify)** |
+
+### Epilogue: "Listen"
+
+| Task | How it plays |
+|---|---|
+| Find the Sun | Turn the dish with A and D |
+| Hold the signal | Keep it lined up while the voices arrive |
+
+### Discovery cards
+
+When a lesson lands, one sentence appears at the bottom of the screen for four seconds and is saved to a list the player can read at the end. No pop-up, no pause. Eight at most in the whole game:
+
+1. Moon gravity is one-sixth of Earth's.
+2. The Moon has no air: no wind, no sound, and dust that falls straight back.
+3. A broken fender was fixed with maps and clamps.
+4. The rover's own camera filmed its crew leaving.
+5. Opportunity was planned for 90 Martian days.
+6. The round pebbles formed in water.
+7. Wind sometimes cleaned the solar panels.
+8. Ingenuity was planned for 5 flights and made 72.
+
+Every card needs a verified source before it goes in.
+
+## 9. Extra cutscenes
+
+Short moments that make the player care, placed where the game would otherwise go straight from one task to the next.
+
+**Rules for all of them:** eight seconds at most. Never two in a row, except at chapter ends. The player gets the controls back within ten seconds. Escape always skips.
+
+| Id | Where | Length | What we see | Why it is there |
+|---|---|---|---|---|
+| `earth_goodbye` | Opening, as the panel closes | 4 s | From inside the box, through the closing gap: a hooded worker rests a hand on the rover for a second. Then dark | Someone cared about it first |
+| `moon_first_look` | Chapter 1, after unfolding | 5 s | The rover's eye pans across grey hills, then finds Earth, small and blue. The focus settles on it | Wonder, and how far from home |
+| `moon_pat` | Chapter 1, after the repair | 3 s | An astronaut pats the taped fender twice and walks off. The rover's antenna perks up | The bond that makes the ending hurt |
+| `mars_day` | Chapter 2, at each of the three time skips | 4 s | Locked-off wide shot. The Sun crosses the sky, shadows sweep round, the sol counter spins | Years passing, cheaply, three times |
+| `mars_tracks` | Chapter 2, at the rim | 5 s | The mast turns to look back. Two wheel tracks run all the way to the horizon | Pride. Look how far it came |
+| `viking_wakes` | Chapter 2, before the call | 6 s | A dust-covered lander, perfectly still. One eyelid cracks open. Dust slides off a long eyebrow | Meeting the old one properly |
+| `first_shadow` | Chapter 3, at 3 metres on flight 1 | 5 s | Straight down: a tiny helicopter shadow on red sand **(verify: it photographed its own shadow)** | "I'm flying" |
+| `flights_montage` | Chapter 3, the counter passing 5 | 6 s | Four quick flights in different light, the counter jumping each cut | Planned and done |
+| `where_they_are` | Epilogue, during the voices | 12 s | As each voice arrives, cut to that machine where it rests today: the rover parked on the Moon, Viking under dust, Opportunity on the rim, Ingenuity on the sand. Three seconds each, locked off | The payoff of the whole game. Every one of them is still there |
+
+This adds about 55 seconds, which takes the game to roughly 13:30. To stay near 12 minutes, shorten the driving between stops, not these moments.
+
+If time runs short, cut in this order: `mars_tracks`, `flights_montage`, `earth_goodbye`, `moon_pat`. Never cut `viking_wakes` or `where_they_are`.

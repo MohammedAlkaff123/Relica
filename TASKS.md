@@ -305,3 +305,20 @@ Try focus blur last, and drop it if it costs more than an hour.
 - What is invented and what is real?
 
 **DIR-9 Upload (hours 22–24).** Fill the form with Abdullatif. Check the video link opens without a login. Submit with an hour to spare.
+
+---
+
+## Added after the first look: missions and extra cutscenes
+
+The directors asked for clearer, more fun tasks and more short cutscenes. The design is in STORY.md sections 8 and 9. These tasks sit on top of the ones above.
+
+| Id | Who | By | Task | Done when |
+|---|---|---|---|---|
+| **C-13** | Abdullatif | hour 4 | Task list on the HUD: `hud.setMission(title, [tasks])`, `hud.completeTask(index)` with a tick sound, `hud.setBonus(label, value)` for the jump record | Chapter 1 shows "Carry the crew" with its tasks ticking off |
+| **C-14** | Abdullatif | hour 9 | Discovery cards: `hud.discover(id)` shows one sentence for four seconds and saves it. Text in Arabic and English in `content/discoveries.json`, each with its verified source. A list of them on the end screen | All eight cards appear in a full playthrough |
+| **A-15** | Ziad | hour 5 | Chapter 1 mission: parking circles, sample boxes that stack on the rover, air-time counter and record | A new player finishes chapter 1 without asking what to do |
+| **A-16** | Ziad | hour 9 | Chapter 2 mission: three hold-E water signs filling a badge, dust and battery, whirlwinds that clean the panels when driven through | The player hunts for whirlwinds on purpose |
+| **A-17** | Ziad | hour 10 | Chapter 3 mission: the height band for flight 1, three dangers to mark with E, the rover's route bending around each mark | Marking a danger visibly changes the route |
+| **B-13** | Abdulkarim | hour 8 | New props and effects: sample box, parking circle, whirlwind, the three dangers (sand trap, boulder field, cliff edge), the height band, a water badge icon | Ziad has replaced every placeholder |
+| **CAM-9** | Moayad | rough by hour 8, final by hour 16 | The nine extra shots in STORY.md section 9. `mars_day` is one shot reused three times. `where_they_are` needs each machine left in its final pose in its own world | `where_they_are` plays and somebody in the room goes quiet |
+| **DIR-10** | Mohammed | hour 11 | Fun check. Watch someone new play each mission. If they ask "what do I do?", the task text is wrong. If they stop trying to jump on the Moon after ten seconds, the jumps are not fun yet | Each mission passes with a new player |
