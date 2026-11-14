@@ -4,7 +4,7 @@
     "title": "A training rover, 1971",
     "caption": {
       "en": "A training rover on Earth, 1971. The Apollo 15 crew practised with it before going to the Moon.",
-      "ar": "عربة تدريب على الأرض، عام ١٩٧١. تدرّب عليها طاقم أبولو ١٥ قبل الذهاب إلى القمر."
+      "ar": "عربة تدريب على الأرض عام ١٩٧١. تدرّب عليها طاقم أبولو ١٥ قبل رحلته إلى القمر."
     },
     "focus": "50% 60%"
   },
@@ -12,7 +12,7 @@
     "title": "The fender repair, Apollo 17",
     "caption": {
       "en": "The real repair: a new fender made of maps, tape and clamps, December 1972.",
-      "ar": "الإصلاح الحقيقي: رفرف جديد من خرائط وشريط لاصق ومشابك، ديسمبر ١٩٧٢."
+      "ar": "هكذا أصلحوها فعلًا: واقي غبار جديد من خرائط وشريط لاصق ومشابك، ديسمبر ١٩٧٢."
     },
     "focus": "50% 100%",
     "_check": "The NASA logo on the backpack is at the top of the photo. focus 50% 100% keeps only the lower part, so the logo is out of frame"
@@ -21,7 +21,7 @@
     "title": "Grinding a rock",
     "caption": {
       "en": "Opportunity's arm at a rock target on the rim of Endeavour crater, 2016.",
-      "ar": "ذراع أوبورتيونيتي عند صخرة على حافة فوهة إنديفور، عام ٢٠١٦."
+      "ar": "ذراع أوبورتيونيتي عند صخرة اختيرت للفحص على حافة فوهة إنديفور، ٢٠١٦."
     }
   },
   "PIA07108": {
@@ -36,7 +36,7 @@
     "title": "Orion crater",
     "caption": {
       "en": "Orion crater on Mars, named after the Apollo 16 lunar module. Seen on sol 4,712.",
-      "ar": "فوهة أوريون على المريخ، سُمّيت باسم مركبة هبوط أبولو ١٦. صُوّرت في اليوم المريخي ٤٧١٢."
+      "ar": "فوهة أوريون على المريخ، سُمّيت باسم مركبة الهبوط القمرية لأبولو ١٦. تظهر هنا في اليوم المريخي ٤٧١٢."
     },
     "fit": "contain"
   },
@@ -44,7 +44,7 @@
     "title": "Ingenuity, ready to fly",
     "caption": {
       "en": "The real Ingenuity helicopter on Earth, before it went to Mars.",
-      "ar": "المروحية إنجينويتي الحقيقية على الأرض قبل ذهابها إلى المريخ."
+      "ar": "مروحية إنجينويتي الحقيقية على الأرض، قبل رحلتها إلى المريخ."
     },
     "focus": "50% 45%"
   },
@@ -52,7 +52,7 @@
     "title": "Its two cameras",
     "caption": {
       "en": "An engineer checks Ingenuity's two cameras on its underside.",
-      "ar": "مهندس يفحص الكاميرتين أسفل إنجينويتي."
+      "ar": "مهندس يفحص كاميرتَي إنجينويتي المثبّتتين أسفلها."
     },
     "focus": "50% 35%"
   },
@@ -60,7 +60,7 @@
     "title": "Pioneer 10, being readied",
     "caption": {
       "en": "Pioneer 10 at Cape Kennedy in February 1972, with its plaque in place.",
-      "ar": "بايونير ١٠ في كيب كينيدي في فبراير ١٩٧٢، ولوحته في مكانها."
+      "ar": "بايونير ١٠ في كيب كينيدي، فبراير ١٩٧٢، وقد ثُبّتت لوحته في مكانها."
     },
     "focus": "50% 50%",
     "zoom": 1.15
@@ -69,7 +69,7 @@
     "title": "The Pioneer plaque",
     "caption": {
       "en": "The plaque on Pioneer 10 tells where and when it came from.",
-      "ar": "اللوحة على بايونير ١٠ تخبر من أين جاء ومتى."
+      "ar": "لوحة بايونير ١٠ تخبر من يجدها من أين انطلق ومتى."
     },
     "focus": "52% 47%",
     "zoom": 2.6

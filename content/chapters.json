@@ -1,33 +1,93 @@
 {
   "_readme": "Owner: Set C. Text for the chapter cards: card.chapter('moon'). Mission names, places and dates must match the verified facts in facts.json under missions.",
   "opening": {
-    "title": { "en": "RELICA", "ar": "ريليكا" },
-    "sub": { "en": "Press Enter to wake up", "ar": "اضغط Enter لتستيقظ" }
+    "title": {
+      "en": "RELICA",
+      "ar": "ريليكا"
+    },
+    "sub": {
+      "en": "Press Enter to wake up",
+      "ar": "اضغط Enter لتستيقظ"
+    }
   },
   "moon": {
-    "title": { "en": "The Moon", "ar": "القمر" },
-    "mission": { "en": "Apollo 17 · Lunar Roving Vehicle", "ar": "أبولو ١٧ · العربة القمرية" },
-    "place": { "en": "Taurus–Littrow valley", "ar": "وادي توروس-ليترو" },
-    "dates": { "en": "December 1972", "ar": "ديسمبر ١٩٧٢" }
+    "title": {
+      "en": "The Moon",
+      "ar": "القمر"
+    },
+    "mission": {
+      "en": "Apollo 17 · Lunar Roving Vehicle",
+      "ar": "أبولو ١٧ · العربة القمرية"
+    },
+    "place": {
+      "en": "Taurus–Littrow valley",
+      "ar": "وادي توروس–ليترو"
+    },
+    "dates": {
+      "en": "December 1972",
+      "ar": "ديسمبر ١٩٧٢"
+    }
   },
   "mars": {
-    "title": { "en": "Mars", "ar": "المريخ" },
-    "mission": { "en": "Mars Exploration Rover · Opportunity", "ar": "مركبة استكشاف المريخ · أوبورتيونيتي" },
-    "place": { "en": "Meridiani Planum", "ar": "سهل ميريدياني" },
-    "dates": { "en": "2004 – 2018", "ar": "٢٠٠٤ – ٢٠١٨" },
-    "sub": { "en": "Planned mission: 90 sols", "ar": "المهمة المخطط لها: ٩٠ يومًا مريخيًا" }
+    "title": {
+      "en": "Mars",
+      "ar": "المريخ"
+    },
+    "mission": {
+      "en": "Mars Exploration Rover · Opportunity",
+      "ar": "مركبة استكشاف المريخ · أوبورتيونيتي"
+    },
+    "place": {
+      "en": "Meridiani Planum",
+      "ar": "سهل ميريدياني"
+    },
+    "dates": {
+      "en": "2004 – 2018",
+      "ar": "٢٠٠٤ – ٢٠١٨"
+    },
+    "sub": {
+      "en": "Planned mission: 90 sols",
+      "ar": "مدة المهمة المقررة: ٩٠ يومًا مريخيًا"
+    }
   },
   "sky": {
-    "title": { "en": "The Mars Sky", "ar": "سماء المريخ" },
-    "mission": { "en": "Mars 2020 · Ingenuity helicopter", "ar": "مهمة المريخ ٢٠٢٠ · المروحية إنجينويتي" },
-    "place": { "en": "Jezero crater", "ar": "فوهة جيزيرو" },
-    "dates": { "en": "2021 – 2024", "ar": "٢٠٢١ – ٢٠٢٤" },
-    "sub": { "en": "Planned: 5 flights", "ar": "المخطط له: ٥ رحلات" }
+    "title": {
+      "en": "The Mars Sky",
+      "ar": "سماء المريخ"
+    },
+    "mission": {
+      "en": "Mars 2020 · Ingenuity helicopter",
+      "ar": "مهمة المريخ ٢٠٢٠ · مروحية إنجينويتي"
+    },
+    "place": {
+      "en": "Jezero crater",
+      "ar": "فوهة جيزيرو"
+    },
+    "dates": {
+      "en": "2021 – 2024",
+      "ar": "٢٠٢١ – ٢٠٢٤"
+    },
+    "sub": {
+      "en": "Planned: 5 flights",
+      "ar": "عدد الرحلات المقرر: ٥"
+    }
   },
   "epilogue": {
-    "title": { "en": "Far Away", "ar": "بعيدًا" },
-    "mission": { "en": "Pioneer 10", "ar": "بايونير ١٠" },
-    "place": { "en": "Beyond the planets", "ar": "ما وراء الكواكب" },
-    "dates": { "en": "1972 – today", "ar": "١٩٧٢ – اليوم" }
+    "title": {
+      "en": "Far Away",
+      "ar": "بعيدًا"
+    },
+    "mission": {
+      "en": "Pioneer 10",
+      "ar": "بايونير ١٠"
+    },
+    "place": {
+      "en": "Beyond the planets",
+      "ar": "ما وراء الكواكب"
+    },
+    "dates": {
+      "en": "1972 – today",
+      "ar": "١٩٧٢ – اليوم"
+    }
   }
 }

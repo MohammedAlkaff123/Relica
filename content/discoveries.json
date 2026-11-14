@@ -8,43 +8,43 @@
   },
   "moon_no_air": {
     "en": "The Moon has no air: no wind, no sound, and dust falls back in clean arcs.",
-    "ar": "لا هواء على القمر: لا ريح ولا صوت، والغبار يعود إلى الأرض في أقواس.",
+    "ar": "لا هواء على القمر: لا رياح ولا صوت، والغبار يسقط في أقواس.",
     "fact": "missions.moon_dust_arcs",
     "source": "https://www.nasa.gov/wp-content/uploads/2015/06/exploration_rover_concepts_grc.pdf"
   },
   "fender_maps": {
     "en": "A broken fender was fixed with maps, tape and clamps.",
-    "ar": "أُصلح الرفرف المكسور بخرائط وشريط لاصق ومشابك.",
+    "ar": "أصلحوا واقي الغبار المكسور بخرائط وشريط لاصق ومشابك.",
     "fact": "missions.a17_fender",
     "source": "https://www.hq.nasa.gov/alsj/a17/A17NewFender.html"
   },
   "rover_filmed": {
     "en": "The rover's own camera filmed its crew leaving.",
-    "ar": "كاميرا العربة نفسها صوّرت طاقمها وهو يغادر.",
+    "ar": "صوّرت العربة بكاميرتها لحظة رحيل طاقمها.",
     "fact": "missions.rover_filmed_liftoff",
     "source": "https://www.nasa.gov/history/50-years-ago-apollo-17-heads-home-to-earth/"
   },
   "opportunity_90": {
     "en": "Opportunity was planned for 90 Martian days. It worked for over 14 years.",
-    "ar": "خُطّط لأوبورتيونيتي أن تعمل ٩٠ يومًا مريخيًا، فعملت أكثر من ١٤ عامًا.",
+    "ar": "كان المقرر أن تعمل أوبورتيونيتي ٩٠ يومًا مريخيًا. لكنها واصلت العمل أكثر من ١٤ عامًا.",
     "fact": "missions.opportunity_planned",
     "source": "https://science.nasa.gov/mission/mer-opportunity/"
   },
   "pebbles_water": {
     "en": "The little round pebbles formed in water.",
-    "ar": "تكوّنت الحصى الصغيرة المستديرة في الماء.",
+    "ar": "تكوّنت هذه الحصى الصغيرة المستديرة في الماء.",
     "fact": "missions.opportunity_spherules",
     "source": "https://astrobiology.nasa.gov/news/check-type-iron-blueberries/"
   },
   "wind_cleaning": {
     "en": "Wind sometimes cleaned the solar panels.",
-    "ar": "كانت الرياح أحيانًا تنظّف الألواح الشمسية.",
+    "ar": "كانت الرياح تزيل الغبار عن الألواح الشمسية أحيانًا.",
     "fact": "missions.opportunity_wind_cleaning",
     "source": "https://science.nasa.gov/mission/mer-opportunity/"
   },
   "ingenuity_72": {
     "en": "Ingenuity was planned for 5 flights. It made 72.",
-    "ar": "خُطّط لإنجينويتي ٥ رحلات، فطارت ٧٢ رحلة.",
+    "ar": "كان المقرر أن تطير إنجينويتي ٥ رحلات. لكنها أكملت ٧٢ رحلة.",
     "fact": "missions.ingenuity_total",
     "source": "https://www.nasa.gov/missions/mars-2020-perseverance/ingenuity-helicopter/nasa-performs-first-aircraft-accident-investigation-on-another-world/"
   }

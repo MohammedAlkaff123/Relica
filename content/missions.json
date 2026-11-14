@@ -1,43 +1,103 @@
 {
   "_readme": "Owner: Set C. The mission list at the top right of the screen, one entry per chapter id (see STORY.md section 8). The HUD shows the English text; the Arabic is kept beside it so both can be edited together. Chapters call hud.setMission('moon') and hud.completeTask(0), (1)... in the order below.",
   "opening": {
-    "title": { "en": "Wake up", "ar": "استيقظ" },
+    "title": {
+      "en": "Wake up",
+      "ar": "استيقظ"
+    },
     "tasks": [
-      { "en": "Spin your wheels (W)", "ar": "أدِر عجلاتك (W)" },
-      { "en": "Steer left and right (A, D)", "ar": "وجّه يمينًا ويسارًا (A، D)" }
+      {
+        "en": "Spin your wheels (W)",
+        "ar": "أدِر عجلاتك (W)"
+      },
+      {
+        "en": "Steer left and right (A, D)",
+        "ar": "انعطف يسارًا ويمينًا (A، D)"
+      }
     ]
   },
   "moon": {
-    "title": { "en": "Carry the crew", "ar": "احمل الطاقم" },
+    "title": {
+      "en": "Carry the crew",
+      "ar": "انقل الطاقم"
+    },
     "tasks": [
-      { "en": "Take the crew to 3 science stops", "ar": "خذ الطاقم إلى ٣ محطات علمية" },
-      { "en": "Bring back 3 sample boxes", "ar": "أعِد ٣ صناديق عيّنات" },
-      { "en": "Drive blind to stop 2", "ar": "قُد دون رؤية إلى المحطة ٢" }
+      {
+        "en": "Take the crew to 3 science stops",
+        "ar": "أوصل الطاقم إلى ٣ محطات علمية"
+      },
+      {
+        "en": "Bring back 3 sample boxes",
+        "ar": "أعِد ٣ صناديق من العيّنات"
+      },
+      {
+        "en": "Drive blind to stop 2",
+        "ar": "قُد إلى المحطة ٢ دون رؤية"
+      }
     ],
-    "bonus": { "en": "Longest jump", "ar": "أطول قفزة" }
+    "bonus": {
+      "en": "Longest jump",
+      "ar": "أطول قفزة"
+    }
   },
   "mars": {
-    "title": { "en": "Follow the water", "ar": "اتبع أثر الماء" },
+    "title": {
+      "en": "Follow the water",
+      "ar": "اتبع أثر الماء"
+    },
     "tasks": [
-      { "en": "Climb out of the crater", "ar": "اخرج من الفوهة" },
-      { "en": "Find 3 signs of water", "ar": "اعثر على ٣ علامات للماء" },
-      { "en": "Keep the battery alive", "ar": "حافظ على البطارية" },
-      { "en": "Reach the rim", "ar": "اصعد إلى الحافة" }
+      {
+        "en": "Climb out of the crater",
+        "ar": "اخرج من الفوهة"
+      },
+      {
+        "en": "Find 3 signs of water",
+        "ar": "اعثر على ٣ علامات للماء"
+      },
+      {
+        "en": "Keep the battery alive",
+        "ar": "لا تدع البطارية تنفد"
+      },
+      {
+        "en": "Reach the rim",
+        "ar": "صِل إلى حافة الفوهة"
+      }
     ]
   },
   "sky": {
-    "title": { "en": "Be the eyes", "ar": "كن العيون" },
+    "title": {
+      "en": "Be the eyes",
+      "ar": "كن عينَي رفيقك"
+    },
     "tasks": [
-      { "en": "First flight: hold 3 m for 3 seconds", "ar": "الرحلة الأولى: اثبت على ارتفاع ٣ أمتار لمدة ٣ ثوانٍ" },
-      { "en": "Scout the road: mark 3 dangers", "ar": "استكشف الطريق: حدّد ٣ مخاطر" },
-      { "en": "Land with battery to spare", "ar": "اهبط قبل أن تنفد البطارية" }
+      {
+        "en": "First flight: hold 3 m for 3 seconds",
+        "ar": "الرحلة الأولى: اثبت على ارتفاع ٣ أمتار لمدة ٣ ثوانٍ"
+      },
+      {
+        "en": "Scout the road: mark 3 dangers",
+        "ar": "استكشف الطريق وحدّد ٣ مخاطر"
+      },
+      {
+        "en": "Land with battery to spare",
+        "ar": "اهبط قبل أن تنفد البطارية"
+      }
     ]
   },
   "epilogue": {
-    "title": { "en": "Listen", "ar": "أنصت" },
+    "title": {
+      "en": "Listen",
+      "ar": "أنصت"
+    },
     "tasks": [
-      { "en": "Find the Sun (A, D)", "ar": "اعثر على الشمس (A، D)" },
-      { "en": "Hold the signal", "ar": "حافظ على الإشارة" }
+      {
+        "en": "Find the Sun (A, D)",
+        "ar": "اعثر على الشمس (A، D)"
+      },
+      {
+        "en": "Hold the signal",
+        "ar": "حافظ على الإشارة"
+      }
     ]
   }
 }
