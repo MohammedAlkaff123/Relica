@@ -72,7 +72,8 @@ export default makeChapter({
 
   async script(s, ctx, opts) {
     const lm = s.prop('lunarModule', LM[0], LM[1], 0);
-    const crew = [s.prop('astronaut', LM[0] + 2, LM[1] + 4), s.prop('astronaut', LM[0] - 2, LM[1] + 4)];
+    // The crew waits beside the rover, one each side, facing it. Two steps and they are aboard.
+    const crew = [s.prop('astronaut', START[0] - 2, START[1] + 0.2, Math.PI / 2), s.prop('astronaut', START[0] + 2, START[1] + 0.2, -Math.PI / 2)];
     ctx.hud.setStat('date', 'Dec 1972');
     s.driven = 0;
     s.air = { now: 0, best: 0 };
