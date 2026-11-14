@@ -2,6 +2,8 @@
 //
 //   const obj = createObjectives({ scene, hud, world, getHero })
 //   await obj.goTo(x, z, 'Drive to the first science stop', { radius: 5 })
+//   const { neat } = await obj.goTo(x, z, 'Park at stop 1', { radius: 6, park: true })
+//       park: only counts once the hero has stopped inside the circle; neat = stopped near the middle
 //   obj.update(dt)       every frame
 //   obj.dispose()        removes markers
 //
@@ -32,7 +34,7 @@ function makeMarker(radius) {
   return group;
 }
 
-export function createObjectives({ scene, hud, world, getHero }) {
+export function createObjectives({ scene, hud, world, getHero, getSpeed = () => 0 }) {
   let current = null; // { x, z, radius, text, resolve, marker, shown }
   let time = 0;
 
@@ -46,13 +48,13 @@ export function createObjectives({ scene, hud, world, getHero }) {
 
   return {
     // Resolves when the hero reaches the circle. Starting a new goal replaces the old one.
-    goTo(x, z, text, { radius = 5, showDistance = true } = {}) {
+    goTo(x, z, text, { radius = 5, showDistance = true, park = false } = {}) {
       clearCurrent();
       const marker = makeMarker(radius);
       marker.position.set(x, heightAt(world, x, z), z);
       scene.add(marker);
       return new Promise((resolve) => {
-        current = { x, z, radius, text, resolve, marker, showDistance, shown: '' };
+        current = { x, z, radius, text, resolve, marker, showDistance, park, shown: '' };
       });
     },
     get active() { return !!current; },
@@ -68,12 +70,15 @@ export function createObjectives({ scene, hud, world, getHero }) {
       const { beam, ring } = current.marker.userData;
       beam.material.opacity = 0.25 + 0.15 * Math.sin(time * 3);
       ring.scale.setScalar(1 + 0.04 * Math.sin(time * 4));
-      const label = current.showDistance && d > current.radius ? `${current.text} · ${Math.round(d)} m` : current.text;
+      const inside = d <= current.radius;
+      let label = current.showDistance && !inside ? `${current.text} · ${Math.round(d)} m` : current.text;
+      if (current.park && inside) label = 'Stop inside the circle';
       if (label !== current.shown) { hud.setObjective(label); current.shown = label; }
-      if (d <= current.radius) {
+      if (inside && (!current.park || getSpeed() < 0.4)) {
         const done = current.resolve;
+        const neat = d <= current.radius * 0.4;
         clearCurrent();
-        done(true);
+        done({ neat, distance: d });
       }
     },
     dispose() { clearCurrent(); },

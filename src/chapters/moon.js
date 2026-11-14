@@ -6,11 +6,16 @@
 // -> free drive to stop 3 -> park facing the Lunar Module -> crew walks back -> lift-off -> alone
 // Pitch-mode jump 'fender' (key 6) starts just after stop 1.
 //
+// Mission "Carry the crew" (STORY.md section 8, TASKS.md A-15): park inside the circle at each stop
+// (a neat park gets a happy beep), a sample box is strapped on at each stop and the stack grows,
+// an air-time record for the longest jump, and a beeping marker to follow through the dust.
+// Extra shots (section 9): moon_first_look after unfolding, moon_pat after the repair.
+//
 // Waiting on others (works without them, see _props.js):
 //   dialogue ch1_dust, ch1_fixed (Set C)   shots moon_arrival, moon_liftoff (Moayad)
 //   props lunarModule, astronaut, env.dust (Set B)   audio.play('fender_snap' | 'music_free') (Set C)
-import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
+import { mission } from './_mission.js';
 
 const LM = [0, -4];
 const START = [7, 3, 0];
@@ -36,6 +41,22 @@ async function climbOff(stage, crew) {
   await Promise.all(crew.map((c, i) => stage.moveTo(c, p.x + (i ? 2.2 : -2.2), p.z + 1.5 + i, 1.2)));
 }
 
+// Park at a stop: wait for the rover to stop inside the circle, beep if it is neat, count the stop.
+async function park(s, ctx, [x, z], text, n) {
+  const { neat } = await s.goTo(x, z, text, { radius: 6, park: true });
+  if (neat) { s.sound('neat_park', 'lrv'); s.hero.setEmotion('happy'); }
+  s.mission.progress(0, n, 3);
+}
+
+// A sample box is strapped onto the back of the rover. The stack grows.
+function addSampleBox(s, n) {
+  const b = s.prop('sampleBox');
+  s.hero.object.add(b);
+  b.position.set(0, s.hero.half[1] * 0.5 + 0.14 + (n - 1) * 0.3, -s.hero.half[2] + 0.3);
+  b.rotation.set(0, (n % 2) * 0.15, 0);
+  s.mission.progress(1, n, 3);
+}
+
 async function climbOn(stage, crew) {
   const p = stage.hero.object.position;
   await Promise.all(crew.map((c, i) => stage.moveTo(c, p.x + (i ? 0.9 : -0.9), p.z, 1)));
@@ -54,6 +75,13 @@ export default makeChapter({
     const crew = [s.prop('astronaut', LM[0] + 2, LM[1] + 4), s.prop('astronaut', LM[0] - 2, LM[1] + 4)];
     ctx.hud.setStat('date', 'Dec 1972');
     s.driven = 0;
+    s.air = { now: 0, best: 0 };
+    s.mission = mission(ctx, 'Carry the crew', [
+      'Take the crew to 3 science stops',
+      'Bring back 3 sample boxes',
+      'Longest jump (bonus)',
+      'Drive blind to stop 2',
+    ]);
 
     if (opts.jump !== 'fender') {
       s.hero.setEmotion('sleepy');
@@ -69,12 +97,13 @@ export default makeChapter({
         return 1 - sc.y < 0.01;
       });
       s.hero.object.scale.set(1, 1, 1);
+      await s.shot('moon_first_look');
       await climbOn(s, crew);
       await s.shot('moon_arrival');
       await s.say('ch1_intro');
 
       s.unlockControls();
-      await s.goTo(STOP1[0], STOP1[1], 'Drive the crew to science stop 1', { radius: 6 });
+      await park(s, ctx, STOP1, 'Drive the crew to science stop 1', 1);
 
       // Stop 1: the crew collects rocks. The rover's eyes follow them.
       s.lockControls();
@@ -86,26 +115,42 @@ export default makeChapter({
       await s.wait(2);
       ctx.hud.setObjective('');
       await climbOn(s, crew);
+      addSampleBox(s, 1);
     } else {
       // Pitch jump: start right after stop 1, crew aboard.
       s.controller.place(STOP1[0], STOP1[1] + 4, 0);
       board(s, crew);
+      s.mission.progress(0, 1, 3);
+      addSampleBox(s, 1);
       s.hero.setEmotion('happy');
       await s.wait(0.1); // let physics move the model to the new spot before measuring from it
     }
 
     // Leaving stop 1, the rear fender breaks (real: Apollo 17, 12 Dec 1972).
     s.unlockControls();
-    const stop2 = s.goTo(STOP2[0], STOP2[1], 'Drive on to science stop 2', { radius: 6 });
+    const stop2 = park(s, ctx, STOP2, 'Drive on to science stop 2', 2);
     await s.until(() => Math.hypot(s.hero.object.position.x - STOP1[0], s.hero.object.position.z - STOP1[1]) > 10);
-    ctx.audio.play?.('fender_snap');
+    s.sound('fender_snap');
     s.dust.shower(true, s.hero);
     s.controller.speedScale = 0.45;
     s.hero.setEmotion('scared');
-    s.objectives.setText('Drive through the dust to science stop 2');
+    s.objectives.setText('Drive blind: follow the beeping marker');
+    s.mission.discover('moon_dust');
+    // The marker beeps faster the closer the rover gets.
+    let beepIn = 0;
+    const stopBeeping = s.every((dt) => {
+      const p = s.hero.object.position;
+      beepIn -= dt;
+      if (beepIn <= 0) {
+        s.sound('marker_beep', 'lrv');
+        beepIn = 0.25 + Math.min(1.5, Math.hypot(p.x - STOP2[0], p.z - STOP2[1]) / 30);
+      }
+    });
     await s.say('ch1_dust');
     s.hero.setEmotion('sad');
     await stop2;
+    stopBeeping();
+    s.mission.done(3);
 
     // Stop 2: the crew tapes maps over the wheel (real).
     s.lockControls();
@@ -118,15 +163,18 @@ export default makeChapter({
     s.dust.shower(false);
     s.controller.speedScale = 1;
     await s.photo('as17-137-20979');
+    s.mission.discover('fender_repair');
+    await s.shot('moon_pat');
     s.hero.setEmotion('happy');
     await s.say('ch1_fixed');
     await climbOn(s, crew);
+    addSampleBox(s, 2);
 
     // The long free drive: the happiest moment in the game.
-    ctx.audio.play?.('music_free');
+    s.sound('music_free');
     s.controller.speedScale = 1.35;
     s.unlockControls();
-    await s.goTo(STOP3[0], STOP3[1], 'Free drive to the last science stop', { radius: 7 });
+    await park(s, ctx, STOP3, 'Free drive to the last science stop', 3);
     s.lockControls();
     s.hero.setEmotion('curious');
     await climbOff(s, crew);
@@ -134,6 +182,7 @@ export default makeChapter({
     await s.wait(3);
     ctx.hud.setObjective('');
     await climbOn(s, crew);
+    addSampleBox(s, 3);
     s.controller.speedScale = 1;
 
     s.unlockControls();
@@ -153,6 +202,7 @@ export default makeChapter({
     s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
     s.hero.setEmotion('sad');
     await Promise.all([s.shot('moon_liftoff'), s.wait(6)]);
+    s.mission.discover('rover_camera');
     await s.say('ch1_left_behind');
     await s.wait(2);
     await s.shot('moon_to_mars');
@@ -160,6 +210,19 @@ export default makeChapter({
   },
 
   tick(dt, s, ctx) {
+    // Air time: every hill is a ramp. The best jump is the bonus record.
+    if (s.air && s.controller) {
+      if (!s.controller.grounded) s.air.now += dt;
+      else if (s.air.now > 0) {
+        if (s.air.now > 0.5 && s.air.now > s.air.best) {
+          s.air.best = s.air.now;
+          s.mission.bonus('Longest jump', s.air.best.toFixed(1) + ' s');
+          if (s.air.best >= 2) s.mission.done(2);
+          if (s.air.best >= 1.2) s.mission.discover('moon_gravity');
+        }
+        s.air.now = 0;
+      }
+    }
     if (!s.controls) return;
     s.driven = (s.driven ?? 0) + s.controller.speed * dt;
     ctx.hud.setStat('driven', s.driven.toFixed(0) + ' m');

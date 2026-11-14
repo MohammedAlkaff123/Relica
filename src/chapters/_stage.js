@@ -29,6 +29,7 @@
 //   stage.ground(x, z)                        ground height
 //   stage.counter(label, value, planned)      HUD counter ("Sol 91 / 90 planned")
 //   stage.battery(0..1)                       HUD battery
+//   stage.sound(name, standInBeep)            Set C's audio.play(name), or a character beep until it exists
 import * as THREE from 'three';
 import { buildWorld } from '../world/world.js';
 import { createCharacter } from '../characters/character.js';
@@ -43,6 +44,11 @@ import { makeProp, makeDust, makeStorm } from './_props.js';
 export class Gone extends Error {
   constructor() { super('chapter left'); this.name = 'Gone'; }
 }
+
+// A script may start something without awaiting it straight away (a shot that plays over a bounce, a
+// park that runs beside a dialogue). If the chapter is left meanwhile, that promise ends with Gone and
+// nobody is listening. That is normal, so it is not reported as an error.
+window.addEventListener('unhandledrejection', (e) => { if (e.reason instanceof Gone) e.preventDefault(); });
 
 const TERRAIN_WORLDS = new Set(['moon', 'mars']);
 
@@ -81,7 +87,7 @@ export function setupStage(ctx, cfg) {
   ctx.hud.setObjective('');
   ctx.audio.setWorld?.(world);
 
-  const objectives = createObjectives({ scene, hud: ctx.hud, world, getHero: () => hero });
+  const objectives = createObjectives({ scene, hud: ctx.hud, world, getHero: () => hero, getSpeed: () => controller?.speed ?? 0 });
   const dust = makeDust(env, scene);
   const storm = world === 'mars' ? makeStorm(env, scene) : null;
 
@@ -162,14 +168,24 @@ export function setupStage(ctx, cfg) {
     say: (id) => after(ctx.dialogue.play(id)),
     photo: (id) => after(ctx.memory.show(id)),
     // A missing shot file is not fatal: the script carries on after a short pause.
+    // Returns true if the shot played, false if it does not exist yet.
     async shot(id, anchor = hero.object) {
       try {
         await after(ctx.cinematics.play(id, anchor));
+        return true;
       } catch (err) {
         if (err instanceof Gone) throw err;
         console.info(`shot "${id}" is not in content/shots/ yet, skipping it`);
         await stage.wait(0.5);
+        return false;
       }
+    },
+
+    // A named sound from Set C (audio.play, TASKS.md hand-off at hour 7). Until it exists, optionally
+    // a character's beep as a stand-in.
+    sound(name, standInBeep) {
+      if (ctx.audio.play) ctx.audio.play(name);
+      else if (standInBeep) ctx.audio.beep(standInBeep);
     },
 
     // ---- world ----

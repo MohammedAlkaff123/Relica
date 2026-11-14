@@ -7,7 +7,9 @@
 //   createProp(name)  exported from src/world/world.js or src/characters/character.js,
 //                     returns a THREE.Object3D (or { object }). Names used:
 //                     'lunarModule' (with a child named 'ascent' for the part that lifts off),
-//                     'astronaut', 'airbags', 'perseverance', 'marker', 'ring', 'sun', 'stand', 'worker'
+//                     'astronaut', 'airbags', 'perseverance', 'ring', 'sun', 'stand', 'worker',
+//                     and from B-13: 'sampleBox', 'whirlwind', 'sandTrap', 'boulders', 'cliffEdge',
+//                     'heightBand' (two rings, one metre apart, centred on y = 0), 'flag'
 //   env.dust.shower(on, hero)   from buildWorld(...)   dust fountain off the rover's broken fender
 //   env.storm.setLevel(0..1)    from buildWorld(...)   the 2018 Mars dust storm
 //   hero.breakBlade()           on the Ingenuity character
@@ -90,6 +92,72 @@ const STAND_INS = {
     const head = box(0.6, 0.3, 0.3, 0xcfcfc8);
     head.position.set(0.7, 3.25, 1.25);
     g.add(mast, head);
+    return g;
+  },
+  sampleBox() {
+    const b = box(0.5, 0.28, 0.4, 0x8f8a7c);
+    b.add(box(0.52, 0.04, 0.42, 0x3a3d44)); // strap
+    return b;
+  },
+  // A dust devil: a tall spinning cone of dust. userData.spin is turned by the chapter.
+  whirlwind() {
+    const g = new THREE.Group();
+    const m = new THREE.MeshBasicMaterial({ color: 0xc89064, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide });
+    for (let i = 0; i < 3; i++) {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.6 - i * 0.35, 9 - i, 10, 1, true), m);
+      cone.rotation.x = Math.PI; // wide at the top
+      cone.position.y = 4.5 - i * 0.3;
+      g.add(cone);
+    }
+    return g;
+  },
+  sandTrap() {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(4, 20), mat(0xd9b07a));
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = 0.04;
+    const g = new THREE.Group();
+    g.add(m);
+    return g;
+  },
+  boulders() {
+    const g = new THREE.Group();
+    const geo = new THREE.IcosahedronGeometry(1, 0);
+    for (let i = 0; i < 9; i++) {
+      const r = new THREE.Mesh(geo, mat(0x6e3a22));
+      const s = 0.5 + ((i * 37) % 10) / 10;
+      r.scale.set(s, s * 0.8, s);
+      r.position.set(Math.cos(i * 2.4) * (1 + i * 0.35), s * 0.3, Math.sin(i * 2.4) * (1 + i * 0.35));
+      g.add(r);
+    }
+    return g;
+  },
+  cliffEdge() {
+    const g = new THREE.Group();
+    const wall = box(10, 3, 1.2, 0x7b4126);
+    wall.position.y = -1.2;
+    const lip = box(10, 0.3, 3, 0x9a5634);
+    lip.position.set(0, 0.1, -1);
+    g.add(wall, lip);
+    return g;
+  },
+  // Two faint rings at the bottom and top of the height band for the first flight.
+  heightBand() {
+    const g = new THREE.Group();
+    for (const y of [-0.5, 0.5]) {
+      const r = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.03, 6, 48), new THREE.MeshBasicMaterial({ color: 0x8fd3ff, transparent: true, opacity: 0.7 }));
+      r.rotation.x = Math.PI / 2;
+      r.position.y = y;
+      g.add(r);
+    }
+    return g;
+  },
+  flag() {
+    const g = new THREE.Group();
+    const pole = box(0.06, 1.6, 0.06, 0xdddddd);
+    pole.position.y = 0.8;
+    const cloth = box(0.6, 0.35, 0.02, 0xe3a23c);
+    cloth.position.set(0.3, 1.4, 0);
+    g.add(pole, cloth);
     return g;
   },
   ring() {

@@ -6,8 +6,10 @@
 // -> Abandoned, but not forgotten -> the wall of real photos -> credits
 //
 // Waiting on others (works without them): dialogue ep_voices, ep_last (Set C); shot ending (Moayad);
-// prop sun (Set B); memory.wall() layout and credits (Set C).
+// prop sun (Set B); memory.wall() layout and credits (Set C); shot where_they_are (Moayad).
+// Mission "Listen" (STORY.md section 8): find the Sun, hold the signal.
 import { makeChapter } from './_stage.js';
+import { mission } from './_mission.js';
 
 const SUN_YAW = 2.3;               // where the Sun sits, measured from the way the probe first faces
 const ALIGN = (5 * Math.PI) / 180; // must point within 5 degrees
@@ -30,6 +32,7 @@ export default makeChapter({
     sun.position.set(Math.sin(SUN_YAW) * 900, 30, Math.cos(SUN_YAW) * 900);
     ctx.hud.setStat('date', 'Today');
     s.spinRate = 0;
+    const m = mission(ctx, 'Listen', ['Find the Sun', 'Hold the signal']);
 
     s.hero.setEmotion('sleepy');
     await s.card('Far Away', 'Pioneer 10 · still travelling');
@@ -41,6 +44,7 @@ export default makeChapter({
     let lined = 0, nextVoice = 0;
     await s.until((dt) => {
       const off = Math.abs(angleTo(s));
+      if (off < ALIGN) m.done(0);
       // Faint voices of the other machines, more often the closer it points.
       nextVoice -= dt;
       if (off < 0.6 && nextVoice <= 0) {
@@ -56,8 +60,10 @@ export default makeChapter({
     s.lockControls();
     ctx.hud.setObjective('');
     s.hero.setEmotion('happy');
+    m.done(1);
     s.hero.talk(true);
-    await s.say('ep_voices');
+    // As each voice arrives: where that machine rests today. Plays with the voices if it exists.
+    await Promise.all([s.shot('where_they_are'), s.say('ep_voices')]);
     s.hero.talk(false);
     s.hero.setEmotion('sleepy');
     await s.say('ep_last');

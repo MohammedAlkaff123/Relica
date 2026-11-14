@@ -73,7 +73,26 @@ async function boot() {
     Digit9: ['sky', 'flight72'],
   };
 
+  // ?fps in the address shows frames per second and the slowest frame of the last second (TASKS.md A-12).
+  let fps = null;
+  if (new URLSearchParams(location.search).has('fps')) {
+    const box = document.createElement('div');
+    Object.assign(box.style, { position: 'fixed', right: '8px', bottom: '8px', font: '12px monospace', color: '#9f9', background: '#000a', padding: '4px 6px', zIndex: 10 });
+    document.body.appendChild(box);
+    fps = { box, frames: 0, worst: 0, last: performance.now(), prev: performance.now() };
+  }
+
   game.start((dt) => {
+    if (fps) {
+      const now = performance.now();
+      fps.frames++;
+      fps.worst = Math.max(fps.worst, now - fps.prev);
+      fps.prev = now;
+      if (now - fps.last >= 1000) {
+        fps.box.textContent = `${Math.round((fps.frames * 1000) / (now - fps.last))} fps · slowest ${fps.worst.toFixed(0)} ms · ${game.renderer.info.render.calls} draw calls`;
+        fps.frames = 0; fps.worst = 0; fps.last = now;
+      }
+    }
     if (input.pressed('Backquote')) tweak.toggle();
     if (input.pressed('Escape')) cinematics.cancel(); // skip a cutscene
     for (let i = 0; i < list.length; i++) {

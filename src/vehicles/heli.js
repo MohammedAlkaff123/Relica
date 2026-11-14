@@ -8,6 +8,7 @@
 //   heli.drift          { x, z, tilt }: a push the player cannot fully fight (the last flight)
 //   heli.noLift         true forces it down (used to force the last landing)
 //   heli.broken         after the crash: Space only makes the rotor twitch
+//   heli.holdAt         metres, or null: hover at that height on its own (while a shot plays)
 //
 // Controls: hold Space to spin up and climb, let go to sink. W/S fly forward and back, A/D turn.
 // Lift is an upward push that has to beat the world's gravity, so it feels different on each world.
@@ -57,6 +58,7 @@ export function createHeli({ body, hero, world, tuning, input }) {
     const move = airborne ? drive * t.speed : 0;
     const damp = Math.exp(-(t.damping ?? 0.8) * dt); // thin air still slows a little
     let vy = v.y * (airborne ? damp : 1) + (canLift ? t.lift * dt : 0);
+    if (heli.holdAt != null && airborne) vy = (heli.holdAt - alt) * 1.5; // scripted hover during a shot
     if (heli.noLift && airborne) vy = Math.min(vy, -1.2); // forced down, hard
     const d = airborne ? heli.drift : { x: 0, z: 0 };
     body.setLinvel({ x: forward.x * move + d.x, y: vy, z: forward.z * move + d.z }, true);
@@ -64,7 +66,7 @@ export function createHeli({ body, hero, world, tuning, input }) {
 
     // Blades: a blur while lifting, slower while sinking, a short twitch when broken.
     twitch = Math.max(0, twitch - dt);
-    const wantRotor = heli.broken ? (twitch > 0 ? 0.35 : 0) : canLift ? 1 : heli.spin * (airborne ? 0.8 : 1);
+    const wantRotor = heli.holdAt != null ? 1 : heli.broken ? (twitch > 0 ? 0.35 : 0) : canLift ? 1 : heli.spin * (airborne ? 0.8 : 1);
     rotor += (wantRotor - rotor) * Math.min(1, 4 * dt);
     hero.rotorSpeed = rotor * 40;
 
@@ -85,6 +87,7 @@ export function createHeli({ body, hero, world, tuning, input }) {
     drift: { x: 0, z: 0, tilt: 0 },
     noLift: false,
     broken: false,
+    holdAt: null,     // a height in metres: hover there on its own (used while a shot plays)
     update(dt) {
       const drive = (input.down('KeyW', 'ArrowUp') ? 1 : 0) - (input.down('KeyS', 'ArrowDown') ? 1 : 0);
       const turn = (input.down('KeyA', 'ArrowLeft') ? 1 : 0) - (input.down('KeyD', 'ArrowRight') ? 1 : 0);

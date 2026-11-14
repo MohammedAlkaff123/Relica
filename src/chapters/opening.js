@@ -5,9 +5,11 @@
 // it cannot go anywhere) -> two workers fold it -> black, launch rumble -> chapter 1
 //
 // Waiting on others (works without them): shots opening_wake, launch (Moayad); dialogue ch0_fold (Set C);
-// props stand, worker (Set B); audio.play('launch') (Set C).
+// props stand, worker (Set B); audio.play('launch') (Set C); shot earth_goodbye (Moayad).
+// Mission "Wake up" (STORY.md section 8): spin your wheels, steer left and right.
 import { makeChapter } from './_stage.js';
 import { findWheels } from '../vehicles/wheels.js';
+import { mission } from './_mission.js';
 
 const STAND_TOP = 1.07;
 
@@ -24,6 +26,7 @@ export default makeChapter({
     ctx.hud.setStat('date', '1971');
     const wheels = findWheels(s.hero);
     s.tutorial = { spun: 0, steered: 0, wheels };
+    const m = mission(ctx, 'Wake up', ['Spin your wheels', 'Steer left and right']);
 
     s.hero.setEmotion('sleepy');
     await s.card('RELICA', 'Press Enter to wake up');
@@ -36,8 +39,10 @@ export default makeChapter({
     s.unlockControls();
     ctx.hud.setObjective('W and S: try your wheels');
     await s.until(() => s.tutorial.spun > 1.2);
+    m.done(0);
     ctx.hud.setObjective('A and D: try your steering');
     await s.until(() => s.tutorial.steered > 1.2);
+    m.done(1);
     ctx.hud.setObjective('');
     await s.wait(1);
     s.lockControls();
@@ -53,10 +58,12 @@ export default makeChapter({
       sc.y += (0.35 - sc.y) * k; sc.z += (0.5 - sc.z) * k;
       return sc.y - 0.35 < 0.01;
     });
+    // From inside the box, through the closing gap: a worker rests a hand on the rover. Then dark.
+    await s.shot('earth_goodbye');
 
     // Black. Launch rumble, then silence.
     await s.fade(true, 1.2);
-    ctx.audio.play?.('launch');
+    s.sound('launch');
     await s.shot('launch');
     await s.wait(2.5);
     s.hero.setEmotion('curious');
