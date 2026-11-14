@@ -1,6 +1,6 @@
 {
   "_readme": [
-    { "who": "note", "ar": "", "en": "Owner: Set C with Mohammed. Arabic register: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Each line is one breath, under 12 English words. Final so far: ch0_wake, ch0_fold, ch1_intro, ch1_dust, ch1_fixed, ch1_left_behind. Lines still marked (placeholder) are written in task C-4. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy." }
+    { "who": "note", "ar": "", "en": "Owner: Set C with Mohammed. Arabic register: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Each line is one breath, under 12 English words. Every line is final text from STORY.md section 3, checked against facts.json -> missions. ch3_grounded is a copy of ch3_goodbye, kept only because src/chapters/sky.js still asks for ch3_grounded; delete it once the chapter uses ch3_goodbye. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy." }
   ],
   "ch0_wake": [
     { "who": "lrv", "emotion": "sleepy", "ar": "…أوه. لقد اشتغلتُ.", "en": "…Oh. I'm on." },
@@ -25,19 +25,58 @@
     { "who": "lrv", "emotion": "sad", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ch2_intro": [
-    { "who": "opportunity", "emotion": "curious", "ar": "تسعون يومًا فقط؟ لنرَ. (نص مؤقت)", "en": "Only ninety days? Let's see. (placeholder)" }
+    { "who": "opportunity", "emotion": "curious", "ar": "تسعون يومًا. هذا كلّ ما طلبوه.", "en": "Ninety days. That's all they asked." },
+    { "who": "opportunity", "emotion": "happy", "ar": "إذن لنرَ كلّ شيء.", "en": "Then let's see everything." }
+  ],
+  "ch2_sol90": [
+    { "who": "opportunity", "emotion": "happy", "ar": "تسعون. …ما زلتُ أستطيع المواصلة.", "en": "Ninety. …I can keep going." }
+  ],
+  "ch2_orion": [
+    { "who": "opportunity", "emotion": "curious", "ar": "سمّوا هذه الفوهة باسم مركبة هبطت على القمر.", "en": "They named this one after a Moon lander." }
   ],
   "ch2_viking_call": [
-    { "who": "viking", "emotion": "sleepy", "ar": "أنا هنا منذ زمن طويل يا صغيري. (نص مؤقت)", "en": "I have been here a long time, little one. (placeholder)" },
-    { "who": "opportunity", "emotion": "sad", "ar": "السماء تظلم. (نص مؤقت)", "en": "The sky is getting dark. (placeholder)" }
+    { "who": "viking", "emotion": "sleepy", "ar": "مَن يتجوّل هناك في الأعلى؟", "en": "Who is driving around up there?" },
+    { "who": "opportunity", "emotion": "curious", "ar": "أوبورتيونيتي. أعطوني تسعين يومًا.", "en": "Opportunity. They gave me ninety days." },
+    { "who": "viking", "emotion": "happy", "ar": "وأعطوني تسعين أيضًا. فأعطيتُهم ستّ سنوات.", "en": "They gave me ninety too. I gave them six years." },
+    { "who": "opportunity", "emotion": "sad", "ar": "هل يؤلم… حين يتوقّفون عن النداء؟", "en": "Does it hurt, when they stop calling?" },
+    { "who": "viking", "emotion": "sleepy", "ar": "لا. تبقى ساهرًا. دائمًا يأتي مَن بعدك.", "en": "No. You keep watch. Someone always comes after." },
+    { "who": "viking", "emotion": "happy", "ar": "استرِح يا صغيري. فعلتَ أكثر مما طلبوا.", "en": "Rest, little one. You did more than they asked." }
+  ],
+  "ch2_storm": [
+    { "who": "opportunity", "emotion": "sleepy", "ar": "السماء تصير بنّية.", "en": "The sky is turning brown." },
+    { "who": "opportunity", "emotion": "sleepy", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ch3_intro": [
-    { "who": "ingenuity", "emotion": "scared", "ar": "الهواء رقيق جدًا… هل أستطيع الطيران؟ (نص مؤقت)", "en": "The air is so thin… can I even fly? (placeholder)" }
+    { "who": "ingenuity", "emotion": "scared", "ar": "الهواء رقيق جدًّا. هل يطير شيء هنا؟", "en": "The air is so thin. Can anything fly here?" },
+    { "who": "ingenuity", "emotion": "scared", "ar": "خمس رحلات. إن حالفني الحظ.", "en": "Five flights. If I'm lucky." }
+  ],
+  "ch3_scout": [
+    { "who": "ingenuity", "emotion": "happy", "ar": "اتبعني. أستطيع رؤية الطريق.", "en": "Follow me. I can see the way." }
+  ],
+  "ch3_crash": [
+    { "who": "ingenuity", "emotion": "scared", "ar": "لا شيء هنا أتمسّك به.", "en": "There's nothing to hold on to." }
+  ],
+  "ch3_goodbye": [
+    { "who": "ingenuity", "emotion": "sad", "ar": "امضِ. لديك عمل.", "en": "Go on. You have work to do." },
+    { "who": "ingenuity", "emotion": "happy", "ar": "اثنتان وسبعون. عددتُها.", "en": "Seventy-two. I counted." },
+    { "who": "ingenuity", "emotion": "sad", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ch3_grounded": [
-    { "who": "ingenuity", "emotion": "sad", "ar": "طرت أكثر مما توقعوا. (نص مؤقت)", "en": "I flew more than they ever expected. (placeholder)" }
+    { "who": "ingenuity", "emotion": "sad", "ar": "امضِ. لديك عمل.", "en": "Go on. You have work to do." },
+    { "who": "ingenuity", "emotion": "happy", "ar": "اثنتان وسبعون. عددتُها.", "en": "Seventy-two. I counted." },
+    { "who": "ingenuity", "emotion": "sad", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ep_drift": [
-    { "who": "pioneer", "emotion": "sleepy", "ar": "ما زلت أسافر. (نص مؤقت)", "en": "I am still travelling. (placeholder)" }
+    { "who": "pioneer", "emotion": "sleepy", "ar": "غادرتُ عام ١٩٧٢. ولم أتوقّف قطّ.", "en": "I left in 1972. I never stopped." },
+    { "who": "pioneer", "emotion": "sleepy", "ar": "في العام نفسه الذي وصلت فيه عربة صغيرة إلى القمر.", "en": "The same year as a little rover on the Moon." }
+  ],
+  "ep_voices": [
+    { "who": "lrv", "emotion": "happy", "ar": "ما زلتُ هنا.", "en": "I'm still here." },
+    { "who": "viking", "emotion": "happy", "ar": "ما زلتُ هنا.", "en": "I'm still here." },
+    { "who": "opportunity", "emotion": "happy", "ar": "ما زلتُ هنا.", "en": "I'm still here." },
+    { "who": "ingenuity", "emotion": "happy", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
+  ],
+  "ep_last": [
+    { "who": "pioneer", "emotion": "happy", "ar": "أسمعكم. لا أستطيع الرد. لكنني أسمعكم.", "en": "I hear you. I can't answer. But I hear you." }
   ]
 }
