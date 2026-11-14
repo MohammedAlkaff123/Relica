@@ -80,6 +80,30 @@ await ctx.cinematics.play('moon_to_mars', stage.hero.object)
 ctx.next()                               // go to the next chapter
 ```
 
+Interface and sound (Set C):
+
+```js
+ctx.hud.setMission('moon')               // mission list, text from content/missions.json
+ctx.hud.completeTask(0)                  // tick a task off, with a sound
+ctx.hud.setBonus('3.1 s')                // bonus line under the tasks (longest jump)
+ctx.hud.setBattery(0.4)                  // battery bar, 0..1
+ctx.hud.setCounter('sol', 4712, 90)      // value with "planned: 90" beside it
+ctx.hud.discover('moon_gravity')         // discovery card from content/discoveries.json
+await ctx.card.chapter('mars')           // chapter card from content/chapters.json
+await ctx.card.title()                   // title screen
+await ctx.card.ending()                  // "The conversations are imagined..."
+await ctx.card.credits()                 // credits
+await ctx.dialogue.play('ch2_viking_call', { auto: true })  // lines advance on their own
+ctx.audio.setWorld('mars')               // background: factory | moon (silent) | mars | space
+ctx.audio.setWind(1)                     // the dust storm
+ctx.audio.play('crack')                  // one-shot: tick, land, bounce, crack, crash, rumble, static...
+ctx.audio.loop('rotor', true)            // looping: rotor | hum, with ctx.audio.loopLevel('rotor', 0.7)
+ctx.audio.music('drive')                 // drive | storm | ending | null
+```
+
+All the text the player reads lives in `content/` (dialogue, missions, discoveries, memories, chapters,
+credits), with Arabic and English side by side. Change text there, not in the code.
+
 A character:
 
 ```js
@@ -123,3 +147,73 @@ Either test on the venue network early, or download the four files listed in `in
 NASA photos: see `public/nasa/CREDITS.csv`.
 Libraries: Three.js (MIT), Rapier (Apache-2.0), lil-gui (MIT).
 Fonts: Space Grotesk, IBM Plex Mono, IBM Plex Sans Arabic (SIL Open Font License), from Google Fonts.
+
+---
+
+# Submission
+
+The sections below are the upload pack for NASA Space Apps 2026. They are kept here so the form can be
+filled by copying from one place.
+
+## How to run it
+
+1. Install Python 3 (nothing else is needed).
+2. In this folder run `python serve.py`.
+3. Open http://localhost:5173 in a current desktop browser (Chrome, Edge or Firefox).
+4. Press Enter to start. W A S D to drive or fly, Space to hop or climb, Enter to continue.
+
+The game also runs from the GitHub Pages link of this repository with no install at all.
+
+## Tools used
+
+| Tool | What for |
+|---|---|
+| Three.js | 3D rendering in the browser |
+| Rapier | Physics, with each world's real gravity |
+| lil-gui | Tuning panel for the directors |
+| Web Audio API | Every sound and music cue, generated in code |
+| Python `http.server` | Local server (`serve.py`) |
+| Blender and an image-to-3D tool | Low-poly models, using the NASA photos as reference |
+| GitHub and GitHub Pages | Code and hosting |
+| Claude Code | AI help with code and text drafts. See the AI disclosure below |
+
+## NASA data statement
+
+Every real-world number, date and photo in the game comes from NASA.
+
+| NASA data | File in this repository | Where it appears in the game |
+|---|---|---|
+| Planetary fact sheets (gravity, temperature, air pressure of Earth, the Moon and Mars) | `content/facts.json` → `worlds` | The environment panel on screen in every chapter. The physics uses the same gravity number |
+| Mission pages and history articles (dates, places, planned and actual lifetimes) | `content/facts.json` → `missions` | Chapter cards, the "planned" counters (90 sols, 5 flights), the dialogue, the discovery cards |
+| NASA Image and Video Library photos | `public/nasa/` with `metadata.json` and `CREDITS.csv` | Memory photos at key moments, the photo wall at the end, and the credits |
+| The same photos | `nasa_data/` (the full pack) | Reference images for every 3D model |
+
+The memory photos shown in the game: `S71-16722`, `as17-137-20979`, `PIA20285`, `PIA07108`, `PIA21708`,
+`PIA23882`, `PIA23969`, `ARC-1972-AC72-2135`, `ARC-1972-A72-2137`. Each one was checked by eye: nobody under 18,
+and no NASA logo left in frame after cropping.
+
+Each fact in `content/facts.json` carries the link of the NASA page it was checked against. A fact without a
+source is marked `"verified": false` and shows an orange "?" in the game.
+
+## AI disclosure
+
+AI was used, and every use is listed with the person and the tool in [AI_USE.md](AI_USE.md).
+In short: Claude Code helped draft the plan documents, write code for the game systems and interface, draft
+dialogue for the team to choose from, and look up NASA sources for the facts. No AI-generated images or video are
+used. The idea, the story and the choices are the team's own, and each team member can explain their part.
+
+## References
+
+- NASA photos: [public/nasa/CREDITS.csv](public/nasa/CREDITS.csv) (each row links to its page on images.nasa.gov)
+- NASA fact sheets: [Earth](https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html),
+  [Moon](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html),
+  [Mars](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html)
+- NASA mission pages: [Opportunity](https://science.nasa.gov/mission/mer-opportunity/),
+  [Viking 1](https://science.nasa.gov/mission/viking-1/), [Pioneer 10](https://science.nasa.gov/mission/pioneer-10/),
+  [Ingenuity](https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/),
+  [Apollo Lunar Roving Vehicle](https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo_lrv.html)
+- Every other fact source: the `source` links in [content/facts.json](content/facts.json)
+- Code libraries: [Three.js](https://threejs.org) (MIT), [Rapier](https://rapier.rs) (Apache-2.0),
+  [lil-gui](https://lil-gui.georgealways.com) (MIT)
+- Fonts: Space Grotesk, IBM Plex Mono, IBM Plex Sans Arabic (SIL Open Font License), Google Fonts
+- Sounds: generated in code. Any sound file added later is listed here with its source and licence
