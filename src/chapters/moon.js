@@ -8,7 +8,7 @@
 //
 // Mission "Carry the crew" (STORY.md section 8, TASKS.md A-15): park inside the circle at each stop
 // (a neat park gets a happy beep), a sample box is strapped on at each stop and the stack grows,
-// an air-time record for the longest jump, and a beeping marker to follow through the dust.
+// and an air-time record for the longest jump.
 // Extra shots (section 9): moon_first_look after unfolding, moon_pat after the repair.
 //
 // Waiting on others (works without them, see _props.js):
@@ -19,10 +19,11 @@ import { mission } from './_mission.js';
 
 const LM = [0, -4];
 const START = [7, 3, 0];
-const STOP1 = [14, 58];
-const STOP2 = [-22, 110];   // just outside a crater in Set B's terrain
-const STOP3 = [-68, 22];
-const PARK = [-20, -8];
+// About half the old distances (the drives were too long). All checked clear of Set B's craters.
+const STOP1 = [10, 30];
+const STOP2 = [-12, 58];
+const STOP3 = [-38, 24];
+const PARK = [-16, -6];
 
 // The two astronauts ride on the rover: put them on their seats.
 function board(stage, crew) {
@@ -98,14 +99,14 @@ export default makeChapter({
     ctx.hud.setStat('date', 'Dec 1972');
     s.driven = 0;
     s.air = { now: 0, best: 0 };
-    // Tasks (content/missions.json "moon"): 0 science stops, 1 sample boxes, 2 drive blind. Bonus: longest jump.
+    // Tasks (content/missions.json "moon"): 0 science stops, 1 sample boxes. Bonus: longest jump.
     s.mission = mission(ctx, 'moon');
     // The self-test (src/core/selftest.js) drives the rover on its own here, with no story events.
     if (opts.jump === 'selftest') { s.unlockControls(); return; }
 
     if (opts.jump !== 'fender') {
       s.hero.setEmotion('sleepy');
-      await s.do(ctx.card.chapter('moon'));
+      await s.chapterCard('moon');
 
       // Unfold: the wheels swing out, the camera post and the antenna stand up (character.folded).
       // The rover keeps its real size the whole time.
@@ -118,9 +119,9 @@ export default makeChapter({
       await s.shot('moon_first_look');
       await climbOn(s, crew);
       await s.shot('moon_arrival');
-      await s.say('ch1_intro');
-
+      // The intro plays while the player already drives.
       s.unlockControls();
+      s.chat('ch1_intro');
       await park(s, ctx, STOP1, 'Drive the crew to science stop 1', 1);
 
       // Stop 1: the crew collects rocks. The rover's eyes follow them.
@@ -157,23 +158,11 @@ export default makeChapter({
     s.loop('dust_spray', true);
     s.controller.speedScale = 0.45;
     s.hero.setEmotion('scared');
-    s.objectives.setText('Drive blind: follow the beeping marker');
+    s.objectives.setText('Drive through the dust to science stop 2');
     s.mission.discover('moon_no_air');
-    // The marker beeps faster the closer the rover gets.
-    let beepIn = 0;
-    const stopBeeping = s.every((dt) => {
-      const p = s.hero.object.position;
-      beepIn -= dt;
-      if (beepIn <= 0) {
-        s.sound('marker_beep', 'park');
-        beepIn = 0.25 + Math.min(1.5, Math.hypot(p.x - STOP2[0], p.z - STOP2[1]) / 30);
-      }
-    });
-    await s.say('ch1_dust');
+    s.chat('ch1_dust'); // while driving through the dust
     s.hero.setEmotion('sad');
     await stop2;
-    stopBeeping();
-    s.mission.done(2);
 
     // Stop 2: the crew tapes maps over the wheel (real).
     s.lockControls();
@@ -193,7 +182,7 @@ export default makeChapter({
     await s.shot('moon_pat');
     act(crew, null);
     s.hero.setEmotion('happy');
-    await s.say('ch1_fixed');
+    await s.say('ch1_fixed', { auto: true });
     await climbOn(s, crew);
     await s.hold('KeyE', 1.5, 'Hold E: secure the second geology sample box');
     addSampleBox(s, 2);

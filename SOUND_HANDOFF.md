@@ -17,7 +17,6 @@ and `standIn` otherwise. Without `has`, the stand-in always plays, so new sounds
 
 | Name | When it plays | Where in the code | Stand-in now | What it should sound like |
 |---|---|---|---|---|
-| `marker_beep` | Moon, driving blind in the dust: repeats faster as the rover nears stop 2 | `moon.js` | `park` | short, clean beacon ping; plays many times in a row, so short and not tiring |
 | `strap` | Moon: a sample box is strapped onto the rover (3 times) | `moon.js` `addSampleBox` | `land` | a strap pulled tight, or a click and a soft thump |
 | `liftoff` | Moon: the top half of the Lunar Module lifts off (with the dust burst) | `moon.js` | `rumble` | engine ignition and a roar that fades as it rises. No air on the Moon, so muffled, felt through the ground |
 | `panels_clean` | Mars: driving through a whirlwind sweeps the solar panels clean, the battery jumps | `mars.js` `updateWhirlwinds` | `park` | a whoosh of wind, then a rising "power back" tone |

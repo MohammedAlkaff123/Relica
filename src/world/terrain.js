@@ -82,9 +82,11 @@ const WORLDS = {
     // boulders: how many big rocks world.js puts here. drop: a gully this deep on the far side.
     places: [
       { name: 'sand', x: -45, z: 55, r: 26, ripples: 0.16, clear: true },
-      { name: 'sandTrap', x: 48, z: 18, r: 12, ripples: 0.1, dip: 0.7, clear: true },
-      { name: 'boulders', x: 8, z: 100, r: 17, boulders: 30 },
-      { name: 'cliff', x: 86, z: -32, r: 16, drop: 6 },
+      // The three dangers, moved closer to the start so the scouting flights are shorter (Ziad, for the
+      // directors). 'sand' for the last flight stays where it was.
+      { name: 'sandTrap', x: 30, z: 22, r: 12, ripples: 0.1, dip: 0.7, clear: true },
+      { name: 'boulders', x: 5, z: 62, r: 17, boulders: 30 },
+      { name: 'cliff', x: 50, z: -12, r: 16, drop: 6 },
     ],
   },
 };

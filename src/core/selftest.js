@@ -230,7 +230,7 @@ export async function runSelfTest(ctx) {
     let s = await press('Digit6');
     await waitForControls(10);
     const p = hero().position;
-    check(ctx.chapters.index === 1 && Math.hypot(p.x - 14, p.z - 62) < 8, 'A-11 key 6 jumps to the fender (Moon, after stop 1)', `chapter ${ctx.chapters.index}`);
+    check(ctx.chapters.index === 1 && Math.hypot(p.x - 10, p.z - 34) < 8, 'A-11 key 6 jumps to the fender (Moon, after stop 1)', `chapter ${ctx.chapters.index}`);
 
     s = await press('Digit7');
     const viking = await until(() => { if (prompting()) { skipPrompts(); } return ctx.characters.has('viking'); }, 8);
@@ -475,7 +475,7 @@ export async function runSelfTest(ctx) {
   // [index, id, task, game-second limit, how many mission tasks must be ticked, story target in seconds]
   const plays = [
     [0, 'opening', 'A-6 Opening', 200, 2, 45],
-    [1, 'moon', 'A-4 + A-15 Moon (Carry the crew)', 600, 3, 180],
+    [1, 'moon', 'A-4 + A-15 Moon (Carry the crew)', 600, 2, 180],
     [2, 'mars', 'A-7 + A-16 Mars (Find evidence of ancient water)', 850, 5, 270],
     [3, 'sky', 'A-8 + A-17 Mars sky (Be the eyes)', 700, 2, 150],
     [4, 'epilogue', 'A-9 Epilogue (Photograph Jupiter, then listen)', 300, 2, 95],

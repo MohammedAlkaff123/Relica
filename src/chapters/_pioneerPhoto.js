@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { mission } from './_mission.js';
 import { revealPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
+import { createPhotoGuide } from './_photoGuide.js';
 
 const CONE = 8 * Math.PI / 180;
 const difference = (target, yaw) => Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
@@ -12,7 +13,7 @@ export async function photographJupiter(s, ctx) {
   ctx.hud.setContext('Pioneer 10', 'Jupiter flyby');
   ctx.hud.setStat('date', 'December 1973');
   ctx.hud.setStat('planned', '21 months');
-  await s.do(ctx.card.chapter('epilogue_photo'));
+  await s.chapterCard('epilogue_photo');
   s.hero.setEmotion('curious');
   const state = s.photoState = { phase: 'frame', targetYaw: 0.42, captured: false, sent: false };
   const earthYaw = -0.65;
@@ -54,12 +55,16 @@ export async function photographJupiter(s, ctx) {
     ctx.camera.lookAt(look);
   };
   const stopCamera = s.every(aim);
+  const guide = createPhotoGuide();
+  // off > 0: turn with A (rotation grows), off < 0: D. Closeness over a quarter turn.
+  const steerGuide = (off, aligned) => guide.update(aligned ? null : off > 0 ? 'KeyA' : 'KeyD', 1 - Math.min(1, Math.abs(off) / 1.6), aligned);
   let cleaned = false;
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
     stopCamera();
     overlay.remove();
+    guide.remove();
     ctx.scene.remove(objects);
     objects.traverse((o) => o.geometry?.dispose());
     for (const material of materials) material.dispose();
@@ -76,6 +81,7 @@ export async function photographJupiter(s, ctx) {
     const off = difference(state.targetYaw, s.hero.object.rotation.y);
     const aligned = Math.abs(off) < CONE;
     reticle.classList.toggle('aligned', aligned);
+    steerGuide(off, aligned);
     if (aligned) m.done(0);
     ctx.hud.setObjective(aligned ? 'Space: capture Jupiter · التقط صورة للمشتري' : 'A / D: frame Jupiter · ضع المشتري داخل الإطار');
     if (!aligned || !ctx.input.pressed('Space')) return false;
@@ -97,6 +103,7 @@ export async function photographJupiter(s, ctx) {
   preview.src = canvas.toDataURL('image/jpeg', 0.8);
   preview.classList.remove('hidden');
   imageNote.classList.remove('hidden');
+  guide.hide();
   let scanned = 0;
   await s.until((dt) => {
     scanned = Math.min(1, scanned + dt / 1.5);
@@ -112,12 +119,17 @@ export async function photographJupiter(s, ctx) {
   s.unlockControls();
   let held = 0;
   await s.until((dt) => {
-    const aligned = Math.abs(difference(earthYaw, s.hero.object.rotation.y)) < CONE;
+    const offEarth = difference(earthYaw, s.hero.object.rotation.y);
+    const aligned = Math.abs(offEarth) < CONE;
     reticle.classList.toggle('aligned', aligned);
+    // Pointing at Earth the image sends on its own (progress on the objective line): no guide needed.
+    if (aligned) guide.hide();
+    else { guide.show(); guide.update(offEarth > 0 ? 'KeyA' : 'KeyD', 1 - Math.min(1, Math.abs(offEarth) / 1.6), false); }
     held = aligned ? held + dt : 0;
     ctx.hud.setObjective(aligned ? `Sending image ${Math.min(100, Math.floor(held * 50))}% · جارٍ إرسال الصورة` : 'A / D: turn toward Earth to send · اتجه نحو الأرض للإرسال');
     return held >= 2;
   });
+  guide.remove();
   state.sent = true;
   state.phase = 'done';
   m.done(2);
@@ -132,7 +144,7 @@ export async function photographJupiter(s, ctx) {
   cleanup();
   ctx.hud.setObjective('');
   ctx.hud.setStat('date', '1973 → 2003');
-  await s.card('21 months planned. More than 30 years.', 'مهمة مقررة من ٢١ شهرًا امتدت أكثر من ٣٠ سنة.');
+  await s.card('21 months planned. More than 30 years.', 'مهمة مقررة من ٢١ شهرًا امتدت أكثر من ٣٠ سنة.', { auto: 5 });
   ctx.hud.setWorld('space');
   await s.fade(false, 0.5);
 }
