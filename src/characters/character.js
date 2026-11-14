@@ -8,7 +8,7 @@
 //
 //   c.lookAt(target)         head and eyes follow a point: a Vector3, any 3D object, or null to stop
 //   c.lookBack(true, camera) glance over the shoulder at the camera; lookBack(false) to stop
-//   c.breakBlade()           the helicopter's blade tip snaps off, spins away and stays on the ground
+//   c.breakBlade()           the last landing: all four blade tips snap off and stay on the ground
 //   c.part('wheel_FL')       a named part of the loaded model, or null
 //   c.wheels                 every part whose name starts with "wheel_"
 //   await c.ready            resolves when the model is in, or has failed and the boxes stay
@@ -291,7 +291,7 @@ export function createCharacter(id) {
   }
 
   const parts = new Map();
-  let loose = null; // the broken blade tip while it is in the air
+  let loose = []; // the broken blade tips while they are in the air
   const character = {
     id, spec, object,
     half: [sx / 2, sy / 2, sz / 2],
@@ -302,21 +302,25 @@ export function createCharacter(id) {
     ready: null,
     setEmotion(name) { want = EMOTIONS[name] || EMOTIONS.curious; },
     lookAt(target) { look.target = target ?? null; },
-    // Flight 72. The tip leaves the rotor and falls; the rest of the blade stays.
+    // Flight 72. NASA found all four blades damaged, so every tip comes off; the stubs stay.
     // `gravity` is the world's, so it falls at the right pace. Safe to call more than once.
     bladeBroken: false,
     breakBlade(gravity = 3.71) {
       if (character.bladeBroken || !blades) return;
       character.bladeBroken = true;
-      const tip = parts.get('blade_tip');
-      if (!tip) {
-        blades[0].scale.x = 0.6; // no model: just a shorter top blade
+      const tips = [1, 2, 3, 4].map((n) => parts.get('blade_tip_' + n)).filter(Boolean);
+      if (!tips.length) {
+        for (const g of blades) g.scale.x = 0.6; // no model: just shorter blades
         return;
       }
-      // Off the spinning rotor and onto the helicopter itself, so it stops turning with the blade
-      // and leaves the scene with the helicopter when the chapter ends.
-      object.attach(tip);
-      loose = { tip, gravity, floor: -sy / 2, vel: new THREE.Vector3((Math.random() - 0.5) * 3, 2.2, (Math.random() - 0.5) * 3) };
+      for (const tip of tips) {
+        // Off the spinning rotor and onto the helicopter itself, so it stops turning with the blade
+        // and leaves the scene with the helicopter when the chapter ends. Each flies outward.
+        object.attach(tip);
+        const out = tip.position.clone().setY(0).normalize();
+        const vel = out.multiplyScalar(1 + Math.random() * 2.5).setY(0.6 + Math.random() * 1.8);
+        loose.push({ tip, gravity, floor: -sy / 2, vel, spin: 5 + Math.random() * 8 });
+      }
     },
     lookBack(on, camera = null) { look.back = !!on; look.camera = camera; },
     talk(on) { talking = !!on; },
@@ -358,17 +362,18 @@ export function createCharacter(id) {
 
       if (blades) for (const g of blades) g.rotation.y += g.userData.dir * character.rotorSpeed * dt;
 
-      if (loose) {
-        loose.vel.y -= loose.gravity * dt;
-        loose.tip.position.addScaledVector(loose.vel, dt);
-        loose.tip.rotation.x += 9 * dt;
-        loose.tip.rotation.z += 6 * dt;
-        if (loose.vel.y < 0 && loose.tip.position.y <= loose.floor) {
-          loose.tip.position.y = loose.floor + 0.02;
-          loose.tip.rotation.set(0, loose.tip.rotation.y, 0); // lies flat where it fell
-          loose = null;
+      for (const l of loose) {
+        l.vel.y -= l.gravity * dt;
+        l.tip.position.addScaledVector(l.vel, dt);
+        l.tip.rotation.x += l.spin * dt;
+        l.tip.rotation.z += l.spin * 0.7 * dt;
+        if (l.vel.y < 0 && l.tip.position.y <= l.floor) {
+          l.tip.position.y = l.floor + 0.02;
+          l.tip.rotation.set(0, l.tip.rotation.y, 0); // lies flat where it fell
+          l.done = true;
         }
       }
+      if (loose.length) loose = loose.filter((l) => !l.done);
     },
   };
 

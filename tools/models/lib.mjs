@@ -23,8 +23,11 @@ export async function loadTriangles(file) {
   const tris = [];
   const nodes = [];
   doc.getRoot().listScenes()[0].traverse((n) => { if (n.getMesh()) nodes.push(n); });
+  // "grandparent/parent/node": lets a model pick out everything under one named node.
+  const pathOf = (n) => { const out = []; for (let p = n; p && p.getName; p = p.getParentNode ? p.getParentNode() : null) out.unshift(p.getName()); return out.join('/'); };
   for (const node of nodes) {
     const m = node.getWorldMatrix();
+    const path = pathOf(node);
     for (const prim of node.getMesh().listPrimitives()) {
       if (prim.getMode() !== 4) continue; // triangles only
       const pos = prim.getAttribute('POSITION');
@@ -55,7 +58,7 @@ export async function loadTriangles(file) {
           const e = pos.getElement(vi, []);
           p.set(mulPoint(m, e[0], e[1], e[2]), k * 3);
         }
-        tris.push({ p, color, node: node.getName(), mat: mat ? mat.getName() : '' });
+        tris.push({ p, color, node: node.getName(), path, mat: mat ? mat.getName() : '' });
       }
     }
   }

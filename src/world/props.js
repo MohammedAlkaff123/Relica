@@ -8,7 +8,8 @@
 //
 // Names:
 //   lunarModule   parts `descent` and `ascent`. 9 m wide, 7 m tall
-//   astronaut     1.85 m, mirror visor, no flag or logo. Use it twice for the crew
+//   astronaut     1.85 m, mirror visor, no flag or logo. Use it twice for the crew.
+//                 Markers `hand_L`, `hand_R`, `head` to aim hero.lookAt at (it stands arms out)
 //   perseverance  plain grey shape for the background of chapter 3
 //   airbags       the bundle Opportunity lands in. A ball 2.2 m across, origin at its centre
 //   petals        the lander base with three petals. Parts `petal_1` `petal_2` `petal_3`:
@@ -20,7 +21,7 @@
 //   pebbles       the patch of tiny round pebbles, 1.6 m across
 //   sampleBox     one sample box, to stack on the back of the Moon rover
 //   worker        a factory worker in a hooded clean-room suit, 1.75 m. No face: mask and goggles.
-//                 Parts `head`, `arm_L`, `arm_R` (arms turn at the shoulder)
+//                 Parts `head`, `arm_L`, `arm_R` (arms turn at the shoulder), `hand_L`, `hand_R`
 //
 // The three models are adapted from NASA's 3D Resources: see public/models/README.md.
 import * as THREE from 'three';
@@ -46,8 +47,15 @@ function rng(seed) {
 
 // A prop that comes from public/models/<name>.glb. Until the file arrives the group is empty;
 // if it never arrives, a plain box of the right size stands in so the chapter still works.
-function fromFile(name, size) {
+function fromFile(name, size, marks = {}) {
   const group = new THREE.Group();
+  // Empty named points, there from the start, for things like hero.lookAt(prop.getObjectByName('hand_L')).
+  for (const [mark, at] of Object.entries(marks)) {
+    const point = new THREE.Object3D();
+    point.name = mark;
+    point.position.set(...at);
+    group.add(point);
+  }
   if (!files.has(name)) {
     const url = new URL(`../../public/models/${name}.glb`, import.meta.url).href;
     files.set(name, loader.loadAsync(url).then((g) => g.scene, () => null));
@@ -67,7 +75,7 @@ const ball = new THREE.IcosahedronGeometry(1, 1);
 
 const BUILDERS = {
   lunarModule: () => fromFile('lunarModule', [9, 7, 9]),
-  astronaut: () => fromFile('astronaut', [0.7, 1.85, 0.5]),
+  astronaut: () => fromFile('astronaut', [0.7, 1.85, 0.5], { hand_L: [0.8, 1.36, 0], hand_R: [-0.8, 1.36, 0], head: [0, 1.68, 0.1] }),
   perseverance: () => fromFile('perseverance', [2.7, 1.85, 3.1]),
 
   // Four lobes of six bags each, like the real pyramid of airbags.
@@ -196,7 +204,7 @@ const BUILDERS = {
       arm.name = name;
       arm.position.set(x, 1.45, 0);
       put(new THREE.BoxGeometry(0.13, 0.6, 0.15), suit, 0, -0.3, 0, arm);
-      put(new THREE.BoxGeometry(0.14, 0.14, 0.16), glove, 0, -0.66, 0, arm);
+      put(new THREE.BoxGeometry(0.14, 0.14, 0.16), glove, 0, -0.66, 0, arm).name = x > 0 ? 'hand_L' : 'hand_R';
       arm.rotation.z = x > 0 ? 0.12 : -0.12;
       g.add(arm);
     }

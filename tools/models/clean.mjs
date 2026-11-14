@@ -10,6 +10,15 @@ import { loadTriangles, bounds, weld, components } from './lib.mjs';
 const lin = (hex) => [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map((v) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
 const hexOf = (c) => c.map((v) => { const s = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return Math.round(Math.min(1, Math.max(0, s)) * 255).toString(16).padStart(2, '0'); }).join('');
 const inBox = (t, lo, hi) => { for (let i = 0; i < 9; i++) { const a = i % 3; if (t.p[i] < lo[a] || t.p[i] > hi[a]) return false; } return true; };
+// Twelve triangles for a box, in the same form as the triangles read from a file.
+function boxTris([cx, cy, cz], [w, h, d], part) {
+  const c = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) c.push([cx + sx * w / 2, cy + sy * h / 2, cz + sz * d / 2]);
+  const idx = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3];
+  const out = [];
+  for (let i = 0; i < idx.length; i += 3) out.push({ p: new Float64Array([...c[idx[i]], ...c[idx[i + 1]], ...c[idx[i + 2]]]), color: [0.5, 0.5, 0.5], node: 'added', path: 'added', mat: '', part });
+  return out;
+}
 const nodeGroups = (tris) => { const m = new Map(); for (const t of tris) { if (!m.has(t.node)) m.set(t.node, []); m.get(t.node).push(t); } return m; };
 
 // Each model: prepare(tris) tags every triangle with t.part (untagged ones are dropped) and returns
@@ -48,10 +57,17 @@ const MODELS = {
   ingenuity: {
     budget: 4800, cast: [0.5, 0.5, 0.5],
     prepare(tris) {
-      const parts = { body: {}, blade_top: { pivot: [0, 0.41, 0] }, blade_bottom: { pivot: [0, 0.31, 0] }, blade_tip: { parent: 'blade_top', pivot: [0, 0.41, 0.36] } };
+      // Each rotor has two blades, and each blade ends in a tip that can come off: NASA found
+      // all four blades damaged after the last landing. The top rotor lies along Z, the bottom along X.
+      const parts = {
+        body: {}, blade_top: { pivot: [0, 0.41, 0] }, blade_bottom: { pivot: [0, 0.31, 0] },
+        blade_tip_1: { parent: 'blade_top', pivot: [0, 0.41, 0.36] }, blade_tip_2: { parent: 'blade_top', pivot: [0, 0.41, -0.36] },
+        blade_tip_3: { parent: 'blade_bottom', pivot: [0.33, 0.31, 0] }, blade_tip_4: { parent: 'blade_bottom', pivot: [-0.33, 0.31, 0] },
+      };
+      const span = (t, axis) => [Math.min(t.p[axis], t.p[axis + 3], t.p[axis + 6]), Math.max(t.p[axis], t.p[axis + 3], t.p[axis + 6])];
       for (const t of tris) {
-        if (t.node === 'rotors_01') t.part = Math.min(t.p[2], t.p[5], t.p[8]) > 0.36 ? 'blade_tip' : 'blade_top';
-        else if (t.node === 'rotors_02') t.part = 'blade_bottom';
+        if (t.node === 'rotors_01') { const [lo, hi] = span(t, 2); t.part = lo > 0.36 ? 'blade_tip_1' : hi < -0.36 ? 'blade_tip_2' : 'blade_top'; }
+        else if (t.node === 'rotors_02') { const [lo, hi] = span(t, 0); t.part = lo > 0.33 ? 'blade_tip_3' : hi < -0.33 ? 'blade_tip_4' : 'blade_bottom'; }
         else t.part = 'body';
       }
       const bus = bounds(tris.filter((t) => t.node === 'bus'));
@@ -112,7 +128,17 @@ const MODELS = {
   perseverance: {
     budget: 4500, dropSmaller: 0.12,
     color: () => lin(0x6f7378), // background silhouette only
-    prepare(tris) { for (const t of tris) t.part = 'body'; return { parts: { body: {} }, anchors: {} }; },
+    prepare(tris) {
+      // In the source the camera mast is folded down on the deck. Lift the head up on a plain pole,
+      // so it reads as a rover with a head, and make it a part of its own so it can turn.
+      const RAISE = 0.75;
+      for (const t of tris) t.part = 'body';
+      const head = tris.filter((t) => t.path.includes('/head'));
+      for (const t of head) { t.part = 'head'; t.p[1] += RAISE; t.p[4] += RAISE; t.p[7] += RAISE; }
+      const hb = bounds(head);
+      tris.push(...boxTris([hb.center[0], hb.min[1] - RAISE / 2, hb.center[2]], [0.09, RAISE, 0.09], 'body'));
+      return { parts: { body: {}, head: { pivot: [hb.center[0], hb.min[1], hb.center[2]] } }, anchors: {} };
+    },
     place: (b) => ({ scale: 1, offset: [-b.center[0], -b.min[1], -b.center[2]] }),
   },
 };

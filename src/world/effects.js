@@ -9,7 +9,9 @@
 //   fx.storm.setLevel(0..1)       0 clear, 1 you can barely see the rover's own antenna
 //   fx.liftoff(object)            one burst of dust along the ground, under a thing that takes off
 //
-// Wheel dust and rotor dust need no call: they follow how the hero moves.
+// Wheel dust, rotor dust and the hero's shadow need no call: they follow how the hero moves.
+// The shadow lies on the ground under the hero and slides away from the Sun as the hero rises,
+// so in flight it shows how high you are.
 // (hero.breakBlade() lives in characters/character.js.)
 //
 // On the Moon there is no air: dust flies in clean arcs and drops straight back. On Mars the thin
@@ -130,6 +132,54 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
     dustPool.update(dt, gravity, drag, floor);
   }
 
+  // ---- the shadow ----
+  // No real shadows are drawn in this game. This is one dark patch on the ground under the hero:
+  // a blob for a rover, a small body and two spinning blade lines for the helicopter.
+  let shadow = null, ink = null, inkBase = 0;
+  const bladeShadows = [];
+  if (env.ground && env.sunDirection) {
+    shadow = new THREE.Group();
+    inkBase = airless ? 0.6 : 0.32; // hard and black on the Moon, soft on Mars
+    ink = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: inkBase, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 14), ink);
+    blob.rotation.x = -Math.PI / 2;
+    blob.scale.set(hero.half[0] * 1.15, hero.half[2] * 1.15, 1);
+    shadow.add(blob);
+    if (hero.spec.rotor) {
+      blob.scale.set(0.16, 0.16, 1);
+      for (const [turn, dir] of [[0, 1], [Math.PI / 2, -1]]) {
+        const line = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.07), ink);
+        line.rotation.x = -Math.PI / 2;
+        const holder = new THREE.Group();
+        holder.rotation.y = turn;
+        holder.userData.dir = dir;
+        holder.add(line);
+        shadow.add(holder);
+        bladeShadows.push(holder);
+      }
+    }
+    scene.add(shadow);
+  }
+  const UP = new THREE.Vector3(0, 1, 0), slope = new THREE.Vector3(), tiltQ = new THREE.Quaternion(), yawQ = new THREE.Quaternion();
+
+  function updateShadow(dt) {
+    if (!shadow) return;
+    const o = hero.object.position, sun = env.sunDirection;
+    const height = Math.max(0, o.y - hero.half[1] - floor(o.x, o.z));
+    // A low Sun would throw the shadow far out of view, so it moves a third of the true distance.
+    const slide = (height * 0.33) / Math.max(0.3, sun.y);
+    const x = o.x - sun.x * slide, z = o.z - sun.z * slide;
+    shadow.position.set(x, floor(x, z) + 0.04, z);
+    // Lie along the slope of the ground, turned the way the hero faces.
+    slope.set(floor(x - 0.6, z) - floor(x + 0.6, z), 1.2, floor(x, z - 0.6) - floor(x, z + 0.6)).normalize();
+    tiltQ.setFromUnitVectors(UP, slope);
+    yawQ.setFromAxisAngle(UP, Math.atan2(fwd.x, fwd.z));
+    shadow.quaternion.copy(tiltQ).multiply(yawQ);
+    shadow.scale.setScalar(1 + height * 0.06);
+    ink.opacity = inkBase * (1 - Math.min(0.7, height / 14)) * (1 - 0.75 * level); // fades with height and in the storm
+    for (const b of bladeShadows) b.rotation.y += b.userData.dir * (hero.rotorSpeed || 0) * dt;
+  }
+
   // ---- the storm ----
   const STORM_COUNT = 900, BOX = 26; // specks blowing through a box that follows the hero
   const stormPos = new Float32Array(STORM_COUNT * 3);
@@ -222,11 +272,13 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
     update(dt) {
       updateDust(dt);
       updateStorm(dt);
+      updateShadow(dt);
     },
     dispose() {
       level = 0;
       applyStorm();
       dustPool.dispose();
+      if (shadow) { scene.remove(shadow); shadow.traverse((o) => o.geometry?.dispose()); ink.dispose(); }
       scene.remove(stormPoints);
       stormGeo.dispose();
       stormMat.dispose();
