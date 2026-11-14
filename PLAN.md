@@ -2,7 +2,7 @@
 
 > Current implementation status (14 Nov): see [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md) and [TESTLOG.md](TESTLOG.md). Camera and mission changes requested by the directors are implemented; art acceptance, novice testing, rehearsal and submission remain explicit human steps. Earlier hour estimates and paper chapter timings are planning history.
 
-Working title taken from the project folder. Browser game, 5 people, 24 hours.
+Approved game title: **RELICA: Still Here — ريليكا: ما زلتُ هنا**. The challenge name remains separate. Browser game, 5 people, 24 hours. See BRANDING_AND_ART_DIRECTION.md for the latest UI requirements and pending art selection.
 
 ## 1. The game in one minute
 
@@ -12,7 +12,7 @@ Every date, place, environment number and "memory" photo in the game comes from 
 
 - **Challenge:** Abandoned but not Forgotten (NASA Space Apps 2026)
 - **Audience:** school students and space fans
-- **Text:** simple Modern Standard Arabic dialogue with English subtitles; menus and HUD in English. Mohammed approved the register on 14 Nov.
+- **Text:** simple Modern Standard Arabic and English. Updated direction: a visible العربية / English selector on the main menu, saved preference, full Arabic interface and RTL support. Abdullatif owns implementation and proofreading. The current build still has bilingual dialogue and English HUD strings; localization is not complete.
 
 ## 2. Rules that shape this plan
 

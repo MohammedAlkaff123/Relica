@@ -1,4 +1,4 @@
-# Relica
+# RELICA: Still Here — ريليكا: ما زلتُ هنا
 
 A short low-poly story game about the machines NASA left behind on the Moon, on Mars and in deep space.
 Built for the NASA Space Apps 2026 challenge "Abandoned but not Forgotten".
@@ -6,6 +6,7 @@ Built for the NASA Space Apps 2026 challenge "Abandoned but not Forgotten".
 - [PLAN.md](PLAN.md): the overall plan, rules, tech and timeline
 - [STORY.md](STORY.md): the story beat by beat, every dialogue line's intent, the shot list
 - [TASKS.md](TASKS.md): who does what, with hand-off times
+- [BRANDING_AND_ART_DIRECTION.md](BRANDING_AND_ART_DIRECTION.md): approved name, menu/language requirements and pending visual-style selection
 - [DIRECTORS_HANDOFF.md](DIRECTORS_HANDOFF.md): delivered camera/mission work and each teammate’s next steps
 - [TESTLOG.md](TESTLOG.md): functional results and remaining human checks
 - [pitch/](pitch/): seven-slide deck, speaker script and 30-second review montage

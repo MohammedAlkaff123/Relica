@@ -1,5 +1,14 @@
 # Directors’ implementation and team handoff
 
+## Approved title and interface direction — 14 November
+
+**RELICA: Still Here — ريليكا: ما زلتُ هنا** is the approved game name. The challenge name is separate. Browser title and the existing title card now use it; this is not the final logo or completed main menu.
+
+See [BRANDING_AND_ART_DIRECTION.md](BRANDING_AND_ART_DIRECTION.md) for the actionable brief. Abdullatif owns the logo, bilingual branding, a real main menu with a visible Arabic/English selector, and a unified redesign of the existing interface. Ziad supports menu/pause/input integration. These remain OPEN; prior functional UI delivery did not mean final visual design was complete.
+
+Three environment-style concepts have been shown to the directors: A Warm Explorer, B Quiet Frontier, C Cosmic Cinema. **Style selection is PENDING.** B is a recommendation only. Do not begin a texture/lighting/particle overhaul from an unapproved option. After selection, attach the selected reference here and record the choice before Abdulkarim implements it. Existing animation and photo-scene tasks remain active.
+
+
 Updated 14 November 2026 for Moayad and Mohammed. This is the current status; older milestone schedules in TASKS/PLAN are planning history. Camera and mission code is implemented and browser-tested. The concurrent main commit 21deaa0 (jointed figures, crew placement and wider rover seats) is preserved in this integration. Human creative approval, novice playtesting and event submission are not claimed as complete.
 
 ## Moayad

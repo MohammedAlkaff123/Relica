@@ -1,10 +1,10 @@
 {
   "_readme": "Owner: Set C. Text for the title, the ending card and the credits (card.title(), card.ending(), card.credits()). The NASA photo list is built in code from public/nasa/CREDITS.csv, using only the photos named in content/memories.json. Add each new sound or tool here when it goes in.",
   "title": {
-    "name": "RELICA",
+    "name": "RELICA: Still Here",
     "line": {
-      "en": "Abandoned, but not forgotten",
-      "ar": "رحلوا عنها… ولم ينسوها."
+      "en": "",
+      "ar": "ريليكا: ما زلتُ هنا"
     },
     "start": {
       "en": "Press Enter to wake up",
