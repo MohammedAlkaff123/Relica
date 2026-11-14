@@ -30,7 +30,8 @@
 //   stage.ground(x, z)                        ground height
 //   stage.counter(label, value, planned)      HUD counter ("Sol 91 / 90 planned")
 //   stage.battery(0..1)                       HUD battery
-//   stage.sound(name, standInBeep)            Set C's audio.play(name), or a character beep until it exists
+//   stage.sound(name, standIn)                Set C's audio.play(name); standIn plays until Set C has the name
+//   stage.loop(name, on) / loopLevel(name, 0..1)  looping sounds, stopped with the chapter
 import * as THREE from 'three';
 import { buildWorld } from '../world/world.js';
 import { createCharacter } from '../characters/character.js';
@@ -205,12 +206,18 @@ export function setupStage(ctx, cfg) {
       } finally { cleanup(); }
     },
 
-    // A named sound from Set C (audio.play, TASKS.md hand-off at hour 7). Until it exists, optionally
-    // a character's beep as a stand-in.
-    sound(name, standInBeep) {
-      if (ctx.audio.play) ctx.audio.play(name);
-      else if (standInBeep) ctx.audio.beep(standInBeep);
+    // A named one-shot sound from Set C. New names are listed in SOUND_HANDOFF.md. Until Set C has
+    // a name (audio.has(name) is true), the stand-in sound plays instead, if one is given.
+    sound(name, standIn) {
+      const has = typeof ctx.audio.has === 'function' && ctx.audio.has(name);
+      ctx.audio.play?.(has || !standIn ? name : standIn);
     },
+    // A looping sound (motor, dust, whirlwind): on while the chapter runs, stopped when it is left.
+    loop(name, on = true) {
+      ctx.audio.loop?.(name, on);
+      if (on) stage.onDispose(() => ctx.audio.loop?.(name, false));
+    },
+    loopLevel(name, level) { ctx.audio.loopLevel?.(name, Math.max(0, Math.min(1, level))); },
 
     // ---- world ----
     ground: (x, z) => heightAt(world, x, z),
@@ -249,6 +256,7 @@ export function setupStage(ctx, cfg) {
 
     update(dt) {
       clock += dt;
+      if (cfg.vehicle === 'rover' && controller) stage.loopLevel('hum', controller.speed / (tuning.rover.speed || 5));
       if (controller) {
         if (stage.controls) controller.update(dt);
         else controller.idle(dt);
@@ -280,6 +288,10 @@ export function setupStage(ctx, cfg) {
   return stage;
 }
 
+function startMotorHum(stage) {
+  if (stage.cfg.vehicle === 'rover') stage.loop('hum', true);
+}
+
 export function makeChapter(cfg) {
   let stage = null;
 
@@ -289,6 +301,8 @@ export function makeChapter(cfg) {
     async start(ctx, opts = {}) {
       const s = stage = setupStage(ctx, cfg);
       ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
+      await ctx.quality?.attach(s); // the new world starts in the chosen graphics mode
+      startMotorHum(s);
       try {
         await cfg.script(s, ctx, opts);
       } catch (err) {

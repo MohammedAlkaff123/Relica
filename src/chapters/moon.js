@@ -50,12 +50,31 @@ async function park(s, ctx, [x, z], text, n) {
 
 // A sample box is strapped onto the back of the rover. The stack grows.
 function addSampleBox(s, n) {
+  s.sound('strap', 'land');
   const b = s.prop('sampleBox');
   s.hero.object.add(b);
   b.position.set(0, s.hero.half[1] * 0.5 + 0.14 + (n - 1) * 0.3, -s.hero.half[2] + 0.3);
   b.rotation.set(0, (n % 2) * 0.15, 0);
   s.mission.progress(1, n, 3);
   s.counter('sample boxes', n, 3);
+}
+
+// Crew actions (TASKS.md astronaut follow-up). Abdulkarim's figures walk, climb and sit on their own.
+// Task actions are asked for through this contract, which Set B implements on the figure:
+//   figure.userData.act(name)   name: 'collect' | 'repair' | 'reassure' | 'farewell'; null returns to idle.
+//                               May return a Promise that ends with the action.
+// Until act exists, nothing happens and the figures keep their automatic idle and walk, never a T-pose.
+// The waits stay the same either way, so the chapter's timing does not depend on the actions.
+function act(crew, name) {
+  for (const c of crew) {
+    try { c.userData.act?.(name); } catch (err) { console.warn(`crew action "${name}" failed`, err); }
+  }
+}
+// Do an action for `seconds`, then back to idle.
+async function perform(stage, crew, name, seconds) {
+  act(crew, name);
+  stage.onDispose(() => act(crew, null)); // restart and chapter jumps stop it
+  try { await stage.wait(seconds); } finally { if (stage.alive) act(crew, null); }
 }
 
 async function climbOn(stage, crew) {
@@ -114,7 +133,7 @@ export default makeChapter({
       s.hero.lookAt?.(crew[0]); // the rover's eyes follow them
       const p = s.hero.object.position;
       await Promise.all(crew.map((c, i) => s.moveTo(c, p.x + (i ? 5 : -4), p.z + 6, 3)));
-      await s.wait(2);
+      await perform(s, crew, 'collect', 2);
       ctx.hud.setObjective('');
       s.hero.lookAt?.(null);
       await climbOn(s, crew);
@@ -137,6 +156,7 @@ export default makeChapter({
     await s.until(() => Math.hypot(s.hero.object.position.x - STOP1[0], s.hero.object.position.z - STOP1[1]) > 10);
     s.sound('crack');
     s.dust.shower(true, s.hero);
+    s.loop('dust_spray', true);
     s.controller.speedScale = 0.45;
     s.hero.setEmotion('scared');
     s.objectives.setText('Drive blind: follow the beeping marker');
@@ -147,7 +167,7 @@ export default makeChapter({
       const p = s.hero.object.position;
       beepIn -= dt;
       if (beepIn <= 0) {
-        s.sound('park'); // a short beep; a dedicated marker sound can replace it
+        s.sound('marker_beep', 'park');
         beepIn = 0.25 + Math.min(1.5, Math.hypot(p.x - STOP2[0], p.z - STOP2[1]) / 30);
       }
     });
@@ -163,13 +183,16 @@ export default makeChapter({
     ctx.hud.setObjective('The crew is repairing the fender');
     const q = s.hero.object.position;
     await Promise.all(crew.map((c, i) => s.moveTo(c, q.x + (i ? 1.2 : -1.2), q.z - 1.6, 1.2)));
-    await s.wait(2.5);
+    await perform(s, crew, 'repair', 2.5);
     ctx.hud.setObjective('');
     s.dust.shower(false);
+    s.loop('dust_spray', false);
     s.controller.speedScale = 1;
     await s.photo('as17-137-20979');
     s.mission.discover('fender_maps');
+    act(crew, 'reassure'); // a hand on the rover while the camera holds on it
     await s.shot('moon_pat');
+    act(crew, null);
     s.hero.setEmotion('happy');
     await s.say('ch1_fixed');
     await climbOn(s, crew);
@@ -186,7 +209,7 @@ export default makeChapter({
     s.hero.setEmotion('curious');
     await climbOff(s, crew);
     ctx.hud.setObjective('The last samples');
-    await s.wait(3);
+    await perform(s, crew, 'collect', 3);
     ctx.hud.setObjective('');
     await climbOn(s, crew);
     await s.hold('KeyE', 1.5, 'Hold E: secure the last geology samples');
@@ -201,6 +224,9 @@ export default makeChapter({
     await s.until((dt) => s.controller.turnToward(LM[0], LM[1], dt));
     await climbOff(s, crew);
     await Promise.all(crew.map((c, i) => s.moveTo(c, LM[0] + (i ? 1 : -1), LM[1] + 3, 6)));
+    // At the ladder they turn back toward the rover for a moment.
+    for (const c of crew) c.rotation.y = Math.atan2(s.hero.object.position.x - c.position.x, s.hero.object.position.z - c.position.z);
+    await perform(s, crew, 'farewell', 1.5);
     crew.forEach((c) => { c.visible = false; });
     await s.wait(1.5);
 
@@ -210,6 +236,7 @@ export default makeChapter({
     let up = 0;
     s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
     s.fx.liftoff?.(ascent);
+    s.sound('liftoff', 'rumble');
     s.hero.lookAt?.(ascent); // the rover's camera follows it up
     s.hero.setEmotion('sad');
     await s.do(ctx.cinematics.conversation('moon_liftoff', 'ch1_left_behind', s.hero.object, { lrv: s.hero.object, ascent }, ctx.dialogue));

@@ -1,0 +1,34 @@
+{
+  "_note": "Graphics quality presets: one shared file (BRANDING_AND_ART_DIRECTION.md, Graphics quality). Ziad's quality.js applies the renderer keys; the whole preset object is passed to Abdulkarim's env.applyQuality / fx.applyQuality, so world keys (textures, rocks, dust, stars) can be added here. Starting budgets, not measured promises.",
+  "default": "medium",
+  "order": ["low", "medium", "high"],
+  "levels": {
+    "low": {
+      "pixelRatioCap": 1.0,
+      "shadows": false,
+      "shadowMapSize": 0,
+      "textureSize": 512,
+      "decorScale": 0.6,
+      "dustScale": 0.25,
+      "starScale": 0.5
+    },
+    "medium": {
+      "pixelRatioCap": 1.5,
+      "shadows": true,
+      "shadowMapSize": 1024,
+      "textureSize": 1024,
+      "decorScale": 1.0,
+      "dustScale": 0.5,
+      "starScale": 1.0
+    },
+    "high": {
+      "pixelRatioCap": 2.0,
+      "shadows": true,
+      "shadowMapSize": 2048,
+      "textureSize": 2048,
+      "decorScale": 1.3,
+      "dustScale": 1.0,
+      "starScale": 1.0
+    }
+  }
+}

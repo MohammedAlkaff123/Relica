@@ -140,7 +140,7 @@ export default makeChapter({
           d.marked = true;
           s.prop('flag', d.at[0], d.at[1]);
           route.avoid(d.at[0], d.at[1], d.at[2]);
-          s.sound('park');
+          s.sound('mark', 'park');
           m.progress(1, ++marked, 3);
         }
         pad.dispose();
@@ -189,6 +189,7 @@ export default makeChapter({
         const k = Math.min(1, (air - 10) / 6);
         heli.drift.x = 2.6 * k; heli.drift.z = -1.2 * k; heli.drift.tilt = 0.45 * k;
         if (k > 0.3) s.hero.setEmotion('scared');
+        if (!s.warned) { s.warned = true; s.sound('drift_warning'); }
       }
       if (air > 12 && !lastPush) lastPush=s.say('ch3_last_push',{keepControls:true});
       if (air > 16) heli.noLift = true;
@@ -198,6 +199,7 @@ export default makeChapter({
     s.objectives.dispose();
     heli.drift.x = heli.drift.z = heli.drift.tilt = 0;
     heli.broken = true;
+    heli.onTwitch = () => s.sound('rotor_twitch');
     s.hero.breakBlade?.();
     s.sound('crash');
     s.sound('crack');
