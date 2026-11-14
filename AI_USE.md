@@ -28,3 +28,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdulkarim | Claude Code | B-3: model loading in character.js, with the boxes kept when a file is missing, and the face rig moved onto the model's head and antenna |
 | 14 Nov | Abdulkarim | Claude Code | B-1: terrain function (heightAt, crater list, height grid for the physics) and the ground mesh built from it; heights checked against a Rapier heightfield |
 | 14 Nov | Abdullatif | Claude Code | C-7: Morse voices with a signature per machine (Viking as an old telegraph, Pioneer deep and echoing), mix buses with dB levels measured per sound, new distinct interface and event sounds |
+| 14 Nov | Abdulkarim | Claude Code | B-2: script that builds the Moon rover model from simple shapes (tools/models/build_lrv.mjs), shaped after the NASA pack photos; checked by eye in the game |
