@@ -26,3 +26,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdulkarim | Claude Code | Searched for open-licence 3D models and found NASA's own set (github.com/nasa/NASA-3D-Resources); checked each model's triangle count, size and textures |
 | 14 Nov | Abdulkarim | Claude Code | B-2/B-5: wrote the script in tools/models that adapts seven NASA models to our look (no textures or flags, under 5,000 triangles, metres, named parts); results checked by eye |
 | 14 Nov | Abdulkarim | Claude Code | B-3: model loading in character.js, with the boxes kept when a file is missing, and the face rig moved onto the model's head and antenna |
+| 14 Nov | Abdulkarim | Claude Code | B-1: terrain function (heightAt, crater list, height grid for the physics) and the ground mesh built from it; heights checked against a Rapier heightfield |
