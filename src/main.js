@@ -7,6 +7,7 @@ import { createChapters } from './core/chapters.js';
 import { createFollowCamera } from './core/followCamera.js';
 import { loadJSON } from './core/content.js';
 import { createQuality } from './core/quality.js';
+import { QUALITY_DATA } from './world/quality.js';
 import { fadeTo } from './core/fade.js';
 import { createCinematics } from './cinematics/cinematic.js';
 import { createPrompt } from './ui/prompt.js';
@@ -31,7 +32,7 @@ async function boot() {
   const [facts, tuning, qualityData] = await Promise.all([
     loadJSON('content/facts.json'),
     loadJSON('content/tuning.json'),
-    loadJSON('content/quality.json'),
+    Promise.resolve(QUALITY_DATA),
   ]);
   await physics.initPhysics();
 

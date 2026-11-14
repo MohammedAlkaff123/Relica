@@ -307,6 +307,7 @@ async function timeSkip(s, to, show) {
 // The radio call. Viking stands far away; the camera cuts to it and back.
 async function radioCall(s, ctx) {
   const viking = createCharacter('viking');
+  s.onDispose(() => viking.dispose());
   s.add(viking.object);
   viking.object.position.set(VIKING_SPOT[0], s.ground(VIKING_SPOT[0], VIKING_SPOT[1]) + viking.half[1], VIKING_SPOT[1]);
   viking.object.rotation.y = 0.8;

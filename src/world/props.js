@@ -29,6 +29,8 @@
 // The people are built here from boxes, so they can have joints.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { presetFor, initialQuality } from './quality.js';
+import { shareResources } from './resources.js';
 
 export const PETAL_CLOSED = -1.91; // radians: the three petals meet in a point
 
@@ -40,6 +42,7 @@ const mats = new Map();
 function flat(color, extra) {
   if (extra) return new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9, ...extra });
   if (!mats.has(color)) mats.set(color, new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9 }));
+  mats.get(color).userData.shared = true;
   return mats.get(color);
 }
 
@@ -61,9 +64,10 @@ function fromFile(name, size, marks = {}) {
   }
   if (!files.has(name)) {
     const url = new URL(`../../public/models/${name}.glb`, import.meta.url).href;
-    files.set(name, loader.loadAsync(url).then((g) => g.scene, () => null));
+    files.set(name, loader.loadAsync(url).then((g) => { shareResources(g.scene); return g.scene; }, () => null));
   }
   group.userData.ready = files.get(name).then((scene) => {
+    if (group.userData.disposed) return false;
     if (scene) { group.add(scene.clone(true)); return true; } // clones share the geometry
     const box = new THREE.Mesh(new THREE.BoxGeometry(...size), flat(0x9a9da3));
     box.position.y = size[1] / 2;
@@ -127,18 +131,19 @@ function makeFigure(kind) {
 
   // ---- it animates itself: this runs once a frame, when the torso is about to be drawn ----
   const seed = Math.random() * 10;
-  const pose = { legL: 0, legR: 0, kneeL: 0, kneeR: 0, armL: 0, armR: 0, elbowL: -0.15, elbowR: -0.15, lean: 0, drop: 0 };
+  let action = null, actionTime = 0, elapsed = 0, managed = false;
+  const ACTIONS = new Set(['collect', 'repair', 'reassure', 'farewell']);
+  const pose = { legL: 0, legR: 0, kneeL: 0, kneeR: 0, armL: 0, armR: 0, armSideL: 0, armSideR: 0, headPitch: 0, elbowL: -0.15, elbowR: -0.15, lean: 0, drop: 0 };
   const want = { ...pose };
   const at = new THREE.Vector3(), was = new THREE.Vector3(), lag = new THREE.Vector3(), v = new THREE.Vector3();
   const q = new THREE.Quaternion(), sc = new THREE.Vector3();
   let lastTime = 0, lastParent = null, phase = 0, walk = 0, lagStart = 0;
 
   torso.frustumCulled = false; // always drawn, so this always runs, even if the body has swung out of view
-  torso.onBeforeRender = () => {
-    const now = performance.now() / 1000;
-    if (now - lastTime < 0.002) return; // drawn twice in one frame
-    const fresh = now - lastTime > 0.5; // first frame, or back after being hidden
-    const dt = Math.min(0.05, now - lastTime);
+  function animate(dt) {
+    dt = Math.min(.05, Math.max(0.0001, dt));
+    elapsed += dt; actionTime += dt;
+    const now = elapsed, fresh = lastTime === 0;
     lastTime = now;
     g.getWorldPosition(at);
     if (fresh) { was.copy(at); lastParent = g.parent; lag.set(0, 0, 0); }
@@ -160,6 +165,7 @@ function makeFigure(kind) {
     if (!riding) phase += speed * dt * (Math.PI / 0.55);
     const swing = Math.sin(phase), t = now + seed, breath = Math.sin(t * 1.5);
 
+    want.armSideL = want.armSideR = want.headPitch = 0;
     if (riding) Object.assign(want, SIT);
     else {
       want.legL = -swing * 0.5 * walk; want.legR = swing * 0.5 * walk;                 // forward is negative
@@ -169,12 +175,30 @@ function makeFigure(kind) {
       want.elbowL = want.elbowR = -0.15 - 0.2 * walk;
       want.lean = 0.05 * walk; want.drop = 0;
     }
+    if (action && !riding) {
+      const reach = Math.sin(actionTime * 3 + seed * .2);
+      if (action === 'collect') Object.assign(want, {
+        legL: -1.25, kneeL: 1.65, legR: -.3, kneeR: 1.1, drop: -.38,
+        lean: .42, armL: -.45, armR: -.75 + reach * .12, elbowL: -.5, elbowR: -.35, headPitch: .4,
+      });
+      if (action === 'repair') Object.assign(want, {
+        legL: -.55, legR: -.55, kneeL: 1.05, kneeR: 1.05, drop: -.22,
+        lean: .3, armL: -1.05, armR: -1.05 + reach * .09, elbowL: -.5, elbowR: -.5 - reach * .12, headPitch: .25,
+      });
+      if (action === 'reassure') Object.assign(want, {
+        lean: .08, armR: -1.12 + Math.sin(actionTime * 2.5) * .035, elbowR: -.22, headPitch: .14,
+      });
+      if (action === 'farewell') Object.assign(want, {
+        armR: -2.4, elbowR: -.6, armSideR: -.35 + Math.sin(actionTime * 4) * .18, headPitch: -.08,
+      });
+    }
     const k = 1 - Math.exp(-9 * dt);
     for (const key of Object.keys(pose)) pose[key] += (want[key] - pose[key]) * k;
 
     J.legL.rotation.x = pose.legL; J.legR.rotation.x = pose.legR;
     J.kneeL.rotation.x = pose.kneeL; J.kneeR.rotation.x = pose.kneeR;
     J.armL.rotation.x = pose.armL; J.armR.rotation.x = pose.armR;
+    J.armL.rotation.z = pose.armSideL; J.armR.rotation.z = pose.armSideR;
     J.elbowL.rotation.x = pose.elbowL; J.elbowR.rotation.x = pose.elbowR;
     J.spine.rotation.x = pose.lean;
     const still = 1 - walk;
@@ -184,7 +208,7 @@ function makeFigure(kind) {
     torso.scale.set(1 + 0.015 * breath, 1 + 0.01 * breath, 1 + 0.045 * breath);
     J.armL.position.y = J.armR.position.y = 0.5 + 0.007 * breath;
     J.head.rotation.y = Math.sin(t * 0.31) * 0.16 * still;
-    J.head.rotation.x = Math.sin(t * 0.23 + 1) * 0.04;
+    J.head.rotation.x = pose.headPitch + Math.sin(t * 0.23 + 1) * 0.04;
 
     lag.multiplyScalar(Math.exp(-6 * dt));
     if (lag.lengthSq() < 1e-5) lag.set(0, 0, 0);
@@ -194,12 +218,25 @@ function makeFigure(kind) {
     v.copy(lag).setY(lag.y + hop).applyQuaternion(q).divide(sc);                       // world offset -> our own space
     rig.position.set(v.x, v.y + pose.drop + Math.abs(swing) * 0.035 * walk, v.z);
   };
-  g.userData.figure = { pose, lag, was }; // read-only, for debugging
+  let fallbackTime = performance.now();
+  torso.onBeforeRender = () => {
+    if (managed) return;
+    const now = performance.now(); if (now - fallbackTime < 2) return;
+    animate((now - fallbackTime) / 1000); fallbackTime = now;
+  };
+  g.userData.updateFigure = (dt) => { managed = true; animate(dt); };
+  g.userData.act = (name) => {
+    if (name !== null && !ACTIONS.has(name)) throw new Error('Unknown figure action: ' + name);
+    if (action !== name) { action = name; actionTime = 0; }
+  };
+  g.userData.figure = { pose, lag, was, get action() { return action; }, get time() { return actionTime; } };
   return g;
 }
 
 const rockShape = new THREE.IcosahedronGeometry(1, 0);
+rockShape.userData.shared = true;
 const ball = new THREE.IcosahedronGeometry(1, 1);
+ball.userData.shared = true;
 
 const BUILDERS = {
   lunarModule: () => fromFile('lunarModule', [9, 7, 9]),
@@ -317,6 +354,60 @@ const BUILDERS = {
     return g;
   },
 
+  // Mission props replace Set A's stand-ins automatically via PROP_NAMES.
+  heightBand() {
+    const g = new THREE.Group();
+    for (const y of [-.5,.5]) for (let i=0;i<4;i++) {
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(2.4,.025,4,12,Math.PI*.32), new THREE.MeshBasicMaterial({color:0x8fd3ff,transparent:true,opacity:.55,depthWrite:false}));
+      arc.rotation.set(Math.PI/2,0,i*Math.PI/2);arc.position.y=y;g.add(arc);
+    }
+    return g;
+  },
+  flag() {
+    const g = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,1.5,6),flat(0xdad9ce));pole.position.y=.75;
+    const tab = new THREE.Mesh(new THREE.BoxGeometry(.48,.28,.025),flat(0xe3a23c));tab.position.set(.24,1.3,0);
+    g.add(pole,tab);return g;
+  },
+  sandTrap() {
+    const g = new THREE.Group();
+    const patch = new THREE.Mesh(new THREE.CircleGeometry(4,32),flat(0xc29469));patch.rotation.x=-Math.PI/2;patch.position.y=.025;g.add(patch);
+    for(let i=0;i<8;i++) {
+      const ridge=new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,5,5),flat(0xb18159));
+      ridge.rotation.z=Math.PI/2;ridge.position.set(0,.04,(i-3.5)*.55);g.add(ridge);
+    }
+    return g;
+  },
+  boulders() {
+    const g = new THREE.Group();
+    for(let i=0;i<9;i++) {
+      const rock=BUILDERS.rock({size:.6+((i*37)%10)/10,seed:i+7,color:0x7c4329});
+      rock.position.set(Math.cos(i*2.4)*(1+i*.35),0,Math.sin(i*2.4)*(1+i*.35));g.add(rock);
+    }
+    return g;
+  },
+  cliffEdge() {
+    const g = new THREE.Group();
+    for(let i=0;i<4;i++) {
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(10-i*.2,.65,1.3+i*.4),flat(i%2?0x874b30:0x9a5634));
+      slab.position.set(0,-2+i*.6,-i*.2);g.add(slab);
+    }
+    return g;
+  },
+  whirlwind() {
+    const g = new THREE.Group(), count=160, positions=new Float32Array(count*3), random=rng(481);
+    for(let i=0;i<count;i++) {
+      const y=random()*7, angle=y*2.1+random()*Math.PI*2, radius=.18+y*.13+random()*.25;
+      positions.set([Math.cos(angle)*radius,y,Math.sin(angle)*radius],i*3);
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    const material=new THREE.PointsMaterial({color:0xb68b65,size:.12,transparent:true,opacity:.22,depthWrite:false});
+    const dust=new THREE.Points(geo,material);g.add(dust);
+    g.userData.applyQuality=(p)=>geo.setDrawRange(0,Math.round(count*p.dustScale));
+    g.userData.applyQuality(presetFor(initialQuality()));
+    return g;
+  },
+
   worker: () => makeFigure('worker'),
 
   sampleBox() {
@@ -338,5 +429,8 @@ export function createProp(name, options) {
   const prop = build(options);
   prop.name = name;
   prop.userData.ready ??= Promise.resolve(true);
+  prop.userData.ready.then(() => prop.traverse((o) => {
+    if (o.isMesh && !o.material?.transparent) { o.castShadow = true; o.receiveShadow = true; }
+  }));
   return prop;
 }

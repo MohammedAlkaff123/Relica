@@ -20,6 +20,7 @@
 // The box size in CAST is also the physics size, so keep it close to the real model.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { disposeObject } from '../world/resources.js';
 
 const loader = new GLTFLoader();
 const modelUrl = (id) => new URL(`../../public/models/${id}.glb`, import.meta.url).href;
@@ -60,6 +61,7 @@ export function createCharacter(id) {
   const spec = CAST[id];
   if (!spec) throw new Error(`unknown character "${id}"`);
   const [sx, sy, sz] = spec.size;
+  let disposed = false;
   const object = new THREE.Group();
   object.name = id;
   // Everything that is only a stand-in goes in here, so one line removes it when the model arrives.
@@ -285,7 +287,7 @@ export function createCharacter(id) {
     });
     if (ant) parts.set('antenna', ant);
     object.remove(boxes);
-    boxes.traverse((o) => o.geometry?.dispose());
+    disposeObject(boxes);
     object.add(model);
     character.model = model;
   }
@@ -294,6 +296,7 @@ export function createCharacter(id) {
   let loose = []; // the broken blade tips while they are in the air
   const character = {
     id, spec, object,
+    dispose() { if (disposed) return; disposed = true; disposeObject(object); },
     half: [sx / 2, sy / 2, sz / 2],
     rotorSpeed: 0, // radians per second, set by the helicopter controller
     model: null,   // the loaded model, or null while the boxes are showing
@@ -378,7 +381,7 @@ export function createCharacter(id) {
   };
 
   character.ready = loader.loadAsync(modelUrl(id)).then(
-    (gltf) => { useModel(gltf.scene); return true; },
+    (gltf) => { if (disposed) { disposeObject(gltf.scene); return false; } useModel(gltf.scene); return true; },
     () => false, // no file, or a broken one: the boxes stay
   );
   return character;

@@ -34,6 +34,7 @@
 //   stage.loop(name, on) / loopLevel(name, 0..1)  looping sounds, stopped with the chapter
 import * as THREE from 'three';
 import { buildWorld } from '../world/world.js';
+import { disposeObject } from '../world/resources.js';
 import { createCharacter } from '../characters/character.js';
 import { createRover } from '../vehicles/rover.js';
 import { createHeli } from '../vehicles/heli.js';
@@ -64,7 +65,7 @@ export function setupStage(ctx, cfg) {
   physics.resetWorld(gravity);
   fadeTo(cfg.startBlack ? 1 : 0, 0);
 
-  const env = buildWorld(world, scene);
+  const env = buildWorld(world, scene, { quality: ctx.quality?.get() });
   const hero = createCharacter(cfg.character);
   scene.add(hero.object);
   ctx.characters.clear();
@@ -267,6 +268,7 @@ export function setupStage(ctx, cfg) {
       hero.update(dt);
       if (cfg.character === 'lrv') ctx.followCam.setMotion({ airborne: controller && !controller.grounded });
       objectives.update(dt);
+      scene.traverse((o) => o.userData.updateFigure?.(dt));
       fx.update(dt);
       for (const task of [...tasks]) task(dt);
     },
@@ -278,7 +280,11 @@ export function setupStage(ctx, cfg) {
       tasks.clear();
       objectives.dispose();
       fx.dispose();
-      for (const o of added) scene.remove(o);
+      for (const o of added) {
+        o.traverse((child) => { child.userData.disposed = true; child.userData.act?.(null); });
+        scene.remove(o); disposeObject(o);
+      }
+      hero.dispose();
       scene.remove(hero.object);
       env.dispose();
       ctx.characters.clear();
@@ -302,6 +308,7 @@ export function makeChapter(cfg) {
       const s = stage = setupStage(ctx, cfg);
       ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
       await ctx.quality?.attach(s); // the new world starts in the chosen graphics mode
+      if (!s.alive) return;
       startMotorHum(s);
       try {
         await cfg.script(s, ctx, opts);

@@ -46,13 +46,13 @@ Reference images: Outer Wilds; supplied by the director for art discussion. This
 
 Direction: approachable stylized realism, not smooth plastic and not dense photorealism. Preserve clean forms with restrained painted/roughness variation. Warm/cool separation and deliberate shadows provide drama. NASA terrain, machine proportions, emotional face rigs and historical-photo framing remain the factual/functional constraints. Moon/deep space remain airless; Mars gets restrained dusty depth. A large planet is a composition reference, not permission to change historical views or astronomical scale in photo tasks.
 
-## Low / Medium / High graphics — required, implementation OPEN
+## Low / Medium / High graphics — world/runtime implemented, selector OPEN
 
 **Abdullatif:** add **Graphics quality / جودة الرسومات** to both main-menu Settings and in-game Settings, with **Low / منخفضة**, **Medium / متوسطة**, **High / عالية**. Show the current selection, a short localized description, and keyboard/touch-accessible states. Save the preference and restore it before the first world loads; handle unavailable storage. Medium is the initial default when no preference exists. No automatic quality changes that silently override the player's selection.
 
-**Abdulkarim:** author all worlds, materials, textures, shadows, decorations and effects to support these three modes. Provide a shared preset definition and an `applyQuality` hook for each active world/effect; dispose resources cleanly when changing settings or chapters. The same art style, silhouettes, palette and mission readability must survive in all modes. Low is a finished visual target, not a placeholder version.
+**Abdulkarim / Moayad continuation:** implemented world presets; maintain all worlds, materials, textures, shadows, decorations and effects to support these three modes. Provide a shared preset definition and an `applyQuality` hook for each active world/effect; dispose resources cleanly when changing settings or chapters. The same art style, silhouettes, palette and mission readability must survive in all modes. Low is a finished visual target, not a placeholder version.
 
-**Ziad:** connect the selector and presets through one runtime settings API, apply resolution/shadow settings, pass the chosen preset to newly loaded worlds and coordinate safe asynchronous asset changes. The existing renderer currently has only a fixed pixel-ratio cap of 2; selectable graphics presets do not exist yet.
+**Ziad:** connect the selector and presets through one runtime settings API, apply resolution/shadow settings, pass the chosen preset to newly loaded worlds and coordinate safe asynchronous asset changes. The runtime and world/effect hooks now implement selectable presets; Abdullatif’s selector UI is still open. See DIRECTORS_HANDOFF.md for completion evidence.
 
 Suggested integration contract (to implement, not an existing API): `quality.get()` returns `low|medium|high`; `await quality.set(level)` updates the renderer and active world; `quality.subscribe(listener)` updates the UI and returns an unsubscribe function. Put preset values in one shared data file. The UI must not reach into individual world meshes. Validate saved values, retain the previous working preset if loading fails, and allow only the latest change to finish when the player clicks rapidly.
 
@@ -96,3 +96,16 @@ These apply to every option; they are not a claim that all devices are supported
 - Test on the actual demo laptop plus a representative low-end phone/integrated-GPU device. Record browser/device, resolution, quality preset and slow scenes in TESTLOG.md. Broad support also requires loading, memory, WebGL and input checks.
 
 Final acceptance belongs to Moayad and Mohammed after reviewing the slice, not to a concept image. Retain the historical-photo framing and fade-to-original transitions throughout the art pass.
+
+
+## Set B completion under Moayad — 14 November
+
+Moayad approved **G / sand_01 / Ready-made CC0 / Our palette for Moon and Mars**. Jezero uses the same selected detail with its own Mars ground color. The local 256/512/1024 variants replace H / rocks_ground_05; source, license and reproducible processing are in public/textures/README.md and tools/textures/make.mjs.
+
+Delivered: retained Abdulkarim’s warm/cool lighting, massifs and skyline; unified renderer/world/effect presets in content/quality.json; fixed the preset-object/level-name mismatch; implemented bounded quality-dependent dust and storm particles, moving shadow coverage, safe texture loading/rollback and chapter cleanup. Added collect/kneel, repair, reassurance/pat and farewell actions to the procedural figures using Ziad’s existing hooks. Figure animation now follows game time and pauses correctly. Completed mission prop replacements (height band, route flag, sand trap, boulders, cliff edge and restrained whirlwind). Refined the three historical-photo sets with instrument silhouettes, surface detail and instanced gravel; framing profiles and real-photo reveals remain intact. These are stylized composition studies, not exact reconstructions.
+
+Verification: full browser run **57 passed, 0 failed**, no browser exceptions or missing assets. Targeted checks cover all presets in every world, saved/blocked storage, invalid values, failed texture load rollback, rapid competing changes, pause, distinct figure actions and repeated-switch GPU resource stability. Same-world resource counts settled at 90 geometries / 2 textures before and after repeated switches. All 25 machine/emotion combinations have finite transforms; rendered world, figure and photo-set previews were inspected. Tests used headless Edge with software WebGL: no actual-device FPS or subjective emotional acceptance is claimed.
+
+Remaining human checks: Moayad/Mohammed review the final lighting, faces and photo approximations; measure FPS/memory on the demo laptop and a lower-end device; novice playtest and final media capture. Abdullatif still owns the branded menu, Arabic/English interface and graphics selector. The selector should call ctx.quality.get/set/subscribe; it must not modify meshes directly. This pass completes the Set B implementation work identified in the handoff, not those separate UI or human acceptance tasks.
+
+Raw evidence: tests/worlds-selftest.json and tests/worlds-quality-check.json.

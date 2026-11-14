@@ -10,11 +10,11 @@ export async function rememberTheMachines(s, ctx) {
   const background=ctx.scene.background,fog=ctx.scene.fog;
   for(const [id,world] of [['lrv','moon'],['viking','mars'],['opportunity','mars'],['ingenuity','jezero']]) {
     const set=new THREE.Scene();
-    worlds.push(buildWorld(world,set));
+    worlds.push(buildWorld(world,set,{quality:ctx.quality.get()}));
     const hero=createCharacter(id);characters.push(hero);
     hero.object.position.set(0,heightAt(world,0,0)+hero.half[1],0);
     hero.setEmotion('sleepy');set.add(hero.object);
-    if(id==='ingenuity')hero.breakBlade();
+    if(id==='ingenuity')hero.ready.then(()=>hero.breakBlade());
     set.visible=false;ctx.scene.add(set);sets[id]=set;actors[id]=hero.object;
     ctx.characters.set(id,hero);
   }
@@ -24,11 +24,15 @@ export async function rememberTheMachines(s, ctx) {
     characters.forEach((hero)=>hero.update(dt));
   });
   previous.forEach(([o])=>{o.visible=false;});ctx.scene.fog=null;
+  const unlisten=ctx.quality.subscribe((level,preset)=>{
+    worlds.forEach((env)=>env.applyQuality(preset,level).catch((error)=>console.warn(error)));
+  });
   let cleaned=false;
   const cleanup=()=>{
-    if(cleaned)return;cleaned=true;stop();
+    if(cleaned)return;cleaned=true;stop();unlisten();
     Object.entries(sets).forEach(([id,set])=>{ctx.scene.remove(set);ctx.characters.delete(id);});
     worlds.forEach((env)=>env.dispose());
+    characters.forEach((hero)=>hero.dispose());
     previous.forEach(([o,v])=>{o.visible=v;});ctx.scene.background=background;ctx.scene.fog=fog;
   };
   s.onDispose(cleanup);

@@ -1,5 +1,17 @@
 # RELICA: who does what
 
+## Set B completion under Moayad — 14 November
+
+Moayad approved **G / sand_01 / Ready-made CC0 / Our palette for Moon and Mars**. Jezero uses the same selected detail with its own Mars ground color. The local 256/512/1024 variants replace H / rocks_ground_05; source, license and reproducible processing are in public/textures/README.md and tools/textures/make.mjs.
+
+Delivered: retained Abdulkarim’s warm/cool lighting, massifs and skyline; unified renderer/world/effect presets in content/quality.json; fixed the preset-object/level-name mismatch; implemented bounded quality-dependent dust and storm particles, moving shadow coverage, safe texture loading/rollback and chapter cleanup. Added collect/kneel, repair, reassurance/pat and farewell actions to the procedural figures using Ziad’s existing hooks. Figure animation now follows game time and pauses correctly. Completed mission prop replacements (height band, route flag, sand trap, boulders, cliff edge and restrained whirlwind). Refined the three historical-photo sets with instrument silhouettes, surface detail and instanced gravel; framing profiles and real-photo reveals remain intact. These are stylized composition studies, not exact reconstructions.
+
+Verification: full browser run **57 passed, 0 failed**, no browser exceptions or missing assets. Targeted checks cover all presets in every world, saved/blocked storage, invalid values, failed texture load rollback, rapid competing changes, pause, distinct figure actions and repeated-switch GPU resource stability. Same-world resource counts settled at 90 geometries / 2 textures before and after repeated switches. All 25 machine/emotion combinations have finite transforms; rendered world, figure and photo-set previews were inspected. Tests used headless Edge with software WebGL: no actual-device FPS or subjective emotional acceptance is claimed.
+
+Remaining human checks: Moayad/Mohammed review the final lighting, faces and photo approximations; measure FPS/memory on the demo laptop and a lower-end device; novice playtest and final media capture. Abdullatif still owns the branded menu, Arabic/English interface and graphics selector. The selector should call ctx.quality.get/set/subscribe; it must not modify meshes directly. This pass completes the Set B implementation work identified in the handoff, not those separate UI or human acceptance tasks.
+
+Raw evidence: tests/worlds-selftest.json and tests/worlds-quality-check.json.
+
 ## Approved title and interface direction — 14 November
 
 **RELICA: Still Here — ريليكا: ما زلتُ هنا** is the approved game name. The challenge name is separate. Browser title and the existing title card now use it; this is not the final logo or completed main menu.

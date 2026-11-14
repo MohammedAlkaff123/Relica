@@ -57,7 +57,10 @@ export default makeChapter({
       return sc.y - 0.35 < 0.01;
     });
     // From inside the box, through the closing gap: a worker rests a hand on the rover. Then dark.
+    workers[0]?.userData.act?.('reassure');
+    s.onDispose(() => workers.forEach((w) => w.userData.act?.(null)));
     await s.shot('earth_goodbye');
+    workers[0]?.userData.act?.(null);
 
     // Black. Launch rumble, then silence.
     await s.fade(true, 1.2);

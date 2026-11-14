@@ -183,6 +183,7 @@ export default makeChapter({
     ctx.hud.setObjective('The crew is repairing the fender');
     const q = s.hero.object.position;
     await Promise.all(crew.map((c, i) => s.moveTo(c, q.x + (i ? 1.2 : -1.2), q.z - 1.6, 1.2)));
+    for (const c of crew) c.rotation.y = Math.atan2(q.x-c.position.x, q.z-c.position.z);
     await perform(s, crew, 'repair', 2.5);
     ctx.hud.setObjective('');
     s.dust.shower(false);

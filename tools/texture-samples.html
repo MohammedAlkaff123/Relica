@@ -7,8 +7,8 @@
 <!-- A review page, not part of the game. Open http://localhost:5173/tools/texture-samples.html
      It shows candidate ground textures on the real Moon and Mars terrain, lit as in the game.
      "Made by code" textures are drawn here from noise. "Ready-made" ones are CC0 photo textures
-     from Poly Haven, loaded straight from their site for this preview only: nothing is saved in
-     the repository until the team chooses one. -->
+     from Poly Haven, loaded straight from their site for this preview only: G / sand_01 with Our palette is approved for Moon and Mars. The derived
+     256/512/1024 textures are now stored locally in public/textures. -->
 <style>
   html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
@@ -189,7 +189,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
 const cells = [];
 for (let i = 0; i < 10; i++) { const cell = document.createElement('div'); cell.className = 'cell'; cell.innerHTML = '<div class="tag"></div><div class="note"></div><canvas class="swatch" width="76" height="76"></canvas>'; grid.appendChild(cell); cells.push(cell); }
-const state = { source: 'code', tint: 'ours', size: 512, view: 'game' };
+const state = { source: 'photo', tint: 'ours', size: 512, view: 'game' };
 let built = [], run = 0;
 
 async function rebuild() {
@@ -205,7 +205,8 @@ async function rebuild() {
   built = next.map(({ world, px }) => buildScene(world, px, state.size));
   next.forEach(({ world, variant, px }, i) => {
     cells[i].querySelector('.tag').innerHTML = `<b>${world.label} ${variant.key}</b> · ${variant.name}`;
-    cells[i].querySelector('.note').textContent = variant.note;
+    cells[i].querySelector('.note').textContent = (variant.key === 'G' ? 'APPROVED: Our palette. ' : '') + variant.note;
+    cells[i].style.borderColor = variant.key === 'G' ? '#e3a23c' : '#2c3442';
     // The flat swatch: one copy of the texture, in the colour it will have on the ground.
     const c = cells[i].querySelector('.swatch'), g = c.getContext('2d'), out = g.createImageData(76, 76), col = new THREE.Color(world.ground);
     const base = [Math.pow(col.r * 0.9, 1 / 2.2) * 255, Math.pow(col.g * 0.9, 1 / 2.2) * 255, Math.pow(col.b * 0.9, 1 / 2.2) * 255];
@@ -244,6 +245,7 @@ document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('
   if (key === 'view') draw(); else rebuild();
 }));
 addEventListener('resize', draw);
+document.querySelectorAll('[data-source]').forEach(b=>b.classList.toggle('on',b.dataset.source===state.source));
 await rebuild();
 window.samples = { state, rebuild, draw };
 </script>
