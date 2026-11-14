@@ -28,7 +28,7 @@
   "sky": {
     "title": { "en": "Be the eyes", "ar": "كن العيون" },
     "tasks": [
-      { "en": "First flight: hold 3 m for 3 seconds", "ar": "الطيران الأول: اثبت على ٣ أمتار لـ ٣ ثوانٍ" },
+      { "en": "First flight: hold 3 m for 3 seconds", "ar": "الرحلة الأولى: اثبت على ارتفاع ٣ أمتار لمدة ٣ ثوانٍ" },
       { "en": "Scout the road: mark 3 dangers", "ar": "استكشف الطريق: حدّد ٣ مخاطر" },
       { "en": "Land with battery to spare", "ar": "اهبط قبل أن تنفد البطارية" }
     ]

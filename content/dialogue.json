@@ -77,6 +77,6 @@
     { "who": "ingenuity", "emotion": "happy", "ar": "ما زلتُ هنا.", "en": "I'm still here." }
   ],
   "ep_last": [
-    { "who": "pioneer", "emotion": "happy", "ar": "أسمعكم. لا أستطيع الرد. لكنني أسمعكم.", "en": "I hear you. I can't answer. But I hear you." }
+    { "who": "pioneer", "emotion": "happy", "ar": "أسمعكم. لا أستطيع الردّ. لكنني أسمعكم.", "en": "I hear you. I can't answer. But I hear you." }
   ]
 }

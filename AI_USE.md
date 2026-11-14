@@ -21,3 +21,4 @@ The idea, the story and the explanation of the project are the team's own.
 | 14 Nov | Abdullatif | Claude Code | C-9: title screen, ending card and credits (card.title, card.ending, card.credits), texts in content/credits.json, photo credits read from CREDITS.csv |
 | 14 Nov | Abdullatif | Claude Code | C-10: README upload pack (how to run, tools, NASA data statement, AI disclosure, references) and the Set C calls in the contracts |
 | 14 Nov | Abdullatif | Claude Code | C-12: English and Arabic subtitle files for the 30-second video, timed to the storyboard in STORY.md |
+| 14 Nov | Abdullatif | Claude Code | C-11: proofreading pass over all player text; fixed four Arabic and English lines. Final read-through with Mohammed still to do |
