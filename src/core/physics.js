@@ -1,7 +1,7 @@
 // Thin wrapper around Rapier. One physics world per chapter, with that world's gravity. Owner: Set A.
 import RAPIER from '@dimforge/rapier3d-compat';
 import * as THREE from 'three';
-import { heightAt } from './terrain.js';
+import { heightAt, TERRAIN_SIZE, TERRAIN_CELLS } from './terrain.js';
 
 let world = null;
 const links = []; // { body, object, tilt? }: 3D objects that follow a physics body
@@ -25,8 +25,8 @@ export function addGround(size = 400) {
   return body;
 }
 
-// Ground that follows heightAt(worldName, x, z) from src/core/terrain.js, sampled every `cell` metres.
-export function addTerrain(worldName, size = 400, cell = 2) {
+// Ground that follows heightAt(worldName, x, z), sampled on the same grid as Set B's ground mesh.
+export function addTerrain(worldName, size = TERRAIN_SIZE, cell = TERRAIN_SIZE / TERRAIN_CELLS) {
   const cells = Math.round(size / cell);
   const heights = new Float32Array((cells + 1) * (cells + 1));
   // Rapier layout: rows run along z, columns along x, stored column by column.

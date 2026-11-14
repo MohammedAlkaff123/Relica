@@ -51,7 +51,7 @@ export function createRover({ body, hero, world, tuning, input }) {
     // Speed builds and fades. Braking (pressing against the motion) is twice as strong.
     const top = t.speed * controller.speedScale;
     const want = drive * top;
-    const braking = Math.sign(want) !== Math.sign(speed) && Math.abs(speed) > 0.2;
+    const braking = drive !== 0 && Math.sign(want) !== Math.sign(speed) && Math.abs(speed) > 0.2; // pressing against the motion
     const rate = (braking ? 2 : drive ? 1 : 0.7) * t.accel * (grounded ? 1 : 0.15);
     const before = speed;
     speed += (want - speed) * Math.min(1, rate * dt);

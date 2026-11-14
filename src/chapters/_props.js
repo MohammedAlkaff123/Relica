@@ -1,21 +1,11 @@
-// Props and effects the chapters need, with temporary stand-ins. Owner: Set A.
+// Props for the chapters. Owner: Set A.
 //
-// The real props and effects belong to Set B (TASKS.md hand-offs at hours 7 and 9). This file asks
-// for them first and only builds a stand-in when they are not there yet, so nothing in the chapter
-// files changes when they arrive. What this file looks for:
-//
-//   createProp(name)  exported from src/world/world.js or src/characters/character.js,
-//                     returns a THREE.Object3D (or { object }). Names used:
-//                     'lunarModule' (with a child named 'ascent' for the part that lifts off),
-//                     'astronaut', 'airbags', 'perseverance', 'ring', 'sun', 'stand', 'worker',
-//                     and from B-13: 'sampleBox', 'whirlwind', 'sandTrap', 'boulders', 'cliffEdge',
-//                     'heightBand' (two rings, one metre apart, centred on y = 0), 'flag'
-//   env.dust.shower(on, hero)   from buildWorld(...)   dust fountain off the rover's broken fender
-//   env.storm.setLevel(0..1)    from buildWorld(...)   the 2018 Mars dust storm
-//   hero.breakBlade()           on the Ingenuity character
+// Real props come from Set B's createProp (src/world/props.js). The few things Set B does not make
+// (the factory stand and workers, the epilogue Sun, Mars whirlwinds, the three dangers in chapter 3,
+// the height band and the marker flag) have simple stand-ins here. If Set B adds one of these names,
+// theirs is used automatically.
 import * as THREE from 'three';
-import * as World from '../world/world.js';
-import * as Characters from '../characters/character.js';
+import { createProp, PROP_NAMES } from '../world/props.js';
 
 const mat = (color, extra) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9, ...extra });
 const box = (w, h, d, color) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color));
@@ -195,83 +185,10 @@ const STAND_INS = {
 };
 
 export function makeProp(name) {
-  const fromSetB = World.createProp ?? Characters.createProp;
-  if (typeof fromSetB === 'function') {
-    try {
-      const made = fromSetB(name);
-      if (made) return made.isObject3D ? made : made.object;
-    } catch (err) {
-      console.warn(`createProp("${name}") failed, using the stand-in`, err);
-    }
-  }
+  if (PROP_NAMES.includes(name)) return createProp(name);
   const make = STAND_INS[name];
   if (!make) throw new Error(`no prop or stand-in called "${name}"`);
   const obj = make();
   obj.name = 'prop:' + name;
   return obj;
-}
-
-// ---- effects ----
-
-// Dust fountain off the rover. Stand-in: a small particle spray behind the hero.
-export function makeDust(env, scene) {
-  if (env?.dust?.shower) return { shower: (on, hero) => env.dust.shower(on, hero), update() {}, dispose() { env.dust.shower(false); } };
-  const N = 160;
-  const pos = new Float32Array(N * 3);
-  const vel = new Float32Array(N * 3);
-  const life = new Float32Array(N);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const points = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9a9a9a, size: 0.18, transparent: true, opacity: 0.85, depthWrite: false }));
-  points.frustumCulled = false;
-  points.visible = false;
-  scene.add(points);
-  let on = false, hero = null, next = 0;
-  const back = new THREE.Vector3();
-  return {
-    shower(v, h) { on = v; if (h) hero = h; if (v) points.visible = true; },
-    update(dt, gravity) {
-      if (!points.visible) return;
-      let alive = 0;
-      for (let i = 0; i < N; i++) {
-        if (life[i] > 0) {
-          life[i] -= dt;
-          vel[i * 3 + 1] -= gravity * dt;
-          for (let k = 0; k < 3; k++) pos[i * 3 + k] += vel[i * 3 + k] * dt;
-          alive++;
-        } else if (on && hero && next <= 0) {
-          back.set(0.5 * (Math.random() - 0.5), 0.3, -hero.half[2]).applyQuaternion(hero.object.quaternion).add(hero.object.position);
-          pos.set([back.x, back.y, back.z], i * 3);
-          vel.set([(Math.random() - 0.5) * 1.5, 2.5 + Math.random() * 2, (Math.random() - 0.5) * 1.5], i * 3);
-          life[i] = 1.6;
-          next = 0.012;
-          alive++;
-        }
-      }
-      next -= dt;
-      geo.attributes.position.needsUpdate = true;
-      if (!on && !alive) points.visible = false;
-    },
-    dispose() { scene.remove(points); geo.dispose(); points.material.dispose(); },
-  };
-}
-
-// The Mars dust storm. Stand-in: tints the sky and fog brown and dims the lights of the world.
-export function makeStorm(env, scene) {
-  if (env?.storm?.setLevel) return { setLevel: (v) => env.storm.setLevel(v), dispose() { env.storm.setLevel(0); } };
-  const sky0 = scene.background?.isColor ? scene.background.clone() : new THREE.Color(0xd8a878);
-  const brown = new THREE.Color(0x4a2c18);
-  const fog0 = scene.fog ? { near: scene.fog.near, far: scene.fog.far } : null;
-  const lights = [];
-  env?.group?.traverse((o) => { if (o.isLight) lights.push([o, o.intensity]); });
-  function setLevel(v) {
-    if (scene.background?.isColor) scene.background.copy(sky0).lerp(brown, v);
-    if (scene.fog && fog0) {
-      scene.fog.color.copy(sky0).lerp(brown, v);
-      scene.fog.near = THREE.MathUtils.lerp(fog0.near, 2, v);
-      scene.fog.far = THREE.MathUtils.lerp(fog0.far, 28, v);
-    }
-    for (const [light, i0] of lights) light.intensity = i0 * (1 - 0.8 * v);
-  }
-  return { setLevel, dispose() { setLevel(0); } };
 }

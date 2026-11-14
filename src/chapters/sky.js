@@ -37,7 +37,8 @@ const FAR = [110, 60]; // flight 72 heads out over the smooth sand; too far to r
 
 export default makeChapter({
   id: 'sky',
-  world: 'mars',
+  world: 'jezero',      // Set B's Jezero terrain
+  factsWorld: 'mars',   // gravity and the HUD panel are Mars
   character: 'ingenuity',
   vehicle: 'heli',
   cameraScale: 0.6,

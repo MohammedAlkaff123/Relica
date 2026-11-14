@@ -13,7 +13,7 @@
 // Extra shots (section 9): mars_day at each time skip, mars_tracks at the rim, viking_wakes before the call.
 //
 // Waiting on others (works without them):
-//   dialogue ch2_pebbles, ch2_sol90, ch2_orion, ch2_storm (Set C)   shots mars_landing, mars_day,
+//   shots mars_landing, mars_day,
 //   mars_tracks, viking_wakes (Moayad)   props airbags, whirlwind, env.storm (Set B)
 //   hud.setBattery, hud.setCounter, hud.setMission (Set C)
 //   Numbers come from facts.json "missions" (Set C, verified); the dates below match those facts.
@@ -30,10 +30,10 @@ const DATES = { landed: 'Jan 2004', orion: 'Apr 2017', storm: 'Jun 2018' };
 const CRATER = [0, 0];
 const PEBBLES = [16, 26];
 const ROCK = [-20, 88];
-const VIEW = [62, 132];
+const VIEW = [-49, 106];   // on the rim of Set B's big crater ('rim' in cratersOf('mars'))
 const VIKING_SPOT = [-150, -150];
 // Whirlwinds wander inside this box, around the long drive.
-const DEVIL_AREA = { x: [-40, 75], z: [30, 135] };
+const DEVIL_AREA = { x: [-45, 35], z: [15, 95] };
 const DEVILS = 4;
 
 export default makeChapter({
@@ -61,6 +61,8 @@ export default makeChapter({
       if (s.sol > MISSION.planned) m.discover('opportunity_90');
     };
     const waterSign = () => { s.water++; m.progress(1, s.water, 3); };
+    s.prop('pebbles', PEBBLES[0], PEBBLES[1]);
+    s.prop('layeredRock', ROCK[0] - 2, ROCK[1] + 2);
 
     if (!opts.jump) {
       await s.do(ctx.card.chapter('mars'));
@@ -77,7 +79,6 @@ export default makeChapter({
       await s.hold('KeyE', 2, 'Hold E to study the tiny round pebbles');
       waterSign();
       m.discover('pebbles_water');
-      await s.say('ch2_pebbles');
 
       // Time skip 1: the counter passes 90 and keeps going.
       await timeSkip(s, SKIP[0], showSol);
@@ -224,7 +225,7 @@ async function landing(s, ctx) {
   s.body.setEnabled(false);
   s.hero.object.visible = false;
   const bags = s.add(makeProp('airbags'));
-  const ball = ctx.physics.addBall(bags, 1.4, [-45, 22, -50], { restitution: 0.55 });
+  const ball = ctx.physics.addBall(bags, 1.1, [-45, 22, -50], { restitution: 0.55 });
   ball.setLinvel({ x: 7, y: -4, z: 8 }, true);
   // The camera follows a calm point that faces where the ball rolls, not the spinning ball itself.
   const anchor = s.add(new THREE.Object3D());

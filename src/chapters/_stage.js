@@ -36,10 +36,11 @@ import { buildWorld } from '../world/world.js';
 import { createCharacter } from '../characters/character.js';
 import { createRover } from '../vehicles/rover.js';
 import { createHeli } from '../vehicles/heli.js';
-import { heightAt, conformWorld } from '../core/terrain.js';
+import { heightAt } from '../core/terrain.js';
+import { createEffects } from '../world/effects.js';
 import { createObjectives } from '../core/objectives.js';
 import { fadeTo } from '../core/fade.js';
-import { makeProp, makeDust, makeStorm } from './_props.js';
+import { makeProp } from './_props.js';
 
 // Thrown into a chapter script when its chapter has been left. Not an error.
 export class Gone extends Error {
@@ -51,17 +52,18 @@ export class Gone extends Error {
 // nobody is listening. That is normal, so it is not reported as an error.
 window.addEventListener('unhandledrejection', (e) => { if (e.reason instanceof Gone) e.preventDefault(); });
 
-const TERRAIN_WORLDS = new Set(['moon', 'mars']);
+const TERRAIN_WORLDS = new Set(['moon', 'mars', 'jezero']);
 
 export function setupStage(ctx, cfg) {
   const { scene, physics, tuning, input } = ctx;
   const world = cfg.world;
-  const gravity = ctx.facts.worlds[world].gravity.value;
+  // Which facts.json world gives gravity and the HUD panel. Jezero is on Mars: cfg.factsWorld = 'mars'.
+  const factsWorld = cfg.factsWorld ?? world;
+  const gravity = ctx.facts.worlds[factsWorld].gravity.value;
   physics.resetWorld(gravity);
   fadeTo(cfg.startBlack ? 1 : 0, 0);
 
   const env = buildWorld(world, scene);
-  conformWorld(env, world);
   const hero = createCharacter(cfg.character);
   scene.add(hero.object);
   ctx.characters.clear();
@@ -84,13 +86,15 @@ export function setupStage(ctx, cfg) {
   }
 
   ctx.followCam.setTarget(hero.object, cfg.cameraScale ?? 1);
-  ctx.hud.setWorld(world);
+  ctx.hud.setWorld(factsWorld);
   ctx.hud.setObjective('');
-  ctx.audio.setWorld?.(world);
+  ctx.audio.setWorld?.(factsWorld);
 
   const objectives = createObjectives({ scene, hud: ctx.hud, world, getHero: () => hero, getSpeed: () => controller?.speed ?? 0 });
-  const dust = makeDust(env, scene);
-  const storm = world === 'mars' ? makeStorm(env, scene) : null;
+  // Set B's effects: wheel and rotor dust follow the hero on their own; dust shower and storm on call.
+  const fx = createEffects({ scene, env, hero, gravity });
+  const dust = { shower: (on) => fx.dust.shower(on) };
+  const storm = fx.storm;
 
   const added = [];
   const tasks = new Set();
@@ -118,7 +122,7 @@ export function setupStage(ctx, cfg) {
   }
 
   const stage = {
-    cfg, env, hero, body, controller, gravity, world, dust, storm, objectives,
+    cfg, env, hero, body, controller, gravity, world, dust, storm, fx, objectives,
     alive: true,      // false once the chapter has been left
     controls: false,  // true while the player drives or flies
     get time() { return clock; },
@@ -234,7 +238,7 @@ export function setupStage(ctx, cfg) {
       }
       hero.update(dt);
       objectives.update(dt);
-      dust.update(dt, gravity);
+      fx.update(dt);
       for (const task of [...tasks]) task(dt);
     },
     dispose() {
@@ -244,8 +248,7 @@ export function setupStage(ctx, cfg) {
       pending.clear();
       tasks.clear();
       objectives.dispose();
-      dust.dispose();
-      storm?.dispose();
+      fx.dispose();
       for (const o of added) scene.remove(o);
       scene.remove(hero.object);
       env.dispose();

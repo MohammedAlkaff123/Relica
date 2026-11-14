@@ -20,7 +20,7 @@ import { mission } from './_mission.js';
 const LM = [0, -4];
 const START = [7, 3, 0];
 const STOP1 = [14, 58];
-const STOP2 = [-22, 100];
+const STOP2 = [-22, 110];   // just outside a crater in Set B's terrain
 const STOP3 = [-68, 22];
 const PARK = [-20, -8];
 
@@ -108,10 +108,12 @@ export default makeChapter({
       s.hero.setEmotion('curious');
       await climbOff(s, crew);
       ctx.hud.setObjective('The crew is collecting samples');
+      s.hero.lookAt?.(crew[0]); // the rover's eyes follow them
       const p = s.hero.object.position;
       await Promise.all(crew.map((c, i) => s.moveTo(c, p.x + (i ? 5 : -4), p.z + 6, 3)));
       await s.wait(2);
       ctx.hud.setObjective('');
+      s.hero.lookAt?.(null);
       await climbOn(s, crew);
       addSampleBox(s, 1);
     } else {
@@ -199,6 +201,8 @@ export default makeChapter({
     const ascent = lm.getObjectByName('ascent') ?? lm;
     let up = 0;
     s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
+    s.fx.liftoff?.(ascent);
+    s.hero.lookAt?.(ascent); // the rover's camera follows it up
     s.hero.setEmotion('sad');
     await Promise.all([s.shot('moon_liftoff'), s.wait(6)]);
     s.mission.discover('rover_filmed');
