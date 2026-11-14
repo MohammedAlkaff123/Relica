@@ -14,7 +14,8 @@ import { CAST } from '../characters/character.js';
 
 const LETTERS_PER_SECOND = 32;
 // How long a finished line stays up in auto mode: a base plus time to read it.
-const holdFor = (line) => line.hold ?? Math.max(2.2, 1.2 + Math.max(line.ar.length, line.en.length) * 0.055);
+const holdFor = (line, voiceSeconds = 0) =>
+  line.hold ?? Math.max(2.2, voiceSeconds + 0.6, 1.2 + Math.max(line.ar.length, line.en.length) * 0.055);
 
 // Split into what a reader sees as single letters, so Arabic marks stay on their letter while typing.
 const segmenter = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('ar', { granularity: 'grapheme' }) : null;
@@ -89,7 +90,8 @@ export async function createDialogue(root, prompt, audio, getCharacter) {
         whoAr.textContent = cast?.ar ?? '';
         box.classList.remove('hidden');
         if (speaker) { if (line.emotion) speaker.setEmotion(line.emotion); speaker.talk(true); }
-        audio.beep(line.who);
+        // The machine "speaks" this line in its own voice; the sound is cut if the player moves on early.
+        const voice = audio.speak ? audio.speak(line.who, line.en) : (audio.beep(line.who), null);
 
         // 1. Type the line. Enter shows it all at once.
         const t = type(line);
@@ -100,8 +102,9 @@ export async function createDialogue(root, prompt, audio, getCharacter) {
         if (result === 'typed') prompt.cancel(); // typing ended first: drop the wait we started
 
         // 2. Wait for Enter, or for the hold time in auto mode.
-        if (result !== 'cancel') result = await waitForPlayer(auto ? holdFor(line) : undefined);
+        if (result !== 'cancel') result = await waitForPlayer(auto ? holdFor(line, voice?.duration) : undefined);
         if (speaker) speaker.talk(false);
+        if (voice) voice.stop();
         if (result === 'cancel') break;
       }
       if (typing) typing.stop();

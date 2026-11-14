@@ -6,25 +6,59 @@
 //   audio.loop('rotor', true)     start or stop a looping sound: rotor | hum
 //   audio.loopLevel('rotor', 0.5) how hard a loop works (rotor speed, motor load), 0..1
 //   audio.music('drive')          a music cue: drive | storm | ending | null to fade out
-//   audio.beep(who)               a character's voice: lrv | opportunity | viking | ingenuity | pioneer
+//   audio.speak(who, text)        a machine says a line in its own voice (see "voices" below)
+//   audio.beep(who)               a short sample of a voice: lrv | opportunity | viking | ingenuity | pioneer
+//   audio.setBoost(2)             overall loudness, 1 = normal, up to 4
 //
 // Every sound is made in code (Web Audio), so nothing needs a licence and nothing downloads.
 // A file in public/audio/<name>.mp3 can later replace any one-shot: see FILES below.
 // The Moon has no air, so setWorld('moon') plays nothing from outside: only the rover's own hum and beeps.
 // Sound is never allowed to break the game: every public call is wrapped in try/catch.
 
+// The signal chain, in order:
+//   every sound -> master (gain) -> glue (gentle compressor) -> boost (gain) -> limiter -> analyser -> speakers
+// The old chain used a compressor on its default settings (ratio 12), which squashed everything back down
+// and made the game too quiet. Now the compressor is gentle, and a limiter at the end only stops clipping.
+// boost: 1 = normal, up to 4 for quiet speakers. audio.setBoost(2) or the slider on the sound test page.
 let ac = null;
 let master = null;
+let boost = null;
+let analyser = null;
+let boostLevel = 1.5;
 function context() {
   if (!ac) {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     master = ac.createGain();
-    master.gain.value = 0.8;
+    master.gain.value = 1.6;
+    const glue = ac.createDynamicsCompressor();
+    glue.threshold.value = -18;
+    glue.knee.value = 12;
+    glue.ratio.value = 3;
+    glue.attack.value = 0.005;
+    glue.release.value = 0.2;
+    boost = ac.createGain();
+    boost.gain.value = boostLevel;
     const limiter = ac.createDynamicsCompressor();
-    master.connect(limiter).connect(ac.destination);
+    limiter.threshold.value = -2;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.1;
+    analyser = ac.createAnalyser();
+    analyser.fftSize = 2048;
+    master.connect(glue).connect(boost).connect(limiter).connect(analyser).connect(ac.destination);
   }
   if (ac.state === 'suspended') ac.resume();
   return ac;
+}
+
+// For the sound test page: the waveform of everything that is playing.
+export function getAnalyser() { context(); return analyser; }
+
+// Overall loudness: 1 = normal, up to 4.
+export function setBoost(level) {
+  boostLevel = Math.max(0.2, Math.min(4, Number(level) || 1));
+  if (boost) boost.gain.setTargetAtTime(boostLevel, ac.currentTime, 0.05);
 }
 
 // ---------- building blocks ----------
@@ -77,18 +111,198 @@ function burst(at, length, { freq = 400, q = 0.8, volume = 0.3, type = 'lowpass'
   src.stop(start + length + 0.05);
 }
 
-// ---------- voices ----------
+// ---------- voices: each machine "speaks" its line in its own sound ----------
+//
+// audio.speak(who, text) turns the words of a line into a burst of sound. The same text always gives the
+// same sound, and a longer line gives a longer burst. Each machine has its own recipe, so a player can tell
+// who is talking with eyes closed:
+//
+//   lrv          Moon rover. Bright, bouncy chirps that slide upward, one per syllable. Happy and quick.
+//   opportunity  Mars rover. Real Morse code of the English line: steady dots and dashes on one clean tone.
+//   viking       The old lander. Low, slow, buzzy hums with a shaky vibrato, each falling at the end, plus radio crackle.
+//   ingenuity    The helicopter. Very fast, very high blips, like a nervous little bird.
+//   pioneer      The far probe. A few long, soft, gliding tones with an echo, as if from very far away.
+//
+// A "?" makes the last sound rise, a "!" makes the line louder. The English text is used, because each
+// letter maps to a fixed sound (and Morse needs Latin letters). The pitch range and rhythm of each machine
+// are far apart on purpose: high/fast (Ingenuity), mid/bouncy (LRV), mid/steady (Opportunity),
+// low/slow (Viking), long/echoing (Pioneer).
 
-// Each machine speaks in beeps. Viking is low and slow, Ingenuity high and quick.
-// Volumes are loud on purpose: laptop speakers lose a lot, and low voices (Viking, Pioneer) use
-// triangle waves so their overtones are still heard on small speakers.
-const VOICES = {
-  lrv:         { base: 520, notes: [1, 1.25, 0.9],             gap: 0.1,  len: 0.1,  type: 'triangle', volume: 0.3 },
-  opportunity: { base: 660, notes: [1, 1.12, 1.33, 1.0],       gap: 0.09, len: 0.09, type: 'triangle', volume: 0.3 },
-  viking:      { base: 190, notes: [1, 0.84, 0.75],            gap: 0.24, len: 0.22, type: 'triangle', volume: 0.45 },
-  ingenuity:   { base: 1100, notes: [1, 1.2, 1.1, 1.4, 1.3],   gap: 0.05, len: 0.045, type: 'square', volume: 0.12 },
-  pioneer:     { base: 150, notes: [1, 1.5],                   gap: 0.4,  len: 0.38, type: 'triangle', volume: 0.45 },
+const MORSE = {
+  a: '.-', b: '-...', c: '-.-.', d: '-..', e: '.', f: '..-.', g: '--.', h: '....', i: '..', j: '.---',
+  k: '-.-', l: '.-..', m: '--', n: '-.', o: '---', p: '.--.', q: '--.-', r: '.-.', s: '...', t: '-',
+  u: '..-', v: '...-', w: '.--', x: '-..-', y: '-.--', z: '--..',
+  0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-', 5: '.....', 6: '-....', 7: '--...', 8: '---..', 9: '----.',
 };
+// Musical steps (a pentatonic scale), so every voice sounds pleasant whatever the letters are.
+const SCALE = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
+
+function words(text) {
+  return String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+}
+// Rough syllables: groups of vowels. "everything" -> 3.
+function syllables(word) {
+  return Math.max(1, (word.match(/[aeiouy]+/g) || []).length);
+}
+const code = (s, i) => s.charCodeAt(i % s.length) || 97;
+
+// One voice note: an oscillator with its own envelope, an optional pitch slide and vibrato.
+function note(out, at, freq, len, { type = 'triangle', vol = 0.3, slide = 1, vibrato = 0, vibratoRate = 6, attack = 0.01 } = {}) {
+  const c = context();
+  const t = c.currentTime + at;
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  if (slide !== 1) osc.frequency.exponentialRampToValueAtTime(freq * slide, t + len);
+  if (vibrato) {
+    const lfo = c.createOscillator();
+    const depth = c.createGain();
+    lfo.frequency.value = vibratoRate;
+    depth.gain.value = vibrato;
+    lfo.connect(depth).connect(osc.frequency);
+    lfo.start(t);
+    lfo.stop(t + len + 0.05);
+  }
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.min(attack, len / 3));
+  g.gain.setValueAtTime(vol, t + len * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  osc.connect(g).connect(out);
+  osc.start(t);
+  osc.stop(t + len + 0.05);
+}
+
+// Each recipe schedules its notes into `out` and returns how long the line lasts, in seconds.
+const VOICE_RECIPES = {
+  // Moon rover: one upward chirp per syllable, hopping around the scale.
+  lrv(out, text, loud) {
+    let t = 0;
+    const base = 560;
+    for (const w of words(text).slice(0, 10)) {
+      for (let s = 0; s < Math.min(3, syllables(w)); s++) {
+        const step = SCALE[code(w, s * 3) % SCALE.length];
+        note(out, t, base * step, 0.085, { type: 'triangle', vol: 0.32 * loud, slide: 1.18 });
+        t += 0.11;
+      }
+      t += 0.07;
+    }
+    return t;
+  },
+
+  // Mars rover: the English line in real Morse code. Dot 70 ms, dash 3 dots.
+  opportunity(out, text, loud) {
+    const dot = 0.065;
+    let t = 0;
+    for (const w of words(text)) {
+      for (const ch of w) {
+        const m = MORSE[ch];
+        if (!m) continue;
+        for (const sym of m) {
+          const len = sym === '.' ? dot : dot * 3;
+          note(out, t, 740, len, { type: 'sine', vol: 0.4 * loud, attack: 0.004 });
+          note(out, t, 1480, len, { type: 'sine', vol: 0.08 * loud, attack: 0.004 }); // a little brightness
+          t += len + dot;
+        }
+        t += dot * 2;
+        if (t > 2.6) return t; // keep lines short: about the first 2.6 seconds of Morse is enough
+      }
+      t += dot * 4;
+    }
+    return t;
+  },
+
+  // Old Viking: slow, low buzz, shaky (vibrato), each hum falling at the end, with radio crackle at the start.
+  viking(out, text, loud) {
+    const c = context();
+    burst(0, 0.18, { freq: 2600, type: 'bandpass', q: 0.8, volume: 0.12 * loud });
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1400;
+    filter.connect(out);
+    let t = 0.12;
+    const all = words(text);
+    let n = 0;
+    for (const w of all) {
+      const step = [1, 9 / 8, 4 / 5, 1][code(w, 0) % 4];
+      note(filter, t, 165 * step, 0.26, { type: 'sawtooth', vol: 0.3 * loud, slide: 0.88, vibrato: 7, vibratoRate: 5 });
+      t += 0.33;
+      if (++n >= 7) break;
+    }
+    return t;
+  },
+
+  // Ingenuity: rapid high square blips, one per letter, nervous and quick.
+  ingenuity(out, text, loud) {
+    let t = 0;
+    const letters = words(text).join('').slice(0, 26);
+    for (let i = 0; i < letters.length; i++) {
+      const step = SCALE[code(letters, i) % SCALE.length];
+      note(out, t, 1150 * step, 0.035, { type: 'square', vol: 0.22 * loud, attack: 0.002 });
+      t += 0.05 + ((code(letters, i) % 3) * 0.01);
+    }
+    return t;
+  },
+
+  // Pioneer: a few long gliding tones, soft attack, echoing as if from far away.
+  pioneer(out, text, loud) {
+    const c = context();
+    const delay = c.createDelay(1);
+    delay.delayTime.value = 0.28;
+    const feedback = c.createGain();
+    feedback.gain.value = 0.4;
+    delay.connect(feedback).connect(delay);
+    delay.connect(out);
+    const dry = c.createGain();
+    dry.connect(out);
+    dry.connect(delay);
+    let t = 0;
+    for (const w of words(text).slice(0, 4)) {
+      const step = SCALE[code(w, 1) % 4];
+      note(dry, t, 330 * step, 0.5, { type: 'sine', vol: 0.4 * loud, slide: 1.12, attack: 0.12 });
+      note(dry, t, 660 * step, 0.5, { type: 'sine', vol: 0.08 * loud, slide: 1.12, attack: 0.12 });
+      t += 0.6;
+    }
+    return t + 0.6; // room for the echo to fade
+  },
+};
+
+// A short sample line per machine, for audio.beep(who) and the sound test page.
+export const VOICE_SAMPLES = {
+  lrv: 'Wheels! I have wheels!',
+  opportunity: 'Then let us see everything.',
+  viking: 'Who is driving around up there?',
+  ingenuity: 'Follow me. I can see the way.',
+  pioneer: 'I hear you.',
+};
+
+// Starts a line. Returns { duration, stop() } so the dialogue can cut it when the player skips ahead.
+function speak(who, text) {
+  const c = context();
+  const recipe = VOICE_RECIPES[who] ?? VOICE_RECIPES.lrv;
+  const out = c.createGain();
+  out.connect(master);
+  const loud = /!/.test(text) ? 1.25 : 1;
+  let duration = recipe(out, text || VOICE_SAMPLES[who] || 'hello', loud);
+  // A question rises at the end: one extra rising note in the machine's own register.
+  if (/\?\s*$/.test(text)) {
+    const end = { lrv: 700, opportunity: 740, viking: 190, ingenuity: 1500, pioneer: 400 }[who] ?? 600;
+    const type = { opportunity: 'sine', viking: 'sawtooth', ingenuity: 'square', pioneer: 'sine' }[who] ?? 'triangle';
+    note(out, duration, end, 0.16, { type, vol: (who === 'ingenuity' ? 0.22 : 0.3) * loud, slide: 1.35 });
+    duration += 0.2;
+  }
+  let stopped = false;
+  return {
+    duration,
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      const now = c.currentTime;
+      out.gain.setTargetAtTime(0, now, 0.03);
+      setTimeout(() => out.disconnect(), 300);
+    },
+  };
+}
 
 // ---------- one-shot sounds ----------
 
@@ -288,10 +502,13 @@ export const sfx = safe((name) => {
 export function createAudio() {
   return {
     play: sfx,
-    beep: safe((who) => {
-      const v = VOICES[who] ?? VOICES.lrv;
-      v.notes.forEach((mult, i) => tone(v.base * mult, i * v.gap, v.len, { type: v.type, volume: v.volume ?? 0.3 }));
-    }),
+    // A machine says a line: audio.speak('viking', 'Who is driving around up there?') -> { duration, stop() }
+    speak: (who, text) => {
+      try { return speak(who, text); } catch (err) { console.warn('sound:', err); return { duration: 0, stop() {} }; }
+    },
+    // Short voice sample, kept for older code: the machine's sample line.
+    beep: safe((who) => { speak(who, VOICE_SAMPLES[who] ?? 'hello'); }),
+    setBoost: safe(setBoost),
     setWorld: safe((name) => {
       const want = new Set(WORLD_BED[name] ?? []);
       for (const n of ['wind', 'room', 'drone']) setLoop(n, want.has(n));
