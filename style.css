@@ -29,11 +29,25 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 .hud .unverified::after { content: " ?"; color: var(--foil); }
 .hud .legend { color: var(--foil); font-size: 11px; margin-top: 4px; }
 
+/* Battery bar and planned counters inside the environment panel */
+.hud .battery span:last-child { display: flex; align-items: center; gap: 8px; }
+.hud .bar { display: inline-block; width: 110px; height: 8px; border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.hud .bar .fill { display: block; height: 100%; background: #8fd18b; transition: width 0.3s, background 0.3s; }
+.hud .battery.low .fill { background: #e0624a; }
+.hud .battery.low .pct { color: #e0624a; }
+.hud .pct { min-width: 34px; text-align: right; }
+.hud .counter .num { font-weight: 500; }
+.hud .counter .planned { margin-left: 8px; font-size: 11px; color: var(--dim); transition: color 1s; }
+.hud .counter.passed .planned { color: var(--foil); }
+
+/* Objective: one short line at the top centre */
 .objective {
   position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-  background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
-  padding: 8px 16px; font-size: 15px; max-width: 46vw; text-align: center;
+  background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--foil); border-radius: 4px;
+  padding: 7px 16px 7px 14px; font-size: 15px; max-width: 46vw; text-align: center;
+  animation: objective-in 0.35s ease-out;
 }
+@keyframes objective-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* Mission list, top right: a title and tasks that tick off */
 .mission {
@@ -91,6 +105,10 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 }
 .card h1 { font-size: clamp(34px, 7vw, 76px); margin: 0; letter-spacing: 0.02em; }
 .card p { font: 400 16px var(--mono); color: var(--dim); margin: 10px 0 0; }
+.card .mission-name { font: 500 13px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--foil); margin-bottom: 12px; }
+.card .title-ar { font: 600 clamp(20px, 3.4vw, 34px) var(--arabic); color: var(--dim); margin-top: 4px; }
+.card .card-facts { display: flex; gap: 0; margin-top: 14px; font: 400 15px var(--mono); color: var(--ink); }
+.card .card-facts span + span::before { content: "·"; margin: 0 12px; color: var(--dim); }
 
 /* Memory photo: a real NASA photo with its caption */
 .memory { position: absolute; inset: 0; background: rgba(4, 6, 12, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; }

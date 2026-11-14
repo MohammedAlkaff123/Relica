@@ -3,6 +3,8 @@
 //   hud.setWorld('mars')            shows gravity, temperature, pressure from content/facts.json
 //   hud.setStat('Sol', '4,712')     adds or updates an extra row (date, sol, distance, battery...)
 //   hud.setObjective('Drive to the first science stop')   '' hides it
+//   hud.setBattery(0.75)            battery bar, 0..1 (null hides it)
+//   hud.setCounter('sol', 4712, 90) value with a small "planned: 90" beside it
 //
 // Mission list (top right, STORY.md section 8):
 //   hud.setMission('moon')                       title and tasks from content/missions.json
@@ -48,6 +50,13 @@ export function createHud(root, facts) {
     return v;
   }
 
+  // Extra rows (setStat, setBattery, setCounter) share one map by label, so a label can change type.
+  function removeRow(label) {
+    const s = stats.get(label);
+    if (s) s.row.remove();
+    stats.delete(label);
+  }
+
   function show(fact) {
     return fact.text ?? `${fact.value} ${fact.unit ?? ''}`.trim();
   }
@@ -86,12 +95,59 @@ export function createHud(root, facts) {
       panel.classList.remove('hidden');
     },
     setStat(label, value) {
-      if (!stats.has(label)) stats.set(label, row(label, ''));
-      stats.get(label).textContent = value;
+      let s = stats.get(label);
+      if (!s || !s.value) {
+        removeRow(label);
+        const value = row(label, '');
+        s = { row: value.parentNode, value };
+        stats.set(label, s);
+      }
+      s.value.textContent = value;
     },
     setObjective(text) {
       objective.textContent = text;
       objective.classList.toggle('hidden', !text);
+    },
+
+    // Battery as a bar, 0 = empty, 1 = full. null hides it.
+    setBattery(level) {
+      if (level === null) { removeRow('battery'); return; }
+      const v = Math.max(0, Math.min(1, Number(level) || 0));
+      let b = stats.get('battery');
+      if (!b || !b.bar) {
+        removeRow('battery');
+        const r = el('div', 'row battery', rows);
+        el('span', '', r, 'battery');
+        const cell = el('span', '', r);
+        const track = el('span', 'bar', cell);
+        const fill = el('span', 'fill', track);
+        const pct = el('span', 'pct', cell);
+        b = { row: r, bar: true, fill, pct };
+        stats.set('battery', b);
+      }
+      b.fill.style.width = (v * 100).toFixed(1) + '%';
+      b.pct.textContent = Math.round(v * 100) + '%';
+      b.row.classList.toggle('low', v < 0.2);
+    },
+
+    // A counter with its planned number beside it: setCounter('sol', 4712, 90) -> "4,712  planned: 90".
+    // Once the value passes the plan, the planned label turns gold. Nobody comments on it.
+    setCounter(label, value, planned) {
+      let c = stats.get(label);
+      if (!c || !c.counter) {
+        removeRow(label);
+        const r = el('div', 'row counter', rows);
+        el('span', '', r, label);
+        const cell = el('span', '', r);
+        const num = el('span', 'num', cell);
+        const plan = el('span', 'planned', cell);
+        c = { row: r, counter: true, num, plan };
+        stats.set(label, c);
+      }
+      c.num.textContent = typeof value === 'number' ? value.toLocaleString('en') : String(value);
+      const hasPlan = planned !== undefined && planned !== null;
+      c.plan.textContent = hasPlan ? `planned: ${typeof planned === 'number' ? planned.toLocaleString('en') : planned}` : '';
+      c.row.classList.toggle('passed', hasPlan && Number(value) > Number(planned));
     },
 
     setMission(titleOrId, tasks) {
