@@ -77,9 +77,11 @@ Meridiani Planum, 2004 to 2018.
 | 1:00 | Long drive. Dust settles on the panels and the battery sinks. A gust of wind cleans them and the battery jumps **(verify)** | drive, watch the battery | sad → happy | HUD battery |
 | 1:30 | Sol counter in the thousands. Grind a rock | hold E | curious | memory `PIA20285` |
 | 2:00 | A crater on the rim. It was named after a Moon lander **(real, in the pack)** | drive to the viewpoint | curious | memory `PIA21708`, dialogue `ch2_orion` |
-| 2:15 | Sunset. Radio static. An old voice | Enter through the lines | curious → sad | dialogue `ch2_viking_call`, cut-away to Viking |
+| 2:15 | Sunset. Radio static. An old voice acknowledges loneliness, reminds Opportunity that discoveries endure, and encourages it to keep exploring | Enter through the lines | curious → sad → curious | dialogue `ch2_viking_call`, cut-away to Viking |
 | 2:50 | The sky turns brown. The Sun becomes a dim dot. The battery falls and the wheels slow, however hard the player holds W | drive, slower and slower | sleepy | storm 0 → 1, dialogue `ch2_storm` |
 | 3:20 | Stopped. "I'm still here." It looks up into the brown | none | sleepy | cutscene `storm_to_jezero` |
+
+**Approved Viking dialogue (14 Nov):** acknowledge that silence can hurt, then encourage Opportunity to continue discovering. Keep Viking older and slower; his final line offers encouragement before the storm rather than a farewell or an instruction to rest. Preserve the six-line conversation and existing chapter duration. These are imagined character lines, not historical radio messages. The two dialogue revisions are approved; the remaining chapter review and camera/performance integration are still open.
 
 ### Chapter 3: the Mars sky, Ingenuity (2:30)
 
@@ -139,8 +141,8 @@ Abdullatif writes the final Arabic and English from this. The English here is a 
 | | opportunity | curious | Introduces itself by its limit | "Opportunity. They gave me ninety days." |
 | | viking | happy | The parallel **(verify: 90-day plan, about 6 years of work)** | "They gave me ninety too. I gave them six years." |
 | | opportunity | sad | The real question of the game | "Does it hurt, when they stop calling?" |
-| | viking | sleepy | The answer of the game | "No. You keep watch. Someone always comes after." |
-| | viking | happy | Blessing | "Rest, little one. You did more than they asked." |
+| | viking | sleepy | Acknowledges loneliness; discoveries endure | "Sometimes… but what we discovered remains." |
+| | viking | happy | Encourages continued exploration before the storm | "Keep going, little one. There's still more to discover." |
 | `ch2_storm` | opportunity | sleepy | Notices the dark without fear | "The sky is turning brown." |
 | | opportunity | sleepy | Motif line, whispered | "I'm still here." |
 | `ch3_intro` | ingenuity | scared | Feels the difficulty, chooses to try | "The air is thin… but I’ll try." |

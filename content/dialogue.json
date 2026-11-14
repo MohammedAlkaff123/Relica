@@ -136,14 +136,14 @@
     {
       "who": "viking",
       "emotion": "sleepy",
-      "ar": "لا. تبقى تراقب… وهناك دائمًا من يأتي بعدك.",
-      "en": "No. You keep watch. Someone always comes after."
+      "ar": "أحيانًا… لكن ما اكتشفناه يبقى.",
+      "en": "Sometimes… but what we discovered remains."
     },
     {
       "who": "viking",
       "emotion": "happy",
-      "ar": "استرح يا صغيري. أعطيتَ أكثر مما طلبوا.",
-      "en": "Rest, little one. You did more than they asked."
+      "ar": "واصل يا صغيري. ما زال هناك ما تكتشفه.",
+      "en": "Keep going, little one. There's still more to discover."
     }
   ],
   "ch2_storm": [
