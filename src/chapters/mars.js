@@ -82,7 +82,7 @@ export default makeChapter({
       await s.goTo(PEBBLES[0], PEBBLES[1], 'Reach the hematite blueberries', { radius: 4, park: true });
       await investigate(s, ctx, 'Hold E: examine the blueberries with your instruments',
         'Hematite-rich spheres formed in water-altered rock.', 'كرات غنية بالهيماتيت تكوّنت في صخور غيّرها الماء.');
-      waterSign(); m.discover('pebbles_water');
+      waterSign(); m.discover('pebbles_water', { quiet: true }); // the finding already said it
 
       s.power.on = true;
       startWhirlwinds(s, ctx);
@@ -91,13 +91,13 @@ export default makeChapter({
       await investigate(s, ctx, 'Grind the crust, then analyze the exposed rock',
         'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.',
         () => grindRock(s, ctx)); // the rock-grinder mini-game instead of holding E
-      waterSign(); m.discover('jarosite_water');
+      waterSign(); m.discover('jarosite_water', { quiet: true });
 
       s.unlockControls();
       await s.goTo(VIEW[0], VIEW[1], 'Inspect the fine layers in the next outcrop', { radius: 4, park: true });
       await investigate(s, ctx, 'Hold E: scan the tilted layers in the rock',
         'Cross-lamination: evidence of ripples made by flowing water.', 'طبقات متقاطعة: دليل على تموّجات صنعها ماء جارٍ.');
-      waterSign(); m.discover('ripples_water');
+      waterSign(); m.discover('ripples_water', { quiet: true });
       await s.say('ch2_water', { auto: true });
       // Three different clues support ancient water, not a discovery of present-day drinking water.
       await timeSkip(s, SKIP[0], showSol);
@@ -320,9 +320,7 @@ async function radioCall(s, ctx) {
   ctx.characters.set('viking', viking);
   // The imagined, decades-later radio exchange comes first. Half-way through, Viking tells its story
   // and the player lives it as a flashback (the real 1976 work); then the call picks up again.
-  ctx.hud.setStat('date', '2017 · imagined conversation');
-  const fiction=el('div','fiction-label',document.getElementById('ui'),'Imagined conversation · حوار متخيّل');
-  s.onDispose(()=>fiction.remove());
+  ctx.hud.setStat('date', '2017');
   s.hero.setEmotion('curious');
   s.sound('static');
   await s.wait(1);
@@ -330,11 +328,8 @@ async function radioCall(s, ctx) {
   await s.shot('viking_wakes', viking.object);
   const talk = (id) => s.do(ctx.cinematics.conversation('ch2_viking_call', id, s.hero.object, { opportunity: s.hero.object, viking: viking.object }, ctx.dialogue));
   await talk('ch2_viking_call');
-  fiction.style.display = 'none';
   await vikingFlashback(s, ctx, viking);
-  fiction.style.display = '';
   await talk('ch2_viking_call_2');
-  fiction.remove();
   // Viking's service record comes at the end of the chapter, after Opportunity's.
   ctx.followCam.setTarget(s.hero.object, 1);
   s.hero.setEmotion('sad');
@@ -372,7 +367,7 @@ async function vikingFlashback(s, ctx, viking) {
   await s.fade(true, 0.8);
   end();
   viking.setEmotion('sleepy');
-  ctx.hud.setWorld('mars'); ctx.hud.setStat('date', '2017 · imagined conversation');
+  ctx.hud.setWorld('mars'); ctx.hud.setStat('date', '2017');
   ctx.hud.setMission('mars');
   for (let i=0;i<5;i++) if (s.mission.isDone(i)) ctx.hud.completeTask(i);
   await s.fade(false, 0.8);
@@ -393,6 +388,14 @@ async function investigate(s, ctx, instruction, result, arabic, play) {
   if (play) { ctx.hud.setObjective(instruction); await play(); ctx.hud.setObjective(''); }
   else await s.hold('KeyE',2.5,instruction);
   cleanup(); s.hero.lookAt?.(null);
-  // The finding goes on a line at the bottom of the screen and the drive carries on: no card to dismiss.
-  if (ctx.hud.note) ctx.hud.note(result, arabic); else await s.card(result, arabic);
+  // The finding goes on a line at the bottom of the screen: no card to dismiss. It gets the screen to
+  // itself for a few seconds (one message at a time), then the story carries on.
+  if (ctx.hud.note) {
+    // One message at a time: a remark that is still running gets a few seconds to finish; if it is
+    // still going, it steps aside for the finding (the finding is what the player came for).
+    let waited = 0;
+    await s.until((dt) => (waited += dt) > 4 || !document.querySelector('.dialogue:not(.hidden)'));
+    if (document.querySelector('.dialogue:not(.hidden)')) ctx.dialogue.hide?.();
+    ctx.hud.note(result, arabic, 5); await s.wait(4.5);
+  } else await s.card(result, arabic);
 }

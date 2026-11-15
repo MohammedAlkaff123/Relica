@@ -25,10 +25,10 @@ export function mission(ctx, id) {
     },
     isDone: (i) => ticked.has(i),
     bonus(value) { hud.setBonus(value); },
-    discover(card) {
+    discover(card, opts) {
       if (found.has(card)) return;
       found.add(card);
-      hud.discover(card);
+      hud.discover(card, opts);
     },
     found,
   };
