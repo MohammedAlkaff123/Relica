@@ -19,54 +19,68 @@
 import * as THREE from 'three';
 import { heightAt } from './terrain.js';
 import { DUST_POOL, presetFor } from './quality.js';
+import { softPoints, HIDDEN } from './softPoints.js';
 
 const STORM_SKY = new THREE.Color(0x7a5236);
 const STORM_GROUND = new THREE.Color(0x6e4630);
 const STORM_SUN = new THREE.Color(0xc9ae8c);
 const DEAD = -9999;
 
-// A fixed set of square dust specks, reused in a circle. One draw call.
-function makePool(scene, count, color, size, map) {
-  let active = count;
-  const pos = new Float32Array(count * 3).fill(DEAD);
-  const vel = new Float32Array(count * 3);
-  const life = new Float32Array(count);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.PointsMaterial({ color, size, map, sizeAttenuation: true, transparent: true, opacity: 0.5, depthWrite: false, alphaTest: 0.03 });
-  const points = new THREE.Points(geo, mat);
-  points.frustumCulled = false;
-  scene.add(points);
-  let next = 0;
+// Dust as soft puffs, reused in a circle. One draw call. Each puff starts small where it is thrown
+// up, swells and fades. In air it slows, hangs and billows; with no air it flies an arc and is
+// gone when it lands, as real Moon dust does. A `haze` puff is the thin low veil left over the
+// wheel tracks: it stays put, spreads and clears.
+function makePool(scene, count, color, airless, scale = 1) {
+  let active = count, next = 0;
+  const puffs = softPoints(count, color), { pos, size, alpha } = puffs;
+  const vel = new Float32Array(count * 3), age = new Float32Array(count), span = new Float32Array(count), base = new Float32Array(count), haze = new Uint8Array(count);
+  scene.add(puffs.points);
+  const lift = airless ? 1 : 0.2, solid = airless ? 0.45 : 0.6;
+  const kill = (n) => { span[n] = 0; alpha[n] = 0; pos[n * 3 + 1] = HIDDEN; };
   return {
-    points, mat, pos, vel, life, count,
+    points: puffs.points, count,
     setLimit(n) {
       active = Math.max(1, Math.min(count, n)); next = 0;
-      for (let i = active; i < count; i++) { life[i] = 0; pos[i * 3 + 1] = DEAD; }
-      geo.setDrawRange(0, active); geo.attributes.position.needsUpdate = true;
+      for (let i = active; i < count; i++) kill(i);
+      puffs.geo.setDrawRange(0, active); puffs.touch();
     },
-    emit(x, y, z, vx, vy, vz, seconds) {
+    emit(x, y, z, vx, vy, vz, seconds, isHaze = false) {
       const i = next * 3;
       pos[i] = x; pos[i + 1] = y; pos[i + 2] = z;
       vel[i] = vx; vel[i + 1] = vy; vel[i + 2] = vz;
-      life[next] = seconds;
+      age[next] = 0; span[next] = seconds; haze[next] = isHaze ? 1 : 0; alpha[next] = 0;
+      base[next] = scale * (isHaze ? 2.8 + Math.random() * 1.2 : airless ? 0.6 + Math.random() * 0.5 : 1.4 + Math.random() * 1);
       next = (next + 1) % active;
     },
-    // gravity pulls down, drag (0 on the Moon) slows, floor(x, z) is where a speck lands and dies.
+    // gravity pulls down, drag (0 on the Moon) slows, floor(x, z) is the ground.
     update(dt, gravity, drag, floor) {
       const keep = Math.max(0, 1 - drag * dt);
       for (let n = 0; n < active; n++) {
-        if (life[n] <= 0) continue;
-        const i = n * 3;
-        vel[i + 1] -= gravity * dt;
+        if (span[n] <= 0) continue;
+        age[n] += dt;
+        if (age[n] >= span[n]) { kill(n); continue; }
+        const i = n * 3, k = age[n] / span[n];
+        if (haze[n]) {
+          size[n] = base[n] * (1 + k * 1.5);
+          alpha[n] = 0.32 * Math.min(1, k * 5) * (1 - k);
+          continue;
+        }
+        vel[i + 1] -= gravity * lift * dt;
         vel[i] *= keep; vel[i + 1] *= keep; vel[i + 2] *= keep;
         pos[i] += vel[i] * dt; pos[i + 1] += vel[i + 1] * dt; pos[i + 2] += vel[i + 2] * dt;
-        life[n] -= dt;
-        if (life[n] <= 0 || (vel[i + 1] < 0 && pos[i + 1] < floor(pos[i], pos[i + 2]))) { life[n] = 0; pos[i + 1] = DEAD; }
+        if (vel[i + 1] < 0) {
+          const ground = floor(pos[i], pos[i + 2]);
+          if (pos[i + 1] < ground + 0.08) {
+            if (airless) { kill(n); continue; }
+            pos[i + 1] = ground + 0.08; vel[i] = vel[i + 1] = vel[i + 2] = 0; // settles and goes on fading
+          }
+        }
+        size[n] = base[n] * (airless ? 0.3 + k * 0.5 : 0.3 + k * 1.3);
+        alpha[n] = solid * Math.min(1, k * 8) * Math.pow(1 - k, 1.4);
       }
-      geo.attributes.position.needsUpdate = true;
+      puffs.touch();
     },
-    dispose() { scene.remove(points); geo.dispose(); mat.dispose(); },
+    dispose() { scene.remove(puffs.points); puffs.dispose(); },
   };
 }
 
@@ -83,7 +97,9 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
   fade.addColorStop(0, '#fff'); fade.addColorStop(.5, '#ffffff99'); fade.addColorStop(1, '#ffffff00');
   brush.fillStyle = fade; brush.beginPath(); brush.ellipse(16, 16, 15, 11, .4, 0, Math.PI * 2); brush.fill();
   const dustMap = new THREE.CanvasTexture(sprite);
-  const dustPool = makePool(scene, DUST_POOL, dustColor, 0.13, dustMap);
+  // Puffs sized to the machine: a small helicopter raises smaller ones than a rover.
+  const dustPool = makePool(scene, DUST_POOL, dustColor, airless, Math.max(0.4, Math.min(1, hero.half[0] * 1.3)));
+  let hazeDebt = 0;
   let qualityLevel = env.quality ?? 'medium', preset = presetFor(qualityLevel);
   hero.ready?.then(() => hero.object.traverse((o) => {
     if (o.isMesh && !o.material?.transparent) { o.castShadow = true; o.receiveShadow = true; }
@@ -114,13 +130,15 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
 
     if (hero.spec.wheels && onGround && speed > 0.8) {
       // Wheel dust: a little from each rear wheel, thrown back and up.
-      wheelDebt += Math.min(speed, 8) * 5 * preset.dustScale * dt;
+      wheelDebt += Math.min(speed, 8) * 10 * preset.dustScale * dt;
       while (wheelDebt >= 1) {
         wheelDebt -= 1;
         const side = Math.random() < 0.5 ? -1 : 1;
         heroPoint(side * hx * 0.85, -hz * 0.7);
         dustPool.emit(p.x, p.y + 0.05, p.z,
-          -fwd.x * speed * 0.25 + rand(-0.5, 0.5), rand(0.5, 1.4), -fwd.z * speed * 0.25 + rand(-0.5, 0.5), airless ? 3 : 1.2);
+          -fwd.x * speed * 0.25 + rand(-0.5, 0.5), rand(0.5, 1.4), -fwd.z * speed * 0.25 + rand(-0.5, 0.5), airless ? 3 : rand(1.3, 2));
+        // Every third puff also leaves a thin veil low over the tracks.
+        if (++hazeDebt >= 3) { hazeDebt = 0; dustPool.emit(p.x, p.y + 0.2, p.z, 0, 0, 0, airless ? 3 : 5, true); }
       }
       // The broken fender: a tall rooster tail from the right rear wheel that comes down on the rover.
       if (showerOn) {
@@ -249,6 +267,7 @@ export function createEffects({ scene, env, hero, gravity = 3.71 }) {
       disc.material.color.copy(clear.disc).lerp(STORM_SUN, e);
       disc.scale.setScalar(1 - 0.25 * e);
       if (halo) halo.material.opacity = clear.halo * (1 - e);
+      for (const name of ['glow', 'streak']) { const g = env.sunDisc.getObjectByName(name); if (g) g.material.opacity = g.userData.opacity * (1 - e); }
     }
     stormMat.opacity = Math.min(1, t * 1.2) * 0.45;
     stormPoints.visible = t > 0.01;

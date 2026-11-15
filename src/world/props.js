@@ -28,6 +28,7 @@
 // The Lunar Module and Perseverance are adapted from NASA's 3D Resources: see public/models/README.md.
 // The people are built here from boxes, so they can have joints.
 import * as THREE from 'three';
+import { softPoints } from './softPoints.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { presetFor, initialQuality } from './quality.js';
 import { shareResources } from './resources.js';
@@ -87,6 +88,11 @@ function fromFile(name, size, marks = {}) {
 // it across the ground (stage.moveTo) or add it to the rover (hero.object.add), as it does now.
 const SIT = { legL: -1.45, legR: -1.45, kneeL: 0.3, kneeR: 0.3, armL: -0.75, armR: -0.75, elbowL: -0.7, elbowR: -0.7, lean: -0.1, drop: -0.38 };
 
+// Band colours of the Moon crew, in the order they are made: orange, then the commander's red
+// (Apollo 17's commander wore red bands so the two could be told apart in photos).
+const BANDS = [0xe07a3a, 0xc8452f];
+let crew = 0;
+
 function makeFigure(kind) {
   const astro = kind === 'astronaut';
   const w = astro ? 1.15 : 1; // a pressure suit is bulkier than a clean-room suit
@@ -100,33 +106,58 @@ function makeFigure(kind) {
 
   const hips = joint(rig, 'hips', 0, 0.92, 0);
   const spine = joint(hips, 'spine', 0, 0, 0);
-  const torso = box(spine, 0.42 * w, 0.52, 0.26 * w, 0, 0.3, 0, suit);
-  box(spine, 0.44 * w, 0.07, 0.28 * w, 0, 0.03, 0, shade); // belt
-  if (astro) {
-    box(spine, 0.38, 0.52, 0.2, 0, 0.34, -0.25, shade);   // life-support backpack
-    box(spine, 0.2, 0.15, 0.08, 0, 0.36, 0.18, shade);    // chest control box
-  }
   const head = joint(spine, 'head', 0, 0.66, 0);
-  head.add(new THREE.Mesh(new THREE.IcosahedronGeometry(astro ? 0.21 : 0.18, 1), suit));
-  if (astro) {
-    box(head, 0.27, 0.2, 0.1, 0, 0, 0.15, dark).name = 'visor'; // mirror visor: no face
-  } else {
-    box(head, 0.2, 0.1, 0.06, 0, -0.06, 0.15, glove);     // mask
-    box(head, 0.24, 0.07, 0.05, 0, 0.035, 0.15, dark);    // goggles
-  }
   const J = { hips, spine, head };
-  for (const [side, sx] of [['L', 1], ['R', -1]]) {
-    const arm = joint(spine, 'arm_' + side, sx * 0.27 * w, 0.5, 0);
-    box(arm, 0.13 * w, 0.3, 0.14 * w, 0, -0.15, 0, suit);
-    const elbow = joint(arm, 'elbow_' + side, 0, -0.3, 0);
-    box(elbow, 0.12 * w, 0.28, 0.13 * w, 0, -0.14, 0, suit);
-    box(elbow, 0.13 * w, 0.12, 0.14 * w, 0, -0.33, 0, glove).name = 'hand_' + side;
-    const leg = joint(hips, 'leg_' + side, sx * 0.115 * w, 0, 0);
-    box(leg, 0.17 * w, 0.44, 0.19 * w, 0, -0.22, 0, suit);
-    const knee = joint(leg, 'knee_' + side, 0, -0.44, 0);
-    box(knee, 0.16 * w, 0.42, 0.18 * w, 0, -0.21, 0, suit);
-    box(knee, 0.18 * w, 0.1, 0.3, 0, -0.43, 0.05, boot);
-    J['arm' + side] = arm; J['elbow' + side] = elbow; J['leg' + side] = leg; J['knee' + side] = knee;
+  let torso;
+  {
+    // One suit for everyone, the Moon crew and the factory workers alike: a low-poly suit with more to look at than the rest of the cast, by the
+    // directors' exception. Cream cloth, charcoal pack, gloves and boots, coloured bands at the
+    // arms, knees and ankles. The joints and their names are the same as before, so every action
+    // (walk, sit, collect, repair, pat, wave) still drives it.
+    const cream = flat(0xe9dcc3), seam = flat(0xcdbfa4), char = flat(0x4a4640), glass = flat(0x26221f);
+    const band = flat(BANDS[crew++ % BANDS.length]);
+    // A shape with a few flat sides, narrower at one end: n sides, radius at the top and the bottom,
+    // height, then how deep it is front to back (1 = round).
+    const prism = (parent, n, rTop, rBot, h, x, y, z, mat, deep = 1) => {
+      const geo = new THREE.CylinderGeometry(rTop, rBot, h, n);
+      geo.rotateY(Math.PI / n); // a flat side to the front
+      geo.scale(1, 1, deep);
+      const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m;
+    };
+    torso = prism(spine, 6, 0.27, 0.215, 0.5, 0, 0.31, 0, cream, 0.72);
+    prism(spine, 8, 0.15, 0.19, 0.07, 0, 0.585, 0, char);             // neck ring
+    box(spine, 0.5, 0.05, 0.35, 0, 0.4, 0, char);                      // chest strap
+    box(spine, 0.45, 0.08, 0.32, 0, 0.08, 0, char);                    // belt
+    box(spine, 0.11, 0.07, 0.04, 0, 0.08, 0.165, seam);                // buckle
+    box(spine, 0.16, 0.13, 0.05, 0, 0.25, 0.175, seam);                // chest control box
+    box(spine, 0.035, 0.035, 0.02, 0.04, 0.27, 0.205, band);           // its one light
+    box(spine, 0.42, 0.62, 0.2, 0, 0.37, -0.27, char);                 // life-support pack
+    box(spine, 0.28, 0.3, 0.03, 0, 0.42, -0.375, seam);                // panel on its back
+    box(spine, 0.014, 0.36, 0.014, 0.15, 0.86, -0.3, char);            // aerial
+    box(spine, 0.035, 0.035, 0.035, 0.15, 1.05, -0.3, flat(0xe3a23c)); // amber tip, like the rovers'
+    head.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.25, 1), cream));
+    const visor = new THREE.Mesh(new THREE.IcosahedronGeometry(0.2, 1), glass); // dark glass: no face
+    visor.scale.set(1.04, 0.92, 0.82); visor.position.set(0, -0.01, 0.115); visor.name = 'visor';
+    head.add(visor);
+    for (const sx of [1, -1]) box(head, 0.06, 0.12, 0.12, sx * 0.235, -0.01, 0, char); // ear pieces
+    for (const [side, sx] of [['L', 1], ['R', -1]]) {
+      const arm = joint(spine, 'arm_' + side, sx * 0.31, 0.5, 0);
+      prism(arm, 6, 0.1, 0.09, 0.1, 0, -0.02, 0, cream);              // shoulder
+      prism(arm, 6, 0.085, 0.075, 0.3, 0, -0.15, 0, cream);
+      prism(arm, 6, 0.093, 0.089, 0.045, 0, -0.21, 0, band);
+      const elbow = joint(arm, 'elbow_' + side, 0, -0.3, 0);
+      prism(elbow, 6, 0.075, 0.07, 0.26, 0, -0.13, 0, cream);
+      prism(elbow, 6, 0.088, 0.088, 0.05, 0, -0.25, 0, char);         // cuff
+      box(elbow, 0.13, 0.15, 0.15, 0, -0.34, 0, char).name = 'hand_' + side;
+      const leg = joint(hips, 'leg_' + side, sx * 0.13, 0, 0);
+      prism(leg, 6, 0.11, 0.095, 0.44, 0, -0.22, 0, cream);
+      const knee = joint(leg, 'knee_' + side, 0, -0.44, 0);
+      box(knee, 0.13, 0.12, 0.06, 0, -0.03, 0.085, band);             // knee pad
+      prism(knee, 6, 0.095, 0.085, 0.4, 0, -0.2, 0, cream);
+      prism(knee, 6, 0.098, 0.098, 0.04, 0, -0.35, 0, band);
+      box(knee, 0.19, 0.11, 0.31, 0, -0.425, 0.05, char);             // boot
+      J['arm' + side] = arm; J['elbow' + side] = elbow; J['leg' + side] = leg; J['knee' + side] = knee;
+    }
   }
 
   // ---- it animates itself: this runs once a frame, when the torso is about to be drawn ----
@@ -238,10 +269,32 @@ rockShape.userData.shared = true;
 const ball = new THREE.IcosahedronGeometry(1, 1);
 ball.userData.shared = true;
 
+// Wheels that turn with the ground covered, forward or backward, however the prop is moved.
+// Any part of the model named "wheel_..." rolls; `radius` is the wheel's, in metres.
+function rolling(group, radius) {
+  const at = new THREE.Vector3(), last = new THREE.Vector3(), ahead = new THREE.Vector3(), q = new THREE.Quaternion();
+  let wheels = null, fresh = true;
+  group.userData.updateFigure = () => {
+    if (!wheels) {
+      const found = [];
+      group.traverse((o) => { if (o.name.startsWith('wheel_') && !o.parent?.name.startsWith('wheel_')) found.push(o); });
+      if (!found.length) return; // the model has not arrived yet
+      wheels = found;
+    }
+    group.getWorldPosition(at);
+    if (fresh) { last.copy(at); fresh = false; }
+    ahead.set(0, 0, 1).applyQuaternion(group.getWorldQuaternion(q));
+    const moved = (at.x - last.x) * ahead.x + (at.z - last.z) * ahead.z; // along its own nose: negative when backing up
+    last.copy(at);
+    if (Math.abs(moved) < 3) for (const w of wheels) w.rotation.x += moved / radius; // a bigger step is a placement, not a drive
+  };
+  return group;
+}
+
 const BUILDERS = {
   lunarModule: () => fromFile('lunarModule', [9, 7, 9]),
   astronaut: () => makeFigure('astronaut'),
-  perseverance: () => fromFile('perseverance', [2.7, 1.85, 3.1]),
+  perseverance: () => rolling(fromFile('perseverance', [2.7, 1.85, 3.1]), 0.26),
 
   // Four lobes of six bags each, like the real pyramid of airbags.
   airbags() {
@@ -394,16 +447,40 @@ const BUILDERS = {
     }
     return g;
   },
+  // A hazy column of dust, 14 m tall, that leans and snakes slowly, with a low skirt of dust
+  // round its foot. It moves by itself (the stage calls updateFigure on everything each frame).
   whirlwind() {
-    const g = new THREE.Group(), count=160, positions=new Float32Array(count*3), random=rng(481);
-    for(let i=0;i<count;i++) {
-      const y=random()*7, angle=y*2.1+random()*Math.PI*2, radius=.18+y*.13+random()*.25;
-      positions.set([Math.cos(angle)*radius,y,Math.sin(angle)*radius],i*3);
-    }
-    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
-    const material=new THREE.PointsMaterial({color:0xb68b65,size:.12,transparent:true,opacity:.22,depthWrite:false});
-    const dust=new THREE.Points(geo,material);g.add(dust);
-    g.userData.applyQuality=(p)=>geo.setDrawRange(0,Math.round(count*p.dustScale));
+    const g = new THREE.Group(), random = rng(481);
+    const SKIRT = 24, COLUMN = 110, count = SKIRT + COLUMN, H = 14;
+    const puffs = softPoints(count, 0xc79a72);
+    g.add(puffs.points);
+    const skirt = Array.from({ length: SKIRT }, (_, i) => ({ a: (i / SKIRT) * Math.PI * 2, p: random() }));
+    const column = Array.from({ length: COLUMN }, (_, i) => ({ y: (i / COLUMN) * H, a: random() * Math.PI * 2, lift: 1 + random() * 1.2, turn: 1.8 + random() * 1.2 }));
+    let time = random() * 20;
+    g.userData.updateFigure = (dt) => {
+      time += dt;
+      // The chapter spins the whole prop quickly (a habit from the old spiral of dots). The column
+      // must not whirl round like a stick, so it turns itself back by the same amount.
+      puffs.points.rotation.y = -g.rotation.y;
+      skirt.forEach((u, i) => {
+        u.p = (u.p + dt * 0.45) % 1; u.a += dt * 1.8;
+        const r = 0.8 + u.p * 4.4;
+        puffs.pos.set([Math.cos(u.a) * r, 0.4 + u.p * 1, Math.sin(u.a) * r], i * 3);
+        puffs.size[i] = 1.6 + u.p * 3.2; puffs.alpha[i] = 0.36 * (1 - u.p);
+      });
+      column.forEach((u, k) => {
+        const i = SKIRT + k;
+        u.y = (u.y + u.lift * dt) % H; u.a += u.turn * dt;
+        const r = (0.44 + u.y * 0.14) * 0.75; // narrow at the ground, wider at the top
+        const leanX = Math.sin(u.y * 0.22 + time * 0.7) * 0.07 * u.y, leanZ = Math.cos(u.y * 0.18 + time * 0.5) * 0.05 * u.y;
+        puffs.pos.set([leanX + Math.cos(u.a) * r, u.y, leanZ + Math.sin(u.a) * r], i * 3);
+        puffs.size[i] = 1.8 + u.y * 0.34;
+        puffs.alpha[i] = 0.3 * Math.min(1, u.y) * Math.min(1, (H - u.y) / 3); // thin at the foot, fading out at the top
+      });
+      puffs.touch();
+    };
+    g.userData.updateFigure(0);
+    g.userData.applyQuality = (p) => puffs.geo.setDrawRange(0, Math.round(count * Math.max(0.5, p.dustScale)));
     g.userData.applyQuality(presetFor(initialQuality()));
     return g;
   },

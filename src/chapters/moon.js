@@ -107,16 +107,14 @@ export default makeChapter({
       s.hero.setEmotion('sleepy');
       await s.do(ctx.card.chapter('moon'));
 
-      // Unfold: the rover opens out of its folded shape.
-      s.hero.object.scale.set(1, 0.35, 0.5);
+      // Unfold: the wheels swing out, the camera post and the antenna stand up (character.folded).
+      // The rover keeps its real size the whole time.
+      s.hero.folded = 1;
       s.hero.setEmotion('happy');
-      await s.until((dt) => {
-        const sc = s.hero.object.scale;
-        const k = 1 - Math.exp(-3.5 * dt);
-        sc.y += (1 - sc.y) * k; sc.z += (1 - sc.z) * k;
-        return 1 - sc.y < 0.01;
-      });
-      s.hero.object.scale.set(1, 1, 1);
+      await s.wait(0.5);
+      let open = 0;
+      await s.until((dt) => { open = Math.min(1, open + dt / 1.8); s.hero.folded = 1 - open * open * (3 - 2 * open); return open >= 1; });
+      s.hero.folded = 0;
       await s.shot('moon_first_look');
       await climbOn(s, crew);
       await s.shot('moon_arrival');

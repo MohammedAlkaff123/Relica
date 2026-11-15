@@ -1,6 +1,7 @@
 // Authored from PIA20285, PIA21708 and the published flipped PIA10738.
 // These are stylized composition studies, not a photogrammetric reconstruction.
 import * as THREE from 'three';
+import { presetFor, initialQuality } from './quality.js';
 
 export function buildPhotoSet(kind, detail = null) {
   const group = new THREE.Group();
@@ -105,7 +106,19 @@ export function buildPhotoSet(kind, detail = null) {
   }
   group.add(new THREE.HemisphereLight(0xffffff, 0x51463b, 2));
   const sun = new THREE.DirectionalLight(0xffffff, 2.5); sun.position.set(-6,9,4); group.add(sun);
-  group.userData.dispose = () => surface?.dispose();
+  // The same Sun shadow as the worlds (world.js applyQuality), over the 24 m the set covers.
+  // Low has no shadow map. The ground receives and never casts, as in the worlds.
+  const size = presetFor(initialQuality()).shadowMapSize;
+  if (size > 0) {
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(size, size);
+    Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 40 });
+    sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = -0.0005; // about 2 cm along the light, as in the worlds
+    sun.shadow.normalBias = 0.015;
+    group.traverse((o) => { if (o.isMesh) { o.castShadow = o !== groundMesh; o.receiveShadow = true; } });
+  }
+  group.userData.dispose = () => { surface?.dispose(); sun.shadow.map?.dispose(); };
   return group;
 }
 

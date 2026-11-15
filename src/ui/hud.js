@@ -30,6 +30,7 @@ export function createHud(root, facts) {
   const legend = el('div', 'legend hidden', panel, '? = not yet checked against a NASA source');
   const objective = el('div', 'objective hidden', root);
   const stats = new Map();
+  let finding = null, findingEn = null, findingAr = null, findingTimer = 0;
 
   const mission = el('div', 'mission hidden', root);
   const missionTitle = el('h2', '', mission);
@@ -146,6 +147,24 @@ export function createHud(root, facts) {
         stats.set(label, s);
       }
       s.value.textContent = value;
+    },
+    // A finding, shown large at the bottom of the screen while the player keeps driving.
+    // It leaves by itself after `seconds`; a newer one replaces it.
+    note(en, ar = '', seconds = 9) {
+      if (!finding) {
+        finding = el('div', 'finding hidden', root);
+        findingEn = el('div', 'en', finding);
+        findingAr = el('div', 'ar', finding);
+        findingAr.lang = 'ar'; findingAr.dir = 'rtl';
+      }
+      findingEn.textContent = en; findingAr.textContent = ar;
+      finding.classList.remove('hidden', 'leaving');
+      finding.style.animation = 'none'; void finding.offsetWidth; finding.style.animation = ''; // play the entrance again
+      clearTimeout(findingTimer);
+      findingTimer = setTimeout(() => {
+        finding.classList.add('leaving');
+        findingTimer = setTimeout(() => finding.classList.add('hidden'), 600);
+      }, seconds * 1000);
     },
     setObjective(text) {
       objective.textContent = text;

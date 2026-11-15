@@ -355,5 +355,6 @@ async function investigate(s, ctx, instruction, result, arabic) {
   s.hero.lookAt?.(target);
   await s.hold('KeyE',2.5,instruction);
   cleanup(); s.hero.lookAt?.(null);
-  await s.card(result,arabic);
+  // The finding goes on a line at the bottom of the screen and the drive carries on: no card to dismiss.
+  if (ctx.hud.note) ctx.hud.note(result, arabic); else await s.card(result, arabic);
 }
