@@ -40,8 +40,8 @@ export default makeChapter({
     const m = mission(ctx, 'epilogue'); // tasks: 0 find the Sun, 1 hold the signal
 
     s.hero.setEmotion('sleepy');
-    await s.do(ctx.card.chapter('epilogue'));
-    await s.say('ep_drift');
+    await s.chapterCard('epilogue');
+    await s.say('ep_drift', { auto: true });
 
     const fiction = el('div', 'fiction-label', document.getElementById('ui'));
     el('span', '', fiction, 'Imagined conversation');

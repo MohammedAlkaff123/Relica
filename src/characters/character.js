@@ -294,11 +294,15 @@ export function createCharacter(id) {
 
   const parts = new Map();
   let loose = []; // the broken blade tips while they are in the air
+  let foldShown = 0;
   const character = {
     id, spec, object,
     dispose() { if (disposed) return; disposed = true; disposeObject(object); },
     half: [sx / 2, sy / 2, sz / 2],
     rotorSpeed: 0, // radians per second, set by the helicopter controller
+    // Packed for the flight: 0 is open, 1 is folded. The wheels draw in against the chassis and the
+    // camera post and antenna lie back. A chapter moves this number; nothing is squashed.
+    folded: 0,
     model: null,   // the loaded model, or null while the boxes are showing
     wheels: [],
     part(name) { return parts.get(name) ?? null; },
@@ -354,7 +358,16 @@ export function createCharacter(id) {
       for (const pupil of pupils) pupil.position.set(look.eyeX * 0.07, look.eyeY * 0.05, 0.06);
 
       face.rotation.x = -now.nod - look.eyeY * 0.25;
-      antenna.rotation.x = now.antenna + (talking ? Math.sin(time * 18) * 0.06 : 0);
+      const f = Math.max(0, Math.min(1, character.folded));
+      if (f !== foldShown && character.model) {
+        foldShown = f;
+        for (const w of character.wheels) {
+          const rest = (w.userData.rest ??= w.position.clone());
+          w.position.set(rest.x * (1 - 0.25 * f), rest.y, rest.z * (1 - 0.3 * f));
+        }
+        if (neck !== face) neck.rotation.x = -1.25 * f; // a real head on a post lies back on the deck
+      }
+      antenna.rotation.x = (now.antenna + (talking ? Math.sin(time * 18) * 0.06 : 0)) * (1 - f) - 1.35 * f;
 
       rings.forEach((ring, i) => {
         const p = (time * 1.4 + i / 3) % 1;

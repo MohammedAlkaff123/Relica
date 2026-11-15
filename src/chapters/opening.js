@@ -28,7 +28,7 @@ export default makeChapter({
     await s.do(ctx.card.title());
     await s.shot('opening_wake');
     s.hero.setEmotion('curious');
-    await s.say('ch0_wake');
+    await s.say('ch0_wake', { auto: true });
 
     // The tutorial: the player learns W/S and A/D without reading anything long.
     s.hero.setEmotion('happy');
@@ -49,13 +49,10 @@ export default makeChapter({
     await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.5 : -1.5, 0.2, 2)));
     s.hero.setEmotion('scared');
     s.sound('fold');
-    await s.say('ch0_fold');
-    await s.until((dt) => {
-      const sc = s.hero.object.scale;
-      const k = 1 - Math.exp(-3 * dt);
-      sc.y += (0.35 - sc.y) * k; sc.z += (0.5 - sc.z) * k;
-      return sc.y - 0.35 < 0.01;
-    });
+    await s.say('ch0_fold', { auto: true });
+    // Folding: the wheels draw in, the camera post and the antenna lie back (character.folded).
+    let shut = 0;
+    await s.until((dt) => { shut = Math.min(1, shut + dt / 1.6); s.hero.folded = shut * shut * (3 - 2 * shut); return shut >= 1; });
     // From inside the box, through the closing gap: a worker rests a hand on the rover. Then dark.
     workers[0]?.userData.act?.('reassure');
     s.onDispose(() => workers.forEach((w) => w.userData.act?.(null)));

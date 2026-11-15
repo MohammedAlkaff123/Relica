@@ -199,6 +199,32 @@ function buildFactoryRoom(group, workers) {
   }
 }
 
+// The two pictures the Sun's glare is made of, drawn once: a round fade, and a level line that is
+// brightest in the middle and thins to nothing at both ends.
+const glares = new Map();
+function sunGlare(kind) {
+  if (!glares.has(kind)) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = kind === 'streak' ? 32 : 256;
+    const g = c.getContext('2d');
+    if (kind === 'streak') {
+      const px = g.createImageData(256, 32);
+      for (let y = 0; y < 32; y++) for (let x = 0; x < 256; x++) {
+        const u = Math.abs(x - 127.5) / 127.5, v = Math.abs(y - 15.5) / 15.5;
+        const a = Math.pow(1 - u, 2.2) * Math.exp(-v * v * 7);
+        px.data.set([255, 255, 255, Math.round(255 * a)], (y * 256 + x) * 4);
+      }
+      g.putImageData(px, 0, 0);
+    } else {
+      const fade = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+      fade.addColorStop(0, 'rgba(255,255,255,0.9)'); fade.addColorStop(0.25, 'rgba(255,255,255,0.35)'); fade.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = fade; g.fillRect(0, 0, 256, 256);
+    }
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    glares.set(kind, tex); // kept for the whole game: every world's Sun shares the two
+  }
+  return glares.get(kind);
+}
+
 export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
   const look = LOOK[name];
   if (!look) throw new Error(`unknown world "${name}"`);
@@ -213,6 +239,11 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
   const sun = new THREE.DirectionalLight(look.sunColor ?? 0xffffff, look.sun);
   const sunDirection = new THREE.Vector3(...(look.sunAt ?? [40, 60, -30])).normalize();
   sun.position.copy(sunDirection).multiplyScalar(150);
+  // Across and up in the Sun's view of the ground, for moving its shadow box (updateShadow).
+  const shadowRight = new THREE.Vector3().crossVectors(THREE.Object3D.DEFAULT_UP, sunDirection);
+  if (shadowRight.lengthSq() < 1e-6) shadowRight.set(1, 0, 0); // a Sun straight overhead
+  shadowRight.normalize();
+  const shadowUp = new THREE.Vector3().crossVectors(sunDirection, shadowRight), shadowAt = new THREE.Vector3();
   const [fillSky, fillGround] = look.fill ?? [0xffffff, look.ground ?? 0x222233];
   const ambient = new THREE.HemisphereLight(fillSky, fillGround, look.ambient);
   group.add(sun, sun.target, ambient);
@@ -223,9 +254,19 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
   if (look.disc) {
     sunDisc = new THREE.Group();
     sunDisc.position.copy(sunDirection).multiplyScalar(1400);
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(look.discSize ?? 22, 20), new THREE.MeshBasicMaterial({ color: look.disc, fog: false }));
+    const discSize = look.discSize ?? 30;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(discSize, 32), new THREE.MeshBasicMaterial({ color: look.disc, fog: false }));
     disc.name = 'disc';
     sunDisc.add(disc);
+    // A soft glow round the dot and one long level streak through it, like a bright lamp seen
+    // through a lens. Both are added light, so they vanish against a bright sky and in the storm.
+    const glare = (name, w, h, opacity, z) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: sunGlare(name), color: look.disc, fog: false, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }));
+      m.name = name; m.position.z = z; m.userData.opacity = opacity;
+      sunDisc.add(m);
+    };
+    glare('glow', discSize * 7, discSize * 7, look.fog ? 0.5 : 0.8, -0.6);
+    glare('streak', discSize * 44, discSize * 2.2, look.fog ? 0.55 : 0.9, -0.3);
     if (look.halo) {
       const halo = new THREE.Mesh(new THREE.CircleGeometry(look.haloSize ?? 150, 24), new THREE.MeshBasicMaterial({ color: look.halo, fog: false, transparent: true, opacity: look.haloOpacity ?? 0.35, depthWrite: false }));
       halo.name = 'halo';
@@ -432,7 +473,7 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
     if (rocks) {
       rocks.count = rockShade.count = Math.min(rocks.userData.most, Math.round(look.rocks * preset.decorScale));
       rockShade.visible = preset.shadowMapSize === 0;
-      rocks.castShadow = preset.shadowMapSize >= 2048; // only High lets the small rocks cast
+      rocks.castShadow = preset.shadowMapSize > 0; // with no air nothing softens the light: every rock throws a shadow
       pebbles.count = preset.pebbles;
       pebbles.visible = preset.pebbles > 0;
     }
@@ -448,9 +489,14 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
       sun.shadow.mapSize.set(preset.shadowMapSize, preset.shadowMapSize);
       cam.left = -R; cam.right = R; cam.top = R; cam.bottom = -R; cam.near = 1; cam.far = 320;
       cam.updateProjectionMatrix();
-      sun.shadow.bias = -0.0006;
-      sun.shadow.normalBias = 0.06;
-      sun.shadow.radius = look.shadowSoft ?? 1; // hard on the airless Moon, softer in Mars's haze
+      // Small offsets, so a shadow starts where the boot or the wheel meets the ground. The old
+      // ones (-0.0006, 0.06) pushed it some 30 cm away under a low Sun. The ground does not cast,
+      // so it cannot streak itself; these only have to keep the machines and rocks clean.
+      sun.shadow.bias = -0.00006; // about 2 cm along the light
+      sun.shadow.normalBias = 0.015;
+      // The edge is smoothed by the renderer's soft filter (core/quality.js), the same in every
+      // world. That filter does not read `radius`; it is kept for the look table.
+      sun.shadow.radius = look.shadowSoft ?? 1;
     }
 
     return preset;
@@ -469,8 +515,16 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
     get textureSize() { return detailSize; },
     updateShadow(target) {
       if (!sun.castShadow) return;
-      sun.target.position.copy(target.position);
-      sun.position.copy(target.position).addScaledVector(sunDirection, 150);
+      // The box follows the hero in whole shadow pixels, measured along the two axes of the Sun's
+      // own view. Moved freely, every shadow edge crawls while the hero drives.
+      const texel = (sun.shadow.camera.right - sun.shadow.camera.left) / sun.shadow.mapSize.x;
+      const p = target.position;
+      shadowAt.set(0, 0, 0)
+        .addScaledVector(shadowRight, Math.round(p.dot(shadowRight) / texel) * texel)
+        .addScaledVector(shadowUp, Math.round(p.dot(shadowUp) / texel) * texel)
+        .addScaledVector(sunDirection, p.dot(sunDirection));
+      sun.target.position.copy(shadowAt);
+      sun.position.copy(shadowAt).addScaledVector(sunDirection, 150);
       sun.target.updateMatrixWorld();
     },
     get quality() { return level; },

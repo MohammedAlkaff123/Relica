@@ -1,5 +1,6 @@
 // One runtime API for UI, renderer and worlds. Serialize swaps so late texture requests
 // cannot override a newer setting or leave a newly entered chapter at the wrong quality.
+import { PCFSoftShadowMap } from 'three';
 const STORE = 'relica.quality';
 export function createQuality({ renderer, scene, data }) {
   const levels = data.order, valid = (l) => typeof l === 'string' && levels.includes(l);
@@ -70,6 +71,9 @@ export function createQuality({ renderer, scene, data }) {
       });
     },
   };
+  // Shadow edges are blended between shadow pixels, so they read as one soft line and not as
+  // squares. Set once, before the first frame: changing it later means rebuilding every material.
+  renderer.shadowMap.type = PCFSoftShadowMap;
   applyRenderer(data.levels[level]);
   return quality;
 }

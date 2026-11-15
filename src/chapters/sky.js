@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { mission, factNumber } from './_mission.js';
 import { placesOf } from '../world/terrain.js';
+import { wrightFabric, rotorSpinUp } from './_skyGames.js';
 
 // Dates as short labels, each matching a verified fact: ingenuity_first_flight, ingenuity_total.
 const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
@@ -27,7 +28,7 @@ const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
 // The places come from Set B's Jezero map (placesOf('jezero')): three dangers and the smooth sand.
 const START = [0, 0];
 const ROVER_START = [0, -7];
-const DEST = [-10, 140];                     // where the big rover wants to go
+const DEST = [-5, 70];                       // where the big rover wants to go
 // Which danger is marked on which flight. The rover's planned road runs through all three, in the
 // order cliff, sand trap, boulder field; marking one moves the road around it.
 const DANGERS = [
@@ -36,7 +37,8 @@ const DANGERS = [
   { place: 'boulders', name: 'the boulder field', flight: 3 },
 ];
 const ROAD_ORDER = ['cliff', 'sandTrap', 'boulders'];
-const PADS = { 2: [70, -15], 3: [25, 82] }; // where each scouting flight lands, clear of the dangers
+// Where each scouting flight lands, clear of the dangers. Flight 2 is about 87 m, flight 3 about 72 m.
+const PADS = { 2: [14, -8], 3: [10, 16] };
 
 export default makeChapter({
   id: 'sky',
@@ -66,7 +68,7 @@ export default makeChapter({
     const m = s.mission = mission(ctx, 'sky');
 
     if (opts.jump !== 'flight72') {
-      await s.do(ctx.card.chapter('sky'));
+      await s.chapterCard('sky');
       // A tiny machine drops from under the big rover, which backs away.
       heli.place(START[0], START[1], 0, 0.6);
       s.hero.setEmotion('scared');
@@ -74,15 +76,17 @@ export default makeChapter({
       await s.wait(1);
       await s.moveTo(rover, ROVER_START[0], ROVER_START[1], 3, { face: false });
       await drop;
-      await s.say('ch3_intro');
+      s.chat('ch3_intro'); // plays while the player starts the rotor
 
       // Flight 1: spin up, then hold 3 metres inside the band for 3 seconds, then land.
       showFlight();
       const band = s.prop('heightBand', START[0], START[1]);
       band.position.y += 3;
+      // Before the first flight: the Wright brothers' fabric, then spin the rotor up in thin air.
+      await wrightFabric(s, ctx);
+      await rotorSpinUp(s, ctx);
+      heli.spin = 1; // the rotor is at speed: lift starts as soon as Space is held
       s.unlockControls();
-      ctx.hud.setObjective('Hold Space to spin up the rotor');
-      await s.until(() => heli.spin >= 1);
       ctx.hud.setObjective('Keep holding Space: climb to 3 metres');
       await s.until(() => heli.altitude >= 2.7);
       s.hero.setEmotion('happy');
@@ -107,9 +111,9 @@ export default makeChapter({
       await s.photo('PIA23882');
 
       // Flights 2 and 3: scout the road and mark the dangers. The route bends around each mark.
-      await s.card('Beyond the five-flight demonstration', 'Now an aerial scout for Perseverance · الآن تستكشف الطريق لبيرسيفيرانس');
+      await s.card('Beyond the five-flight demonstration', 'Now an aerial scout for Perseverance · الآن تستكشف الطريق لبيرسيفيرانس', { auto: 4.5 });
       ctx.hud.setStat('phase', 'Extended mission · compressed scouting route');
-      await s.say('ch3_scout');
+      s.chat('ch3_scout');
       const places = placesOf('jezero');
       const at = (name) => { const p = places.find((q) => q.name === name); return p ? [p.x, p.z, p.r] : [0, 50, 10]; };
       const dangers = DANGERS.map((d) => ({ ...d, at: at(d.place), marked: false }));
@@ -121,7 +125,7 @@ export default makeChapter({
         const pulse = recoveryTime < 3 ? 0 : Math.sin(Math.min(1,(recoveryTime-3)/4)*Math.PI);
         heli.drift.tilt = pulse*.18; heli.drift.x = pulse*.7;
         if (pulse>.6) s.hero.setEmotion('scared');
-        if (recoveryTime>=7) { recovered=true;heli.drift.tilt=heli.drift.x=0;s.hero.setEmotion('happy');s.say('ch3_recover',{keepControls:true}).catch(()=>{}); }
+        if (recoveryTime>=7) { recovered=true;heli.drift.tilt=heli.drift.x=0;s.hero.setEmotion('happy');s.chat('ch3_recover'); }
       });
       for (const f of [2, 3]) {
         flight = f + 4;
@@ -191,7 +195,7 @@ export default makeChapter({
         if (k > 0.3) s.hero.setEmotion('scared');
         if (!s.warned) { s.warned = true; s.sound('drift_warning'); }
       }
-      if (air > 12 && !lastPush) lastPush=s.say('ch3_last_push',{keepControls:true});
+      if (air > 12 && !lastPush) lastPush=s.chat('ch3_last_push');
       if (air > 16) heli.noLift = true;
       return heli.noLift && !heli.flying;
     });

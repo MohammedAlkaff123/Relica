@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA shadow samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/shadow-samples.html
+     It shows the Sun's shadow on the real Moon and Mars terrain with the game's light, shadow box
+     and bias (src/world/world.js applyQuality), once as the game draws it now (A) and four softer
+     candidates. Each tile has its own renderer, because the shadow filter is a renderer setting. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: auto 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  #info { color: #9aa3b0; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; overflow: hidden; }
+  .cell canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; z-index: 1; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; z-index: 1; }
+  .note i { color: #8fd18f; font-style: normal; } .note u { color: #e08a7a; text-decoration: none; }
+  @media (max-width: 1100px) { #grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto repeat(3, 1fr); } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> shadows</span>
+    <span class="set">World: <button data-world="moon" class="on">Moon</button><button data-world="mars">Mars</button></span>
+    <span class="set">Graphics: <button data-level="medium" class="on">Medium</button><button data-level="high">High</button></span>
+    <span class="set">View: <button data-view="game" class="on">Game camera</button><button data-view="close">Close-up</button><button data-view="top">From above</button></span>
+    <span class="set">Hero: <button data-motion="still" class="on">Still</button><button data-motion="drive">Driving</button></span>
+    <span id="info"></span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { heightAt } from '../src/world/terrain.js';
+
+// The game's own numbers: LOOKS in src/world/world.js and content/quality.json.
+const WORLDS = {
+  moon: { hero: 'lrv', at: [-10, 22], yaw: -0.5, ground: 0x8b8d92, rock: 0x74767b, sky: 0x000000,
+          sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3], fog: null, shadowSoft: 1 },
+  mars: { hero: 'opportunity', at: [6, 20], yaw: 0.2, ground: 0xb0623a, rock: 0x86482b, sky: 0xd8a878,
+          sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240], shadowSoft: 2.5 },
+};
+const LEVELS = { medium: { size: 1024, range: 30, ratio: 1.5 }, high: { size: 2048, range: 40, ratio: 2 } };
+
+// What changes from tile to tile. `size` and `range` multiply the level's own; `radius` is per world.
+// snap: the shadow box moves in whole shadow pixels, so edges do not crawl while the hero drives.
+const VARIANTS = [
+  { key: 'A', name: 'Now', type: THREE.PCFShadowMap, size: 1, range: 1, snap: false, radius: (w) => w.shadowSoft,
+    note: 'What the game draws today. Edges break into squares; they crawl when the hero moves.' },
+  { key: 'B', name: 'Smooth edge', type: THREE.PCFSoftShadowMap, size: 1, range: 1, snap: true, radius: () => 1,
+    note: '<i>Same cost.</i> The filter blends between shadow pixels. Thin, even soft edge.' },
+  { key: 'C', name: 'Smooth + tighter box', type: THREE.PCFSoftShadowMap, size: 1, range: 0.6, snap: true, radius: () => 1,
+    note: '<i>Same cost.</i> Same pixels over a smaller area: crisper. <u>Things further than 60% of the old range lose their shadow.</u>' },
+  { key: 'D', name: 'Smooth + bigger map', type: THREE.PCFSoftShadowMap, size: 2, range: 1, snap: true, radius: () => 1,
+    note: 'Cleanest edge at full range. <u>4× the shadow memory, slower on weak laptops.</u>' },
+  { key: 'E', name: 'Blurred (VSM)', type: THREE.VSMShadowMap, size: 1, range: 1, snap: true, radius: (w) => w.shadowSoft * 2.5,
+    note: 'The softest. Wide blurred edge. <u>Two extra blur passes; the shadow comes away from the feet and thin parts fade.</u>' },
+];
+
+const flat = (color) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9 });
+// The current crew figure, standing still (src/world/props.js makeFigure, without its animation).
+function figure() {
+  const w = 1.15, suit = flat(0xe8e6df), shade = flat(0xcfccc2), glove = flat(0xb9bec6), boot = flat(0x9aa3ae), dark = flat(0x1f2a38);
+  const g = new THREE.Group();
+  const box = (sx, sy, sz, x, y, z, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat); m.position.set(x, y, z); g.add(m); };
+  box(0.42 * w, 0.52, 0.26 * w, 0, 1.22, 0, suit); box(0.44 * w, 0.07, 0.28 * w, 0, 0.95, 0, shade);
+  box(0.38, 0.52, 0.2, 0, 1.26, -0.25, shade); box(0.2, 0.15, 0.08, 0, 1.28, 0.18, shade);
+  const head = new THREE.Mesh(new THREE.IcosahedronGeometry(0.21, 1), suit); head.position.y = 1.58; g.add(head);
+  box(0.27, 0.2, 0.1, 0, 1.58, 0.15, dark);
+  for (const s of [1, -1]) {
+    box(0.13 * w, 0.58, 0.14 * w, s * 0.27 * w, 1.13, 0, suit); box(0.13 * w, 0.12, 0.14 * w, s * 0.27 * w, 0.79, 0, glove);
+    box(0.17 * w, 0.86, 0.19 * w, s * 0.115 * w, 0.49, 0, suit); box(0.18 * w, 0.1, 0.3, s * 0.115 * w, 0.05, 0.05, boot);
+  }
+  return g;
+}
+
+const loader = new GLTFLoader();
+const models = Object.fromEntries(await Promise.all(Object.values(WORLDS).map(async (w) => [w.hero, (await loader.loadAsync(`../public/models/${w.hero}.glb`)).scene])));
+
+function buildScene(world, id) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(world.sky);
+  if (world.fog) scene.fog = new THREE.Fog(world.sky, ...world.fog);
+  const sun = new THREE.DirectionalLight(world.sun[0], world.sun[1]);
+  const sunDirection = new THREE.Vector3(...world.sun[2]).normalize();
+  scene.add(sun, sun.target, new THREE.HemisphereLight(world.fill[0], world.fill[1], world.fill[2]));
+  const [cx, cz] = world.at, S = 110, N = 44; // 2.5 m squares, as in the game
+  const geo = new THREE.PlaneGeometry(S, S, N, N); geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + cx, z = pos.getZ(i) + cz; pos.setXYZ(i, x, heightAt(id, x, z), z); }
+  geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: world.ground, flatShading: true, roughness: 1 }));
+  ground.receiveShadow = true; scene.add(ground);
+  const rockGeo = new THREE.IcosahedronGeometry(1, 0), rockMat = new THREE.MeshStandardMaterial({ color: world.rock, flatShading: true, roughness: 1 });
+  let s = 7; const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+  for (let i = 0; i < 46; i++) {
+    const x = cx + (rnd() - 0.5) * 70, z = cz + (rnd() - 0.5) * 70, k = 0.3 + rnd() * 1.1;
+    if (Math.hypot(x - cx, z - cz) < 3.5) continue;
+    const r = new THREE.Mesh(rockGeo, rockMat); r.scale.set(k, k * 0.6, k); r.position.set(x, heightAt(id, x, z) + k * 0.15, z); r.rotation.y = rnd() * 3;
+    r.castShadow = r.receiveShadow = true; scene.add(r);
+  }
+  const f = new THREE.Vector3(Math.sin(world.yaw), 0, Math.cos(world.yaw)), side = new THREE.Vector3(f.z, 0, -f.x);
+  const hero = models[world.hero].clone(true);
+  hero.position.set(cx, heightAt(id, cx, cz) + 0.3, cz); hero.rotation.y = world.yaw;
+  hero.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(hero);
+  // Two of the crew: one beside the hero, one a little ahead.
+  for (const [a, b, turn] of [[1.7, 1.2, -1.2], [-1.9, 4.5, 2.4]]) {
+    const p = figure(), x = cx + side.x * a + f.x * b, z = cz + side.z * a + f.z * b;
+    p.position.set(x, heightAt(id, x, z), z); p.rotation.y = world.yaw + turn;
+    p.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(p);
+  }
+  return { scene, sun, sunDirection, centre: hero.position.clone(), f, side };
+}
+
+// ---------- page ----------
+const grid = document.getElementById('grid'), info = document.getElementById('info');
+const state = { world: 'moon', level: 'medium', view: 'game', motion: 'still' };
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 3000);
+const tiles = VARIANTS.map((variant) => {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.innerHTML = '<canvas></canvas><div class="tag"></div><div class="note"></div>';
+  grid.appendChild(cell);
+  const renderer = new THREE.WebGLRenderer({ canvas: cell.querySelector('canvas'), antialias: true });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = variant.type;
+  return { variant, cell, renderer, built: null };
+});
+
+function rebuild() {
+  const world = WORLDS[state.world], level = LEVELS[state.level];
+  for (const t of tiles) {
+    if (t.built) { t.built.sun.shadow.map?.dispose(); t.built.scene.traverse((o) => o.geometry?.dispose()); }
+    const b = t.built = buildScene(world, state.world), v = t.variant, sh = b.sun.shadow;
+    const size = Math.min(4096, level.size * v.size), R = level.range * v.range;
+    b.sun.castShadow = true;
+    sh.mapSize.set(size, size);
+    Object.assign(sh.camera, { left: -R, right: R, top: R, bottom: -R, near: 1, far: 320 }); sh.camera.updateProjectionMatrix();
+    sh.bias = v.type === THREE.VSMShadowMap ? -0.0002 : -0.0006;
+    sh.normalBias = 0.06;
+    sh.radius = v.radius(world);
+    sh.blurSamples = 10;
+    b.texel = (2 * R) / size; b.R = R; b.size = size;
+    t.renderer.setPixelRatio(Math.min(devicePixelRatio, level.ratio));
+    const cm = Math.round(b.texel * 1000) / 10;
+    t.cell.querySelector('.tag').innerHTML = `<b>${v.key}</b> · ${v.name} · ${size} px over ${2 * R} m = ${cm} cm a pixel`;
+    t.cell.querySelector('.note').innerHTML = v.note;
+  }
+  info.textContent = state.motion === 'drive' ? 'Driving: watch the rock shadows. In A they crawl; in B–E they hold still.' : '';
+}
+
+// The shadow box follows the hero, as effects.js does every frame. With `snap` it moves in whole
+// shadow pixels, measured along the two axes of the light's own view.
+const right = new THREE.Vector3(), up = new THREE.Vector3(), at = new THREE.Vector3();
+function aimSun(b, snap, focus) {
+  at.copy(focus);
+  if (snap) {
+    right.crossVectors(THREE.Object3D.DEFAULT_UP, b.sunDirection).normalize(); up.crossVectors(b.sunDirection, right);
+    const r = Math.round(at.dot(right) / b.texel) * b.texel, u = Math.round(at.dot(up) / b.texel) * b.texel, d = at.dot(b.sunDirection);
+    at.set(0, 0, 0).addScaledVector(right, r).addScaledVector(up, u).addScaledVector(b.sunDirection, d);
+  }
+  b.sun.target.position.copy(at); b.sun.position.copy(at).addScaledVector(b.sunDirection, 150); b.sun.target.updateMatrixWorld();
+}
+
+const focus = new THREE.Vector3();
+function draw(time = 0) {
+  for (const t of tiles) {
+    const b = t.built, c = b.centre, f = b.f, r = t.cell.getBoundingClientRect();
+    t.renderer.setSize(r.width, r.height, false);
+    camera.aspect = r.width / r.height; camera.fov = state.view === 'close' ? 40 : 55; camera.updateProjectionMatrix();
+    if (state.view === 'game') { camera.position.set(c.x - f.x * 7, c.y + 3, c.z - f.z * 7); camera.lookAt(c.x + f.x * 4, c.y + 0.6, c.z + f.z * 4); }
+    else if (state.view === 'close') { camera.position.set(c.x - f.x * 2.2 + b.side.x * 3.4, c.y + 1.5, c.z - f.z * 2.2 + b.side.z * 3.4); camera.lookAt(c.x + b.side.x * 2.6 + f.x * 1.6, c.y - 0.3, c.z + b.side.z * 2.6 + f.z * 1.6); }
+    else { camera.position.set(c.x, c.y + 20, c.z - 4); camera.lookAt(c.x, c.y, c.z + 2); }
+    // Driving: the hero itself stays put so the tiles are easy to compare; only its shadow box
+    // travels, slowly, the way it does behind a moving rover.
+    focus.copy(c);
+    if (state.motion === 'drive') focus.addScaledVector(f, Math.sin(time / 2600) * 3).addScaledVector(b.side, Math.cos(time / 3400) * 2);
+    aimSun(b, t.variant.snap, focus);
+    t.renderer.render(b.scene, camera);
+  }
+}
+let loop = 0;
+function tick(time) { draw(time); loop = state.motion === 'drive' ? requestAnimationFrame(tick) : 0; }
+function refresh() { cancelAnimationFrame(loop); loop = 0; tick(performance.now()); }
+
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = btn.dataset[key];
+  if (key === 'world' || key === 'level' || key === 'motion') rebuild();
+  refresh();
+}));
+addEventListener('resize', refresh);
+rebuild(); refresh();
+window.samples = { state, rebuild, refresh, draw };
+</script>
+</body>
+</html>

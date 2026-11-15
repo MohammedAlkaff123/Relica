@@ -41,6 +41,7 @@ export function createHud(root, facts) {
   const objective = el('div', 'objective hidden', root);
   objective.setAttribute('role', 'status');
   const stats = new Map(); // label -> { row, kind, ... }
+  let finding = null, findingEn = null, findingAr = null, findingTimer = 0;
 
   const mission = el('div', 'mission hidden', root);
   const missionHead = el('div', 'mission-head', mission);
@@ -360,6 +361,32 @@ export function createHud(root, facts) {
         stats.set(label, s);
       }
       setValue(s, value);
+    },
+    // A finding, shown large near the bottom of the screen while the player keeps driving.
+    // It leaves by itself after `seconds`; a newer one replaces it.
+    note(en, ar = '', seconds = 9) {
+      if (!finding) {
+        finding = el('div', 'finding hidden', root);
+        findingEn = el('div', 'en', finding);
+        findingAr = el('div', 'ar', finding);
+        findingEn.lang = 'en'; findingEn.dir = 'ltr';
+        findingAr.lang = 'ar'; findingAr.dir = 'rtl';
+      }
+      // Set C: the chosen language first; the other one only when "second language" is on in Settings.
+      const arFirst = prefs.language === 'ar' && ar;
+      const second = prefs.get().secondary;
+      findingEn.textContent = arFirst ? ar : en;
+      findingEn.lang = arFirst ? 'ar' : 'en'; findingEn.dir = arFirst ? 'rtl' : 'ltr';
+      findingAr.textContent = second ? (arFirst ? en : ar) : '';
+      findingAr.lang = arFirst ? 'en' : 'ar'; findingAr.dir = arFirst ? 'ltr' : 'rtl';
+      findingAr.classList.toggle('hidden', !findingAr.textContent);
+      finding.classList.remove('hidden', 'leaving');
+      finding.style.animation = 'none'; void finding.offsetWidth; finding.style.animation = ''; // play the entrance again
+      clearTimeout(findingTimer);
+      findingTimer = setTimeout(() => {
+        finding.classList.add('leaving');
+        findingTimer = setTimeout(() => finding.classList.add('hidden'), 600);
+      }, seconds * 1000);
     },
     setObjective(text) {
       given.objective = text || '';

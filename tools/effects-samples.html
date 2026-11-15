@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA whirlwind and dust samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/effects-samples.html
+     Top row: the Mars whirlwind (src/world/props.js `whirlwind`). Bottom row: the dust a rover's
+     wheels throw up (src/world/effects.js). A is what the game draws now; B, C and D are
+     candidates. Everything moves, so judge it here and not from a still picture. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto 1.25fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  #info { color: #9aa3b0; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> whirlwind (top) and wheel dust (bottom)</span>
+    <span class="set">Dust on: <button data-world="mars" class="on">Mars</button><button data-world="moon">Moon</button></span>
+    <span class="set">Speed: <button data-speed="1" class="on">Real</button><button data-speed="0.35">Slow</button></span>
+    <span id="info">The grey box is a rover, 1.6 m wide, for scale. The whirlwind is 7 m tall, as in the game.</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+const MARS = { sky: 0xd8a878, ground: 0xb0623a, sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240], dust: 0xc98a62, gravity: 3.71, drag: 1.6 };
+const MOON = { sky: 0x000000, ground: 0x8b8d92, sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3], fog: null, dust: 0xa9abb0, gravity: 1.62, drag: 0 };
+const rand = (a, b) => a + Math.random() * (b - a);
+
+// One soft round puff, drawn once and shared by every soft effect on the page.
+const soft = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'), fade = g.createRadialGradient(32, 32, 2, 32, 32, 31);
+  fade.addColorStop(0, 'rgba(255,255,255,1)'); fade.addColorStop(0.45, 'rgba(255,255,255,0.55)'); fade.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = fade; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+const puffMat = (color, opacity) => new THREE.SpriteMaterial({ map: soft, color, transparent: true, opacity, depthWrite: false });
+
+function baseScene(w) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(w.sky);
+  if (w.fog) scene.fog = new THREE.Fog(w.sky, ...w.fog);
+  const sun = new THREE.DirectionalLight(w.sun[0], w.sun[1]); sun.position.set(...w.sun[2]).multiplyScalar(50);
+  scene.add(sun, new THREE.HemisphereLight(w.fill[0], w.fill[1], w.fill[2]));
+  scene.add(new THREE.Mesh(new THREE.PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: w.ground, roughness: 1 })));
+  const rover = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 2.4), new THREE.MeshStandardMaterial({ color: 0x9a9da3, flatShading: true, roughness: 0.9 }));
+  rover.position.y = 0.45; scene.add(rover);
+  return { scene, rover };
+}
+
+// ================= whirlwinds: each returns update(t, dt) =================
+// The column leans and snakes a little: where its middle is at height y, at time t.
+const spine = (y, t, amount = 1) => [Math.sin(y * 0.45 + t * 0.7) * 0.07 * y * amount, Math.cos(y * 0.35 + t * 0.5) * 0.05 * y * amount];
+const radiusAt = (y) => 0.22 + y * 0.14; // narrow at the ground, wider at the top
+
+const WHIRL = [
+  { key: 'A', name: 'Now', note: 'A spiral of small dots spinning fast. Reads as a swarm, not as wind.',
+    build(g) {
+      const count = 160, positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) { const y = Math.random() * 7, a = y * 2.1 + Math.random() * 6.28, r = 0.18 + y * 0.13 + Math.random() * 0.25; positions.set([Math.cos(a) * r, y, Math.sin(a) * r], i * 3); }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      g.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xb68b65, size: 0.12, transparent: true, opacity: 0.22, depthWrite: false })));
+      return (t, dt) => { g.rotation.y += dt * 6; g.scale.y = 1 + 0.08 * Math.sin(t * 3); };
+    } },
+  { key: 'B', name: 'Soft column', note: 'A hazy column of dust that leans and snakes slowly, with a low skirt of dust at its foot. The closest to a real dust devil.',
+    build(g) {
+      const puffs = [];
+      for (let i = 0; i < 64; i++) {
+        const s = new THREE.Sprite(puffMat(0xc79a72, 0.16));
+        s.userData = { y: (i / 64) * 7, a: Math.random() * 6.28, lift: rand(0.5, 1.1), turn: rand(0.9, 1.5) };
+        g.add(s); puffs.push(s);
+      }
+      const skirt = [];
+      for (let i = 0; i < 14; i++) { const s = new THREE.Sprite(puffMat(0xc79a72, 0.2)); s.userData = { a: (i / 14) * 6.28, p: Math.random() }; g.add(s); skirt.push(s); }
+      return (t, dt) => {
+        for (const s of puffs) {
+          const u = s.userData; u.y = (u.y + u.lift * dt) % 7; u.a += u.turn * dt;
+          const [sx, sz] = spine(u.y, t), r = radiusAt(u.y) * 0.75;
+          s.position.set(sx + Math.cos(u.a) * r, u.y, sz + Math.sin(u.a) * r);
+          s.scale.setScalar(0.9 + u.y * 0.34);
+          s.material.opacity = 0.17 * Math.min(1, u.y * 2) * Math.min(1, (7 - u.y) / 1.5); // thin at the foot, fading out at the top
+        }
+        for (const s of skirt) {
+          const u = s.userData; u.p = (u.p + dt * 0.35) % 1; u.a += dt * 0.9;
+          const r = 0.4 + u.p * 2.2;
+          s.position.set(Math.cos(u.a) * r, 0.25 + u.p * 0.5, Math.sin(u.a) * r);
+          s.scale.setScalar(0.8 + u.p * 1.6); s.material.opacity = 0.22 * (1 - u.p);
+        }
+      };
+    } },
+  { key: 'C', name: 'Low-poly funnel', note: 'Stacked see-through rings with flat faces, each turning at its own pace and sliding with the lean. Cut like the rocks and the ground.',
+    build(g) {
+      const rings = [], N = 9, H = 7 / N;
+      for (let i = 0; i < N; i++) {
+        const y = i * H, geo = new THREE.CylinderGeometry(radiusAt(y + H) * 1.05, radiusAt(y) * 1.05, H * 0.92, 7, 1, true);
+        const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xc99870, flatShading: true, roughness: 1, transparent: true, opacity: 0.34 - i * 0.022, side: THREE.DoubleSide, depthWrite: false }));
+        m.userData = { y: y + H / 2, turn: (i % 2 ? -1 : 1) * rand(0.5, 1.1) }; g.add(m); rings.push(m);
+      }
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.3, 0.35, 9, 1, true), new THREE.MeshStandardMaterial({ color: 0xc99870, flatShading: true, roughness: 1, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }));
+      foot.position.y = 0.2; g.add(foot);
+      return (t, dt) => {
+        for (const m of rings) { const [sx, sz] = spine(m.userData.y, t); m.position.set(sx, m.userData.y, sz); m.rotation.y += m.userData.turn * dt; }
+        foot.rotation.y -= dt * 0.5; foot.scale.setScalar(1 + 0.06 * Math.sin(t * 1.3));
+      };
+    } },
+  { key: 'D', name: 'Ribbons', note: 'Three bands of dust winding up round an empty middle, with a few soft puffs. Stylised: you read the spin at once.',
+    build(g) {
+      const SEG = 40, ribbons = [];
+      for (let k = 0; k < 3; k++) {
+        const geo = new THREE.BufferGeometry(), pos = new Float32Array((SEG + 1) * 6), idx = [];
+        for (let i = 0; i < SEG; i++) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setIndex(idx);
+        const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xcfa27a, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }));
+        m.frustumCulled = false; m.userData = { phase: (k / 3) * 6.28 }; g.add(m); ribbons.push(m);
+      }
+      const puffs = [];
+      for (let i = 0; i < 16; i++) { const s = new THREE.Sprite(puffMat(0xc79a72, 0.14)); s.userData = { y: Math.random() * 7, a: Math.random() * 6.28 }; g.add(s); puffs.push(s); }
+      return (t, dt) => {
+        for (const m of ribbons) {
+          const pos = m.geometry.attributes.position.array;
+          for (let i = 0; i <= SEG; i++) {
+            const y = (i / SEG) * 7, a = m.userData.phase + y * 1.25 - t * 1.6, r = radiusAt(y), [sx, sz] = spine(y, t), w = 0.16 + y * 0.07;
+            pos.set([sx + Math.cos(a) * r, y - w, sz + Math.sin(a) * r, sx + Math.cos(a) * r, y + w, sz + Math.sin(a) * r], i * 6);
+          }
+          m.geometry.attributes.position.needsUpdate = true;
+        }
+        for (const s of puffs) { const u = s.userData; u.y = (u.y + dt * 0.8) % 7; u.a += dt * 1.3; const [sx, sz] = spine(u.y, t), r = radiusAt(u.y) * 0.5; s.position.set(sx + Math.cos(u.a) * r, u.y, sz + Math.sin(u.a) * r); s.scale.setScalar(1 + u.y * 0.3); }
+      };
+    } },
+];
+
+// ================= wheel dust: each returns { emit(x, y, z, vx, vy, vz), update(dt, w) } =================
+const DUST = [
+  { key: 'A', name: 'Now', rate: 40, note: 'Small specks of one size that blink out. They read as sparks or sand grains, not as a cloud.',
+    build(scene, w) {
+      const N = 300, pos = new Float32Array(N * 3).fill(-999), vel = new Float32Array(N * 3), life = new Float32Array(N); let next = 0;
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: w.dust, size: 0.13, map: soft, transparent: true, opacity: 0.5, depthWrite: false, alphaTest: 0.03 })); pts.frustumCulled = false; scene.add(pts);
+      return {
+        emit(x, y, z, vx, vy, vz) { pos.set([x, y, z], next * 3); vel.set([vx, vy, vz], next * 3); life[next] = w.drag ? 1.2 : 3; next = (next + 1) % N; },
+        update(dt) {
+          const keep = Math.max(0, 1 - w.drag * dt);
+          for (let n = 0; n < N; n++) { if (life[n] <= 0) continue; const i = n * 3; vel[i + 1] -= w.gravity * dt; for (let k = 0; k < 3; k++) { vel[i + k] *= keep; pos[i + k] += vel[i + k] * dt; } life[n] -= dt; if (life[n] <= 0 || (vel[i + 1] < 0 && pos[i + 1] < 0)) { life[n] = 0; pos[i + 1] = -999; } }
+          geo.attributes.position.needsUpdate = true;
+        },
+      };
+    } },
+  { key: 'B', name: 'Soft puffs', rate: 16, note: 'Fewer, larger soft puffs: each starts small at the wheel, swells and fades. On the Moon they fly in arcs and drop, with no billowing, as real lunar dust does.',
+    build(scene, w) { return puffs(scene, w, { n: 70, trail: false }); } },
+  { key: 'C', name: 'Low-poly puffs', rate: 14, note: 'Little faceted lumps that pop out, tumble, grow and shrink away. Solid, like the rocks: the most "toy" of the four and the cheapest to draw.',
+    build(scene, w) {
+      const N = 60, mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: new THREE.Color(w.dust).lerp(new THREE.Color(0xffffff), 0.15), flatShading: true, roughness: 1 }), N);
+      mesh.frustumCulled = false; scene.add(mesh);
+      const P = Array.from({ length: N }, () => ({ life: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), spin: new THREE.Vector3(), rot: new THREE.Euler(), size: 0, age: 0, span: 1 }));
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s3 = new THREE.Vector3(); let next = 0;
+      return {
+        emit(x, y, z, vx, vy, vz) { const o = P[next]; next = (next + 1) % N; o.p.set(x, y, z); o.v.set(vx, vy, vz); o.spin.set(rand(-4, 4), rand(-4, 4), rand(-4, 4)); o.size = rand(0.14, 0.3); o.age = 0; o.span = w.drag ? rand(1, 1.6) : rand(1.6, 2.6); o.life = 1; },
+        update(dt) {
+          const keep = Math.max(0, 1 - w.drag * 0.9 * dt);
+          P.forEach((o, i) => {
+            if (o.life) {
+              o.age += dt; o.v.y -= w.gravity * (w.drag ? 0.25 : 1) * dt; o.v.multiplyScalar(keep); o.p.addScaledVector(o.v, dt);
+              if (o.p.y < o.size * 0.5) { o.p.y = o.size * 0.5; o.v.y = 0; }
+              o.rot.x += o.spin.x * dt; o.rot.y += o.spin.y * dt; o.rot.z += o.spin.z * dt;
+              if (o.age >= o.span) o.life = 0;
+            }
+            const u = o.age / o.span, k = o.life ? o.size * Math.sin(Math.PI * Math.min(1, u)) * (0.6 + u * 1.4) : 0; // out of nothing, up, back to nothing
+            m4.compose(o.p, q.setFromEuler(o.rot), s3.setScalar(k)); mesh.setMatrixAt(i, m4);
+          });
+          mesh.instanceMatrix.needsUpdate = true;
+        },
+      };
+    } },
+  { key: 'D', name: 'Soft puffs + trail', rate: 16, note: 'B, plus a thin low haze that hangs over the tracks for a few seconds and then clears. The fullest look and the most to draw.',
+    build(scene, w) { return puffs(scene, w, { n: 70, trail: true }); } },
+];
+function puffs(scene, w, { n, trail }) {
+  const make = (count, opacity) => Array.from({ length: count }, () => { const s = new THREE.Sprite(puffMat(w.dust, opacity)); s.visible = false; s.userData = { v: new THREE.Vector3(), age: 0, span: 1, size: 1 }; scene.add(s); return s; });
+  const pool = make(n, 0.4), haze = trail ? make(40, 0.2) : []; let next = 0, hnext = 0, debt = 0;
+  return {
+    emit(x, y, z, vx, vy, vz) {
+      const s = pool[next]; next = (next + 1) % n; const u = s.userData;
+      s.position.set(x, y, z); u.v.set(vx * 0.8, vy, vz * 0.8); u.age = 0; u.span = w.drag ? rand(1.3, 2) : rand(1.8, 2.8); u.size = rand(0.7, 1.2); s.visible = true;
+      if (trail && (debt += 1) >= 3) { debt = 0; const h = haze[hnext]; hnext = (hnext + 1) % haze.length; h.position.set(x, 0.18, z); h.userData.age = 0; h.userData.span = w.drag ? 5 : 3; h.userData.size = rand(1.4, 2); h.visible = true; }
+    },
+    update(dt) {
+      const keep = Math.max(0, 1 - w.drag * dt);
+      for (const s of pool) {
+        if (!s.visible) continue; const u = s.userData; u.age += dt;
+        if (u.age >= u.span) { s.visible = false; continue; }
+        // In air the puff slows, hangs and swells. With no air it flies an arc and lands.
+        u.v.y -= w.gravity * (w.drag ? 0.12 : 1) * dt; u.v.multiplyScalar(keep); s.position.addScaledVector(u.v, dt);
+        if (s.position.y < 0.1) { s.position.y = 0.1; u.v.set(0, 0, 0); }
+        const k = u.age / u.span, grow = w.drag ? 0.3 + k * 1.3 : 0.3 + k * 0.5;
+        s.scale.setScalar(u.size * grow); s.material.opacity = 0.42 * Math.min(1, k * 8) * (1 - k) ** 1.4;
+      }
+      for (const h of haze) {
+        if (!h.visible) continue; const u = h.userData; u.age += dt; if (u.age >= u.span) { h.visible = false; continue; }
+        const k = u.age / u.span; h.scale.set(u.size * (1 + k * 1.5), u.size * 0.45, 1); h.material.opacity = 0.2 * Math.min(1, k * 5) * (1 - k);
+      }
+    },
+  };
+}
+
+// ================= page =================
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+const state = { world: 'mars', speed: 1 };
+const cell = (v, kind) => { const c = document.createElement('div'); c.className = 'cell'; c.innerHTML = `<div class="tag"><b>${kind} ${v.key}</b> · ${v.name}</div><div class="note">${v.note}</div>`; grid.appendChild(c); return c; };
+
+const whirls = WHIRL.map((v) => {
+  const { scene, rover } = baseScene(MARS); rover.position.set(-3.2, 0.45, 1);
+  const g = new THREE.Group(); scene.add(g);
+  return { cell: cell(v, 'Whirlwind'), scene, g, update: v.build(g) };
+});
+let dusts = [];
+const dustCells = DUST.map((v) => cell(v, 'Dust'));
+function buildDust() {
+  const w = state.world === 'moon' ? MOON : MARS;
+  dusts = DUST.map((v, i) => { const { scene, rover } = baseScene(w); return { cell: dustCells[i], scene, rover, w, rate: v.rate, debt: 0, fx: v.build(scene, w) }; });
+}
+buildDust();
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 800);
+let last = performance.now(), time = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000) * state.speed; last = now; time += dt;
+  const W = innerWidth, H = innerHeight; renderer.setSize(W, H, false);
+  renderer.setScissor(0, 0, W, H); renderer.setViewport(0, 0, W, H); renderer.setClearColor(0x10141b); renderer.clear();
+  const view = (c) => { const r = c.getBoundingClientRect(); renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); };
+  for (const t of whirls) {
+    t.update(time, dt);
+    t.g.position.set(Math.sin(time * 0.25) * 1.2, 0, Math.cos(time * 0.19) * 0.8); // it wanders a little
+    view(t.cell); camera.position.set(0, 3.2, 15.5); camera.lookAt(0, 3.4, 0); renderer.render(t.scene, camera);
+  }
+  for (const t of dusts) {
+    // The rover drives a circle; its two back wheels throw dust back and up, as in effects.js.
+    const a = time * 0.75, R = 5, speed = 0.75 * R, x = Math.cos(a) * R, z = Math.sin(a) * R, fx = -Math.sin(a), fz = Math.cos(a);
+    t.rover.position.set(x, 0.45, z); t.rover.rotation.y = Math.atan2(fx, fz);
+    t.debt += t.rate * dt;
+    while (t.debt >= 1) {
+      t.debt -= 1; const side = Math.random() < 0.5 ? -1 : 1;
+      t.fx.emit(x - fx * 1.1 + fz * side * 0.7, 0.15, z - fz * 1.1 - fx * side * 0.7, -fx * speed * 0.25 + rand(-0.5, 0.5), rand(0.5, 1.4), -fz * speed * 0.25 + rand(-0.5, 0.5));
+    }
+    t.fx.update(dt, t.w);
+    view(t.cell); camera.position.set(0, 4.2, 13.5); camera.lookAt(0, 0.6, 0); renderer.render(t.scene, camera);
+  }
+  requestAnimationFrame(frame);
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = key === 'speed' ? +btn.dataset.speed : btn.dataset[key];
+  if (key === 'world') buildDust();
+}));
+requestAnimationFrame(frame);
+window.samples = { state };
+</script>
+</body>
+</html>
