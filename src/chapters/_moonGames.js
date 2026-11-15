@@ -183,9 +183,9 @@ function drawWheel(g, spin) {
 }
 
 export async function fenderRepair(s, ctx) {
-  const ui = gamePanel(s, { title: { en: 'The fender broke: make a new one out of maps', ar: 'الرفرف انكسر: سوّ له رفرف جديد من الخرائط' },
-    intro: { en: 'There are no spare parts on the Moon, so the crew taped four laminated maps into a new fender and held it on with clamps.',
-      ar: 'ما فيه قطع غيار على القمر، فالطاقم لصق ٤ خرائط مغلّفة وسوّى منها رفرف جديد، وثبّتوه بملاقط.' },
+  const ui = gamePanel(s, { title: { en: 'The dust guard broke: make a new one from the route maps', ar: 'واقي الغبار انكسر: اصنع واحدًا جديدًا من خرائط الطريق' },
+    intro: { en: 'There are no spare parts on the Moon, so the crew used the maps that show them the way, taped them into a new dust guard and held it on with clamps.',
+      ar: 'لا قطع غيار على القمر، فاستعمل الطاقم الخرائط التي يهتدون بها إلى طريقهم، ولصقوها واقيًا جديدًا وثبّتوه بملاقط.' },
     width: 520, height: 300 });
   ui.help({ en: 'A / D: choose the spot. Space: place the piece. Or drag it with the mouse.',
     ar: 'A / D: اختر المكان. Space: ثبّت القطعة. أو اسحبها بالماوس.' });

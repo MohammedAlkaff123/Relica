@@ -64,6 +64,32 @@
       "en": "I'm sorry… I'm making a mess!"
     }
   ],
+  "ch1_fender_plan": [
+    {
+      "who": "crew",
+      "emotion": "scared",
+      "ar": "انكسر واقي الغبار! والغبار يغطّي كلّ شيء!",
+      "en": "The dust guard broke! Dust is covering everything!"
+    },
+    {
+      "who": "crew",
+      "emotion": "curious",
+      "ar": "لا قطع غيار هنا… لكن معنا خرائطنا!",
+      "en": "No spare parts up here… but we have our maps!"
+    },
+    {
+      "who": "lrv",
+      "emotion": "curious",
+      "ar": "خرائط؟ التي تدلّكما على الطريق؟",
+      "en": "Maps? The ones that show you the way?"
+    },
+    {
+      "who": "crew",
+      "emotion": "happy",
+      "ar": "نعم! ورقها مغلّف وقوي، سنصنع منها واقيًا جديدًا!",
+      "en": "Yes! They're laminated and tough. We'll make a new dust guard out of them!"
+    }
+  ],
   "ch1_fixed": [
     {
       "who": "lrv",

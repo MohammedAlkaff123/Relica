@@ -168,11 +168,13 @@ export default makeChapter({
     // Stop 2: the crew tapes maps over the wheel (real).
     s.lockControls();
     await climbOff(s, crew);
-    ctx.hud.setObjective('The crew is repairing the fender');
+    ctx.hud.setObjective('The crew is repairing the dust guard');
     const q = s.hero.object.position;
     await Promise.all(crew.map((c, i) => s.moveTo(c, q.x + (i ? 1.2 : -1.2), q.z - 1.6, 1.2)));
     for (const c of crew) c.rotation.y = Math.atan2(q.x-c.position.x, q.z-c.position.z);
-    // The player does the repair: maps and clamps on the fender (the crew acts it out meanwhile).
+    // What broke, which maps, and why maps: the crew says it before the puzzle.
+    await s.say('ch1_fender_plan', { auto: true });
+    // The player does the repair: maps and clamps on the dust guard (the crew acts it out meanwhile).
     act(crew, 'repair');
     s.onDispose(() => act(crew, null));
     ctx.hud.setObjective('');
