@@ -204,7 +204,7 @@
       "claim": "The Viking landers were designed to work for about 90 days",
       "value": "About 90 days",
       "verified": true,
-      "source": "https://www3.jpl.nasa.gov/missions/past/viking.html",
+      "source": "https://science.nasa.gov/mission/viking/",
       "note": "Some NASA pages say 'a minimum of 90 days'"
     },
     "viking_end": {

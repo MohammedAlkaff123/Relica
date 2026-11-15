@@ -1,7 +1,6 @@
 # Presentation material
 
-**The final demo for judging is the team's 7-slide deck, linked from the submission page and from the [README](../README.md).**
-It is not stored in this folder.
+**The demo for judging is the 30-second English video: https://youtu.be/ljCjr-8vD4M** (also linked from the [README](../README.md)).
 
 The files here are earlier and supporting material:
 
@@ -10,10 +9,9 @@ The files here are earlier and supporting material:
 | [Relica-pitch.pptx](Relica-pitch.pptx) | An earlier 7-slide draft deck, with NASA image citations in the speaker notes | Superseded by the final deck |
 | [SCRIPT.md](SCRIPT.md) | Speaker script for a live pitch with a short game demonstration | Reference |
 | [Relica-review-30s.webm](Relica-review-30s.webm) + [captions.srt](captions.srt) | A silent 30-second build-review montage with English captions | Superseded; recorded before the final interface |
-| [Relica-trailer-30s.mp4](Relica-trailer-30s.mp4) | 30-second trailer captured frame by frame from the game ([tools/trailer/](../tools/trailer/README.md)) | On-screen text is Arabic only, so it is **not** the submitted demo |
 
-All footage is recorded from the game itself. Photos in the slides and trailer are NASA's, credited in [CREDITS.md](../CREDITS.md).
-AI help with the deck and the trailer tools is listed in [AI_USE.md](../AI_USE.md).
+All footage is recorded from the game itself (capture tools in [tools/trailer/](../tools/trailer/README.md)). Photos in the slides and video are NASA's, credited in [CREDITS.md](../CREDITS.md).
+AI help with the deck and the video tools is listed in [AI_USE.md](../AI_USE.md).
 
 ## Short answers for the jury
 

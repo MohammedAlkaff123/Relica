@@ -11,7 +11,7 @@ The idea, the story and the explanation of the project are the team's own; AI to
 | Writing and editing | Yes | Drafts of plans, dialogue lines, captions and documentation, chosen and edited by the team |
 | Translation | Yes | Arabic and English lines compared between Claude and ChatGPT drafts; final wording chosen by Abdullatif |
 | Research | Yes | Finding and checking NASA sources for facts, photos and models; every fact links to its NASA page |
-| Presentation and video | Yes | Help building the slide deck and the trailer tools; the trailer is captured from the game itself |
+| Presentation and video | Yes | Help building the slide deck and the video capture tools; the footage is recorded from the game itself |
 | Logo | Yes | The Relica logo was designed as simple vector shapes with AI help (Codex); it is not a generated picture |
 | Images in the game | No | No AI-generated images. Photos are NASA's; scenes are rendered by the game |
 | Video | No AI-generated video | Footage is recorded from the game renderer |
@@ -77,5 +77,5 @@ Add a line whenever AI makes or changes something.
 | 15 Nov | Abdulkarim | Claude | Second look pass: the Sun drawn low near the horizon so players see it; the Lunar Module rebuilt from simple shapes (tools/models/build_lm.mjs) with an engine flame and gold foil scraps at lift-off; Viking's old age shown with a long tin-foil beard, heavy brows and lids (chosen from tools/viking-samples.html); a painted-metal surface with light shine on all machines (src/world/surface.js), using Poly Haven's CC0 "Blue Metal Plate" texture, chosen from tools/metal-texture-samples.html. Checked by eye in the game by Abdulkarim; the full ?test run was not repeated |
 | 15 Nov | Abdulkarim | Claude Code | 30-second Arabic trailer from TRAILER_HANDOFF.md: frame-by-frame capture of the game (tools/trailer), the edit with Arabic titles, NASA photo cross-fades and logos, sound made in code, encoded to pitch/Relica-trailer-30s.mp4; checked by decoding the file |
 | Nov | Abdullatif | Codex | Relica logo and the "Field Archive" brand kit (colours, type, icons) designed as simple vector shapes with AI help, then chosen and approved by the team. No image generator was used for the logo |
-| 15 Nov | Abdullatif | Claude Code | Scripts that build and render the presentation deck from the team's text, NASA photos and logos; team photos had their backgrounds removed with the open u2netp segmentation model. All people shown are team members (adults) |
+| 15 Nov | Abdullatif | Claude Code | Scripts that build and render the presentation deck from the team's text, NASA photos and logos. Team photos: background removed with an AI segmentation model, no generated content |
 | 15 Nov | Abdullatif | Claude Code | Submission preparation: README for judges, CREDITS.md, this summary, link checks of the NASA sources, moving the internal team notes to docs/team/, removing a copyrighted reference image. The game itself was not changed |

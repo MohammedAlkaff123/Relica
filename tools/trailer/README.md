@@ -1,7 +1,7 @@
 # Trailer tools
 
 Makes the 30-second Arabic trailer described in `TRAILER_HANDOFF.md`, entirely from the game itself.
-Result: `pitch/Relica-trailer-30s.mp4` (H.264 + AAC, 1920×1080, 30 fps, 30 s, about 25 MB).
+Result: a 30-second MP4 (H.264 + AAC, 1920×1080, 30 fps, about 25 MB). The Arabic cut is kept outside the repository; the submitted English demo is https://youtu.be/ljCjr-8vD4M.
 
 Nothing here is part of the game. It needs Node and Chrome (already on the team laptops); no ffmpeg.
 
