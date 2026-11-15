@@ -76,6 +76,7 @@ export default makeChapter({
     await rememberTheMachines(s, ctx);
     s.hero.setEmotion('sleepy');
     await s.say('ep_last');
+    await s.tribute('ARC-1972-AC72-2135');
     ctx.audio.music?.('ending');
     s.onDispose(() => ctx.audio.music?.(null));
     await s.shot('ending');

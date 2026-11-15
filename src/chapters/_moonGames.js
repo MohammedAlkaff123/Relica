@@ -101,7 +101,10 @@ function drawShape(g, shape, x, y, r, fill) {
 }
 
 export async function fenderRepair(s, ctx) {
-  const ui = gamePanel(s, { title: { en: 'Fix the fender with maps and clamps', ar: 'صلّح الرفرف بالخرائط والملاقط' }, width: 520, height: 300 });
+  const ui = gamePanel(s, { title: { en: 'The fender broke: make a new one out of maps', ar: 'الرفرف انكسر: سوّ له رفرف جديد من الخرائط' },
+    intro: { en: 'There are no spare parts on the Moon, so the crew taped four laminated maps into a new fender and held it on with clamps.',
+      ar: 'ما فيه قطع غيار على القمر، فالطاقم لصق ٤ خرائط مغلّفة وسوّى منها رفرف جديد، وثبّتوه بملاقط.' },
+    width: 520, height: 300 });
   ui.help({ en: 'A / D: choose the spot. Space: place the piece. Or drag it with the mouse.',
     ar: 'A / D: اختر المكان. Space: ثبّت القطعة. أو اسحبها بالماوس.' });
   const st = { cursor: 2, next: 0, placed: new Set(), misses: 0, wiggle: 0, drag: null, dust: [] };

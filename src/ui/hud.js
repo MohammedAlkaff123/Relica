@@ -27,6 +27,7 @@ import { found } from './discoveries.js';
 import { prefs, pick } from './prefs.js';
 import { t, translate, holdAction, registerPairs, isolateUnits } from './i18n.js';
 import { fillWithKeys, keycap } from './keys.js';
+import { icon } from './icons.js';
 
 const ltr = (parent, text) => { const b = el('bdi', 'ltr', parent, text); b.dir = 'ltr'; return b; };
 
@@ -137,6 +138,43 @@ export function createHud(root, facts) {
   }
   const factText = (fact) => fact.text ? isolateUnits(translate(fact.text)) : `${fact.value} ${translate(fact.unit ?? '')}`.trim();
 
+  // World conditions for players of any age: an icon, a few words and a bar compared with Earth.
+  // The exact NASA numbers stay in the tooltip (and in content/facts.json).
+  const EARTH_G = 9.81, EARTH_MBAR = 1014;
+  // If a text is missing (an old cached i18n.js next to a new hud.js), never show the raw key.
+  const tx = (key, vars, fallback = '') => { const s = t(key, vars); return s === key ? fallback : s; };
+  const num = (x) => Number(String(x).replace(/[−–]/g, '-').replace(/,/g, ''));
+  function gravityLevel(fact) {
+    const g = Number(fact.value);
+    if (!(g > 0.05)) return { fill: 0, word: tx('cond.g.float') };
+    const ratio = EARTH_G / g;
+    if (ratio < 1.3) return { fill: Math.min(1, g / EARTH_G), word: tx('cond.g.earth') };
+    return { fill: g / EARTH_G, word: tx('cond.g.lighter', { n: Math.round(ratio) }) };
+  }
+  function tempWord(c) {
+    return c < -150 ? 'cond.t.deep' : c < -20 ? 'cond.t.verycold' : c < 10 ? 'cond.t.cold' : c <= 35 ? 'cond.t.mild' : c <= 80 ? 'cond.t.hot' : 'cond.t.veryhot';
+  }
+  function tempLevel(fact) {
+    const temps = [...String(fact.text ?? '').matchAll(/([−+\-]?\d+(?:\.\d+)?)\s?°C/g)].map((m) => num(m[1]));
+    if (!temps.length) return null;
+    const pos = (c) => Math.max(0.03, Math.min(0.97, (c + 273) / (150 + 273)));
+    const lo = Math.min(...temps), hi = Math.max(...temps);
+    const word = tx(temps.length > 1 && hi > 35 && lo < -20 ? 'cond.t.daynight' : tempWord(temps[0]));
+    return { from: pos(lo), to: pos(hi), word };
+  }
+  function airLevel(fact) {
+    const text = String(fact.text ?? '');
+    let mbar = /vacuum|almost none/i.test(text) ? 0 : null;
+    const m = text.match(/([\d.,]+)\s?mbar/);
+    if (mbar === null && m) mbar = num(m[1]);
+    if (mbar === null && /atmosphere/i.test(text)) mbar = EARTH_MBAR;
+    if (mbar === null) return null;
+    const share = mbar / EARTH_MBAR;
+    const word = tx(share <= 0 ? 'cond.a.none' : share < 0.05 ? 'cond.a.thin' : 'cond.a.earth');
+    return { fill: Math.sqrt(Math.min(1, share)), word };
+  }
+  const GAUGES = [['gravity', 'weight', gravityLevel], ['temperature', 'thermometer', tempLevel], ['pressure', 'wind', airLevel]];
+
   function drawWorld() {
     const name = given.world;
     if (!name) return;
@@ -144,21 +182,36 @@ export function createHud(root, facts) {
     title.textContent = translate(w.label);
     place.textContent = translate(w.place);
     for (const r of [...rows.querySelectorAll('.row.fact')]) r.remove();
-    let unverified = false;
     const first = rows.firstChild;
-    for (const key of ['gravity', 'temperature', 'pressure']) {
+    for (const [key, ic, level] of GAUGES) {
       const fact = w[key];
       if (!fact) continue;
-      if (!fact.verified) unverified = true;
-      const r = el('div', 'row fact');
-      el('span', 'row-label', r, translate(key));
-      const v = el('span', 'row-value' + (fact.verified ? '' : ' unverified'), r);
-      if (fact.text || prefs.language === 'ar') v.textContent = isolateUnits(factText(fact)); else ltr(v, factText(fact));
-      if (!fact.verified) v.title = t('hud.unverified');
+      const lv = level(fact);
+      const r = el('div', 'row fact gauge gauge-' + key);
+      r.title = translate(key) + ': ' + factText(fact) + (fact.verified ? '' : ' · ' + t('hud.unverified'));
+      el('span', 'gauge-icon', r).append(icon(ic));
+      const body = el('div', 'gauge-body', r);
+      const head = el('div', 'gauge-head', body);
+      el('span', 'gauge-label', head, tx('cond.' + key, null, translate(key)));
+      el('span', 'gauge-word' + (fact.verified ? '' : ' unverified'), head, (lv && lv.word) || factText(fact));
+      if (lv) {
+        const track = el('div', 'gauge-track', body);
+        if (key === 'temperature') {
+          const seg = el('span', 'gauge-range', track);
+          seg.style.insetInlineStart = (lv.from * 100).toFixed(1) + '%';
+          seg.style.width = Math.max(0, (lv.to - lv.from) * 100).toFixed(1) + '%';
+          for (const at of lv.to - lv.from > 0.02 ? [lv.from, lv.to] : [lv.from]) {
+            const dot = el('span', 'gauge-dot', track);
+            dot.style.insetInlineStart = (at * 100).toFixed(1) + '%';
+          }
+        } else {
+          el('span', 'gauge-fill', track).style.width = (lv.fill * 100).toFixed(1) + '%';
+          el('span', 'gauge-earth', track).title = tx('cond.earth', null, 'Earth');
+        }
+      }
       rows.insertBefore(r, first);
     }
-    legend.textContent = t('hud.unverified');
-    legend.classList.toggle('hidden', !unverified);
+    legend.classList.add('hidden');
   }
 
   function drawObjective() {
@@ -321,7 +374,14 @@ export function createHud(root, facts) {
         findingEn.lang = 'en'; findingEn.dir = 'ltr';
         findingAr.lang = 'ar'; findingAr.dir = 'rtl';
       }
-      findingEn.textContent = en; findingAr.textContent = ar;
+      // Set C: the chosen language first; the other one only when "second language" is on in Settings.
+      const arFirst = prefs.language === 'ar' && ar;
+      const second = prefs.get().secondary;
+      findingEn.textContent = arFirst ? ar : en;
+      findingEn.lang = arFirst ? 'ar' : 'en'; findingEn.dir = arFirst ? 'rtl' : 'ltr';
+      findingAr.textContent = second ? (arFirst ? en : ar) : '';
+      findingAr.lang = arFirst ? 'en' : 'ar'; findingAr.dir = arFirst ? 'ltr' : 'rtl';
+      findingAr.classList.toggle('hidden', !findingAr.textContent);
       finding.classList.remove('hidden', 'leaving');
       finding.style.animation = 'none'; void finding.offsetWidth; finding.style.animation = ''; // play the entrance again
       clearTimeout(findingTimer);

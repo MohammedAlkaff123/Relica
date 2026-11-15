@@ -327,6 +327,26 @@ html[lang="en"] .hud .row-label::first-letter { text-transform: uppercase; }
 .hud .row-value { text-align: end; font-weight: 600; }
 .hud .unverified::after { content: "?"; display: inline-grid; place-items: center; width: 16px; height: 16px; margin-inline-start: 6px; border-radius: 50%; background: var(--clay); color: var(--ink); font-size: 11px; }
 .hud .legend { color: var(--clay); font-size: 12px; margin-top: 6px; }
+/* World conditions: icon, words and a bar compared with Earth (no raw numbers). */
+.hud .gauge { justify-content: flex-start; align-items: center; gap: 12px; padding: 9px 0; }
+.gauge-icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--ink-3); color: var(--paper); }
+.gauge-icon svg { width: 20px; height: 20px; }
+.gauge-gravity .gauge-icon { color: #C9B8F2; }
+.gauge-temperature .gauge-icon { color: #F2A27E; }
+.gauge-pressure .gauge-icon { color: #9FD0F0; }
+.gauge-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gauge-head { display: flex; flex-direction: column; gap: 1px; }
+.gauge-label { font-size: 11.5px; color: var(--muted-light); }
+.gauge-word { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.gauge-word.unverified::after { width: 14px; height: 14px; font-size: 10px; vertical-align: 1px; }
+.gauge-track { position: relative; height: 8px; border-radius: var(--r-pill); background: var(--ink-3); }
+.gauge-fill { position: absolute; inset-block: 0; inset-inline-start: 0; min-width: 6px; border-radius: inherit; background: #9C8BD6; }
+.gauge-pressure .gauge-fill { background: #7DB6DA; }
+.gauge-earth { position: absolute; inset-inline-end: -2px; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: #6FB07F; }
+.gauge-temperature .gauge-track { background: linear-gradient(to right, #4C7BD1, #8FC1E8 45%, #E9DFC8 68%, #E39A5E 84%, #C8553D); }
+html[dir="rtl"] .gauge-temperature .gauge-track { background: linear-gradient(to left, #4C7BD1, #8FC1E8 45%, #E9DFC8 68%, #E39A5E 84%, #C8553D); }
+.gauge-range { position: absolute; top: 2px; bottom: 2px; background: rgba(16, 24, 32, 0.35); border-radius: var(--r-pill); }
+.gauge-dot { position: absolute; top: 50%; width: 14px; height: 14px; margin-inline-start: -7px; transform: translateY(-50%); border-radius: 50%; background: var(--paper); border: 3px solid var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
 .hud .battery .row-value { display: flex; align-items: center; gap: 8px; }
 .hud .bar { display: inline-block; width: 100px; height: 9px; border-radius: var(--r-pill); background: var(--ink-3); overflow: hidden; }
 html[dir="rtl"] .hud .bar { transform: scaleX(-1); }
@@ -410,9 +430,9 @@ html[dir="rtl"] .navigation { padding: 10px 12px 10px 20px; }
 
 /* Dialogue: a paper card at the bottom */
 .dialogue {
-  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-  width: min(780px, 94vw); background: var(--paper); color: var(--ink);
-  border-radius: var(--r-lg); padding: 16px 24px 14px; box-shadow: var(--shadow);
+  position: absolute; left: 0; right: 0; margin: 0 auto; bottom: 14px;
+  width: min(680px, 94vw); background: rgba(255, 250, 240, 0.96); color: var(--ink);
+  border-radius: var(--r-lg); padding: 10px 18px 10px; box-shadow: var(--shadow);
   border-inline-start: 8px solid var(--speaker, var(--copper));
 }
 .dialogue .who { display: flex; }
@@ -422,10 +442,13 @@ html[dir="rtl"] .navigation { padding: 10px 12px 10px 20px; }
 .dialogue[data-who="viking"]      { --speaker: #6B6A4E; }
 .dialogue[data-who="ingenuity"]   { --speaker: #3F6C86; }
 .dialogue[data-who="pioneer"]     { --speaker: #5B4E86; }
-.dialogue .line-main { margin: 10px 0 2px; min-height: 1.7em; font-size: 22px; line-height: 1.7; font-weight: 600; unicode-bidi: plaintext; text-align: start; }
-.dialogue .line-main:lang(ar) { font-size: 24px; }
+.dialogue .line-main { margin: 4px 0 0; min-height: 1.5em; font-size: 19px; line-height: 1.55; font-weight: 600; unicode-bidi: plaintext; text-align: start; }
+.dialogue .line-main:lang(ar) { font-size: 20px; }
 .dialogue .line-second { font-size: 15px; color: var(--muted); min-height: 1.4em; unicode-bidi: plaintext; text-align: start; }
-.dialogue-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+.dialogue-foot { position: absolute; inset-inline-end: 14px; bottom: 10px; display: flex; }
+.dialogue .line-main, .dialogue .line-second { padding-inline-end: 132px; }
+.dialogue .line-second:empty { display: none; }
+@media (max-width: 560px) { .dialogue-foot { position: static; justify-content: flex-end; margin-top: 4px; } .dialogue .line-main, .dialogue .line-second { padding-inline-end: 0; } }
 .next-btn {
   pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 14px 4px 6px;
   border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--archive); color: var(--ink);
@@ -626,6 +649,7 @@ h3.wall-heading { margin: 22px 0 12px; font-size: 18px; font-weight: 600; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 .mission .tasks li.done kbd.keycap { opacity: 0.5; box-shadow: none; }
+body:has(.navigation:not(.hidden)) .controls-hint { bottom: 96px; }
 
 /* A finding: one clear card near the bottom while the player keeps driving (hud.note) */
 .finding {
@@ -635,8 +659,63 @@ h3.wall-heading { margin: 22px 0 12px; font-size: 18px; font-weight: 600; }
   border-top: 6px solid var(--success-light); padding: 14px 24px;
   animation: finding-in 0.4s ease-out; transition: opacity 0.6s;
 }
-.finding .en { font: 600 21px/1.3 RelicaInter, system-ui, sans-serif; }
-.finding .ar { font: 600 18px/1.6 RelicaArabic, system-ui, sans-serif; margin-top: 2px; color: var(--muted); }
+.finding .en { font-family: var(--font); font-size: 21px; font-weight: 600; line-height: 1.5; }
+.finding .ar { font-family: var(--font); font-size: 16px; font-weight: 600; line-height: 1.5; margin-top: 2px; color: var(--muted); }
 .finding.leaving { opacity: 0; }
 .dialogue:not(.hidden) ~ .finding { bottom: 210px; } /* a conversation has the bottom of the screen: move up */
 @keyframes finding-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* Viking's flashback: the 3D view like an old photograph, dark at the edges */
+body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
+.flashback-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, #1a0f05cc 100%); animation: flashback-flicker 0.35s steps(2) infinite; }
+.flashback-label { position: absolute; top: 88px; left: 50%; transform: translateX(-50%); padding: 3px 12px; font: 500 12px var(--font); letter-spacing: 0.12em; text-transform: uppercase; color: #f1e3c4; background: #1a0f05aa; border: 1px solid #f1e3c455; white-space: nowrap; }
+.flashback-label [lang="ar"] { font: 600 14px RelicaArabic, system-ui, sans-serif; letter-spacing: 0; }
+@keyframes flashback-flicker { from { opacity: 1; } to { opacity: 0.93; } }
+@media (prefers-reduced-motion: reduce) { .flashback-veil { animation: none; } }
+
+/* Time skip: a counter racing in the middle of the screen (_timeJump.js) */
+/* The launch from inside the folded rover (cinematic.js, shot.eyes): engine glow from below, a slit of
+   light through the closed panel, shaking while the rocket climbs; cool and still once weightless. */
+.launch-light { position: absolute; inset: 0; pointer-events: none; --burn: 0; }
+.launch-light ~ .launch-eyes, .launch-eyes { z-index: 1; }
+.launch-glow { position: absolute; inset: -20px; background: radial-gradient(ellipse 95% 75% at 50% 112%, rgba(255, 150, 70, 0.85), rgba(255, 110, 40, 0.32) 45%, transparent 80%); opacity: var(--burn); }
+.launch-slit { position: absolute; left: 18%; right: 18%; top: 22%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, rgba(255, 214, 160, 0.8), transparent); box-shadow: 0 0 18px 4px rgba(255, 170, 90, 0.35); opacity: calc(0.25 + var(--burn) * 0.6); }
+.launch-label { position: absolute; left: 50%; bottom: 16vh; transform: translateX(-50%); font: 600 13px var(--font); letter-spacing: 0.08em; color: rgba(242, 235, 221, 0.7); }
+.launch-light.weightless .launch-glow { opacity: 0.35; background: radial-gradient(ellipse 60% 50% at 50% 110%, rgba(120, 160, 220, 0.35), transparent 70%); transition: opacity 1.5s, background 1.5s; }
+.launch-light.weightless .launch-slit { opacity: 0.2; background: linear-gradient(90deg, transparent, rgba(170, 200, 255, 0.6), transparent); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .launch-light { transform: none !important; } }
+
+.time-jump { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; text-align: center; pointer-events: none; text-shadow: 0 2px 16px #000; }
+.time-jump .label { font: 500 14px var(--font); letter-spacing: 0.3em; text-transform: uppercase; color: var(--copper-light); }
+.time-jump .label [lang="ar"] { font: 600 16px RelicaArabic, system-ui, sans-serif; letter-spacing: 0; }
+.time-jump .number { font: 500 clamp(64px, 13vw, 150px)/1.05 var(--font); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: #f1ede4; filter: blur(1.2px); transition: filter 0.25s, color 0.25s, transform 0.25s; }
+.time-jump.landed .number { filter: none; color: var(--copper-light); transform: scale(1.06); }
+
+/* A machine's service record under its real photo (memory.show with tribute) */
+.memory .service-label { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc7b9; font: 500 11px var(--font); letter-spacing: 0.1em; text-transform: uppercase; color: #5b5b5b; }
+.memory .outside-pack { margin-top: 2px; font-style: italic; }
+/* A new deploy is on the site: a small card in the corner with an Update button (boot.js). */
+.update-toast { position: fixed; z-index: 80; bottom: 16px; inset-inline-start: 16px; display: flex; align-items: center; gap: 12px; max-width: min(460px, calc(100vw - 32px)); padding: 10px 10px 10px 16px; border-radius: var(--r-lg); background: var(--paper); color: var(--ink); font-family: var(--font); font-size: 14px; font-weight: 600; box-shadow: var(--shadow); animation: rise 0.35s ease-out both; }
+.update-toast .btn { min-height: 40px; padding: 6px 16px; flex: 0 0 auto; }
+
+/* World panel, compact (playtest: it must stay a small corner card, about a quarter of the screen at most). */
+.hud { width: 216px; padding: 10px 12px 6px; font-size: 12px; line-height: 1.4; }
+.hud h2 { font-size: 15px; }
+.hud .place { font-size: 11.5px; margin-bottom: 2px; }
+.hud .row { padding: 4px 0; gap: 10px; }
+.hud .row-label { font-size: 11.5px; }
+.hud .row-value { font-size: 12.5px; }
+.hud .bar { width: 64px; height: 7px; }
+.hud .counter .planned { font-size: 10.5px; margin-inline-start: 6px; }
+.hud .row[data-label="mission"], .hud .row[data-label="phase"] { display: none; } /* the mission card already says it */
+.hud .gauge { padding: 5px 0; gap: 8px; }
+.gauge-icon { flex: 0 0 24px; height: 24px; }
+.gauge-icon svg { width: 15px; height: 15px; }
+.gauge-label { display: none; } /* the icon and the words say it; the full name is in the tooltip */
+.gauge-body { gap: 4px; }
+.gauge-word { font-size: 12px; line-height: 1.3; }
+.gauge-track { height: 5px; }
+.gauge-earth { top: -3px; height: 11px; width: 3px; }
+.gauge-dot { width: 10px; height: 10px; margin-inline-start: -5px; border-width: 2px; }
+@media (max-height: 720px) { .hud { width: 200px; } .hud .row-label, .hud .row-value, .gauge-word { font-size: 11.5px; } }
+

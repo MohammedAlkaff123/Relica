@@ -30,7 +30,7 @@ export async function wrightFabric(s, ctx) {
   let done = false;
   holding.then(() => { done = true; }, () => {});
   await s.until((dt) => {
-    if (ctx.input.down('KeyE')) st.attached += dt / 1.2;
+    if (ctx.input.down('KeyE')) st.attached += dt / 0.5; // matches the 0.5 s hold in _stage.js
     draw();
     return done;
   });

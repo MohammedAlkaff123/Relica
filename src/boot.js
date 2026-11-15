@@ -107,6 +107,38 @@ function finish() {
   }, 600);
 }
 
+// ---------- a new version on the site ----------
+// Every minute the page asks for content/preload.json (its version changes with each deploy). On the
+// landing page it simply reloads; during play it offers a Reload button, so nobody loses their place
+// without choosing to (progress is saved at each chapter start).
+let loadedVersion = null;
+const siteVersion = async () => {
+  try { return (await (await fetch('content/preload.json', { cache: 'no-store' })).json()).version ?? null; } catch { return null; }
+};
+siteVersion().then((v) => { loadedVersion = v; });
+let updateShown = false;
+setInterval(async () => {
+  if (document.hidden || !loadedVersion || updateShown || deepLink) return;
+  const v = await siteVersion();
+  if (!v || v === loadedVersion) return;
+  if (document.body.classList.contains('on-landing') && !document.body.classList.contains('loading')) { location.reload(); return; }
+  updateShown = true;
+  const box = document.createElement('div');
+  box.className = 'update-toast';
+  box.setAttribute('role', 'status');
+  const words = document.createElement('span');
+  words.textContent = t('update.ready');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-primary';
+  btn.textContent = t('update.reload');
+  btn.addEventListener('click', () => location.reload());
+  btn.addEventListener('keydown', (e) => e.stopPropagation());
+  btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  box.append(words, btn);
+  document.body.append(box);
+}, 60000);
+
 $('load-retry').addEventListener('click', load);
 $('start').addEventListener('click', () => {
   $('landing').classList.add('leaving');

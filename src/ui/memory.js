@@ -35,6 +35,10 @@ export async function createMemory(root, prompt) {
   function credit(parent, p) {
     const line = el('bdi', 'meta', parent, `${overrides[p.nasa_id]?.taken ?? p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`);
     line.dir = 'ltr';
+    // outsidePack: added later from images.nasa.gov, not from the team's data pack. The card says so.
+    if (overrides[p.nasa_id]?.outsidePack) {
+      el('div', 'meta outside-pack', parent, prefs.language === 'ar' ? 'من موقع ناسا، وليست من حزمة بياناتنا' : 'From images.nasa.gov, not from our data pack');
+    }
     return line;
   }
   // The caption in the chosen language, and the other one under it if the player asked for subtitles.
@@ -125,7 +129,8 @@ export async function createMemory(root, prompt) {
         img.src = src(p);
       });
     },
-    async show(id, { reveal = false } = {}) {
+    // tribute: show the machine's verified service record under the photo instead of the photo caption.
+    async show(id, { reveal = false, tribute = false } = {}) {
       const p = photos.get(id);
       if (!p) { console.warn(`memory "${id}" is not in public/nasa/metadata.json`); return; }
       if (!collected.includes(id)) collected.push(id);
@@ -139,7 +144,11 @@ export async function createMemory(root, prompt) {
         el('div', 'real-tag', words, t('hud.realPhoto'));
         el('h3', '', words, titleOf(p));
         credit(words, p);
-        if (o.caption) caption(words, o.caption);
+        // tribute: the machine's verified service record in place of the photo caption.
+        if (tribute && o.tribute) {
+          el('div', 'service-label', words, prefs.language === 'ar' ? 'سجلّ الخدمة' : 'Service record');
+          caption(words, o.tribute);
+        } else if (o.caption) caption(words, o.caption);
         else {
           const text = p.description.length > 230 ? p.description.slice(0, 230).trimEnd() + '…' : p.description;
           el('div', 'desc', words, text);

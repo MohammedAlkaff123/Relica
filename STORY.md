@@ -140,6 +140,28 @@ Sources: [NASA/JPL first-flight report](https://www.jpl.nasa.gov/news/nasas-inge
 
 Abdullatif writes the final Arabic and English from this. The English here is a draft to show the feeling, not the final text. Keep every line under 12 English words.
 
+**Mohammed's story pass, 15 Nov.** `content/dialogue.json` is now ahead of the drafts in this table; where they differ, the JSON is right. What changed:
+
+- The rover says "I have wheels" only after the player has spun them (`ch0_wheels`). The people say "let's go" before it asks where (`ch0_fold`).
+- Remarks made while driving are small captions that never stop the player: `ch1_intro`, `ch1_dust`, `ch2_storm`.
+- When the crew walks away the rover asks where they are going and gets only a hum back (`ch1_leaving`).
+- Opportunity opens with pride in its mission, not with the number ninety. It asks the rocks about water instead of answering itself. Its sol lines use the real counter: 120, then 4,712.
+- The Viking call starts first. Half-way through, Viking tells its story and the player plays it as a sepia 1976 flashback (photo, soil sample); then the call resumes (`ch2_viking_call`, `ch2_viking_call_2`).
+- Opportunity's last line is cut mid-word as the battery dies (`ch2_storm_cut`).
+- No machine says "I'm still here" at the end of its own chapter. They say it once, together, in `ep_voices`.
+- Every machine's chapter ends on its real NASA photo with its service record (`stage.tribute`).
+- The Moon chapter ends on a photo of the whole Apollo 17 rover in its final parking place (`as17-146-22367`, added from images.nasa.gov). The fender photo stays where it was, during the repair.
+- What the instruments find on Mars is a small note in the corner that fades by itself, not a card that needs Enter. After the third find Opportunity says three clues are enough, then that the dry place has a history (`ch2_water`).
+- Each time skip on Mars shows a large sol counter racing in the middle of the screen; the line for the new sol comes after it settles.
+- Viking leads into the flashback with "let me tell you what I found". The "Viking's memory" label sits under the instruction line.
+- The Apollo 17 rover photo at the end of the Moon chapter is not from the data pack; its card says it came from images.nasa.gov (`outsidePack` in `content/memories.json`).
+- The Mars chapter ends on two cards: Opportunity's, then Viking's own photo (`PIA00565`) with its record. The flashback keeps the footpad photo.
+- Ingenuity introduces itself with its task (five flights to prove flight on Mars is possible), then the thin air, then "let's start the first flight". After landing it celebrates (`ch3_first_flight`); its photo and record wait for the chapter's end.
+- Every time skip shows the big centred counter: sols on Mars, flights for Ingenuity (1 to 6, then to 71), years for Pioneer (1973 to 2003).
+- Hazards are marked only in the air; landed next to one, the player is told to take off. Flags stand on the ground at the hazard's near edge. The camera rides with Perseverance along the route.
+- Flight 72: "what's happening? I think I'm going to fall" and, after the crash, "I'll try again" are passing captions; "I can keep going" too. Ingenuity ends with "I think this is the end… seventy-two flights, I counted them", said once.
+- Pioneer's camera tilts with W/S as well as turning with A/D. The "more than 30 years" card is gone from the mission; it stays in the service record. Pioneer no longer mentions the Moon rover: it drifts alone in the void (`ep_drift`).
+
 | Id | Who | Emotion | What the line must do | Draft |
 |---|---|---|---|---|
 | `ch0_wake` | lrv | sleepy | First thought. Small and confused | "…Oh. I'm on." |
