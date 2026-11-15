@@ -74,15 +74,17 @@ export async function startGame({ onStep = () => {} } = {}) {
   const ctx = {
     scene: game.scene, camera: game.camera, renderer: game.renderer,
     input, physics, facts, tuning, characters,
-    hud, card, dialogue, memory, followCam, cinematics, audio, navigation, quality,
+    hud, card, dialogue, memory, followCam, cinematics, audio, navigation, quality, prompt,
   };
+  // Space continues text only when the player is not driving or flying (there it hops or lifts).
+  prompt.spaceAllowed = () => !ctx.stage?.controls;
 
   const list = [opening, moon, mars, sky, epilogue];
   const chapters = createChapters(list, ctx, () => {
     // Called when we jump chapters: close anything that is waiting on the player.
     prompt.cancel();
     cinematics.cancel();
-    fadeTo(0, 0);
+    fadeTo(1, 0); // stay black while the next chapter is built; it fades itself in (no empty frame, no pop)
     dialogue.hide(); memory.hide(); card.hide();
     hud.setObjective('');
     hud.setHold?.(null);
