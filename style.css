@@ -327,6 +327,26 @@ html[lang="en"] .hud .row-label::first-letter { text-transform: uppercase; }
 .hud .row-value { text-align: end; font-weight: 600; }
 .hud .unverified::after { content: "?"; display: inline-grid; place-items: center; width: 16px; height: 16px; margin-inline-start: 6px; border-radius: 50%; background: var(--clay); color: var(--ink); font-size: 11px; }
 .hud .legend { color: var(--clay); font-size: 12px; margin-top: 6px; }
+/* World conditions: icon, words and a bar compared with Earth (no raw numbers). */
+.hud .gauge { justify-content: flex-start; align-items: center; gap: 12px; padding: 9px 0; }
+.gauge-icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--ink-3); color: var(--paper); }
+.gauge-icon svg { width: 20px; height: 20px; }
+.gauge-gravity .gauge-icon { color: #C9B8F2; }
+.gauge-temperature .gauge-icon { color: #F2A27E; }
+.gauge-pressure .gauge-icon { color: #9FD0F0; }
+.gauge-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gauge-head { display: flex; flex-direction: column; gap: 1px; }
+.gauge-label { font-size: 11.5px; color: var(--muted-light); }
+.gauge-word { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.gauge-word.unverified::after { width: 14px; height: 14px; font-size: 10px; vertical-align: 1px; }
+.gauge-track { position: relative; height: 8px; border-radius: var(--r-pill); background: var(--ink-3); }
+.gauge-fill { position: absolute; inset-block: 0; inset-inline-start: 0; min-width: 6px; border-radius: inherit; background: #9C8BD6; }
+.gauge-pressure .gauge-fill { background: #7DB6DA; }
+.gauge-earth { position: absolute; inset-inline-end: -2px; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: #6FB07F; }
+.gauge-temperature .gauge-track { background: linear-gradient(to right, #4C7BD1, #8FC1E8 45%, #E9DFC8 68%, #E39A5E 84%, #C8553D); }
+html[dir="rtl"] .gauge-temperature .gauge-track { background: linear-gradient(to left, #4C7BD1, #8FC1E8 45%, #E9DFC8 68%, #E39A5E 84%, #C8553D); }
+.gauge-range { position: absolute; top: 2px; bottom: 2px; background: rgba(16, 24, 32, 0.35); border-radius: var(--r-pill); }
+.gauge-dot { position: absolute; top: 50%; width: 14px; height: 14px; margin-inline-start: -7px; transform: translateY(-50%); border-radius: 50%; background: var(--paper); border: 3px solid var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
 .hud .battery .row-value { display: flex; align-items: center; gap: 8px; }
 .hud .bar { display: inline-block; width: 100px; height: 9px; border-radius: var(--r-pill); background: var(--ink-3); overflow: hidden; }
 html[dir="rtl"] .hud .bar { transform: scaleX(-1); }
@@ -410,9 +430,9 @@ html[dir="rtl"] .navigation { padding: 10px 12px 10px 20px; }
 
 /* Dialogue: a paper card at the bottom */
 .dialogue {
-  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-  width: min(780px, 94vw); background: var(--paper); color: var(--ink);
-  border-radius: var(--r-lg); padding: 16px 24px 14px; box-shadow: var(--shadow);
+  position: absolute; left: 0; right: 0; margin: 0 auto; bottom: 14px;
+  width: min(680px, 94vw); background: rgba(255, 250, 240, 0.96); color: var(--ink);
+  border-radius: var(--r-lg); padding: 10px 18px 10px; box-shadow: var(--shadow);
   border-inline-start: 8px solid var(--speaker, var(--copper));
 }
 .dialogue .who { display: flex; }
@@ -422,10 +442,13 @@ html[dir="rtl"] .navigation { padding: 10px 12px 10px 20px; }
 .dialogue[data-who="viking"]      { --speaker: #6B6A4E; }
 .dialogue[data-who="ingenuity"]   { --speaker: #3F6C86; }
 .dialogue[data-who="pioneer"]     { --speaker: #5B4E86; }
-.dialogue .line-main { margin: 10px 0 2px; min-height: 1.7em; font-size: 22px; line-height: 1.7; font-weight: 600; unicode-bidi: plaintext; text-align: start; }
-.dialogue .line-main:lang(ar) { font-size: 24px; }
+.dialogue .line-main { margin: 4px 0 0; min-height: 1.5em; font-size: 19px; line-height: 1.55; font-weight: 600; unicode-bidi: plaintext; text-align: start; }
+.dialogue .line-main:lang(ar) { font-size: 20px; }
 .dialogue .line-second { font-size: 15px; color: var(--muted); min-height: 1.4em; unicode-bidi: plaintext; text-align: start; }
-.dialogue-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+.dialogue-foot { position: absolute; inset-inline-end: 14px; bottom: 10px; display: flex; }
+.dialogue .line-main, .dialogue .line-second { padding-inline-end: 132px; }
+.dialogue .line-second:empty { display: none; }
+@media (max-width: 560px) { .dialogue-foot { position: static; justify-content: flex-end; margin-top: 4px; } .dialogue .line-main, .dialogue .line-second { padding-inline-end: 0; } }
 .next-btn {
   pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 14px 4px 6px;
   border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--archive); color: var(--ink);
@@ -626,3 +649,4 @@ h3.wall-heading { margin: 22px 0 12px; font-size: 18px; font-weight: 600; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 .mission .tasks li.done kbd.keycap { opacity: 0.5; box-shadow: none; }
+body:has(.navigation:not(.hidden)) .controls-hint { bottom: 96px; }

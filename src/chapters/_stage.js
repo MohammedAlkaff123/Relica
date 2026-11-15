@@ -164,7 +164,7 @@ export function setupStage(ctx, cfg) {
     // for more than 2 seconds: long enough to be a choice, short enough not to feel stuck.
     hold(code, seconds, text) {
       let held = 0, shown = '';
-      const need = Math.min(seconds, 2);
+      const need = Math.min(seconds, 1); // Set C: a hold never takes more than 1 second (playtest feedback)
       const key = code.replace(/^Key/, '');
       return guarded((done) => {
         const task = (dt) => {
