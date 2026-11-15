@@ -24,7 +24,16 @@ python serve.py
 Then open http://localhost:5173
 
 Opening `index.html` by double-click does not work: browsers only load the game's code from a server.
-The page needs internet, because Three.js, Rapier and lil-gui load from a CDN (see `index.html`).
+Three.js, Rapier and lil-gui are local copies in `vendor/`, so the game also runs without internet.
+
+What a player sees:
+1. **Landing page**: the Relica × NASA Space Apps Challenge logos, the challenge, the idea in one line, a GitHub link and **Start the game**.
+2. **Loading screen**: downloads every file in `content/preload.json` (about 8 MB) into memory with real progress in bytes, then starts physics and the worlds.
+3. **Main menu** over a live Moon scene: Continue (from the last chapter reached, saved on the device), New game, Chapters, Settings (Arabic / English, graphics Low / Medium / High, sound levels for music, voices and effects, mute, second-language subtitles), How to play and Credits.
+
+The address shortcuts for the team still skip all of that: `?chapter=3`, `?jump=storm`, `?test&speed=4`. Add `&lang=ar` or `&lang=en` to pick a language for one visit and `&mute` to start silent.
+After adding or changing assets, run `node tools/make-preload.mjs` so the loading screen knows about them.
+Sound test page (every sound, loop, voice and emotion, with silent dB measuring): http://localhost:5173/tools/sound-test.html
 
 ## Controls
 
@@ -38,7 +47,8 @@ The page needs internet, because Three.js, Rapier and lil-gui load from a CDN (s
 | R | Restart the current chapter |
 | 6 / 7 / 8 / 9 | Jump to fender repair / Viking memory and call / dust storm / flight 72 |
 | 1 2 3 4 5 | Jump to a chapter: opening, Moon, Mars, Mars sky, epilogue |
-| Escape | Skip a cutscene |
+| Escape | Skip a cutscene; closes a menu |
+| P | Pause menu (also the pause and settings buttons in the top corner) |
 | ` (under Escape) | Show or hide the tuning panel. Add `#dev` to the address to start with it open |
 
 ## What exists right now
@@ -97,7 +107,7 @@ ctx.hud.discover('moon_gravity')         // discovery card from content/discover
 await ctx.card.chapter('mars')           // chapter card from content/chapters.json
 await ctx.card.title()                   // title screen
 await ctx.card.ending()                  // "The conversations are imagined..."
-await ctx.card.credits()                 // credits
+await ctx.card.credits()                 // end screen (team, sources); only its buttons close it: 'menu' or 'again'
 await ctx.dialogue.play('ch2_viking_call', { auto: true })  // lines advance on their own
 ctx.audio.setWorld('mars')               // background: factory | moon (silent) | mars | space
 ctx.audio.setWind(1)                     // the dust storm
@@ -106,7 +116,16 @@ ctx.audio.loop('rotor', true)            // looping: rotor | hum, with ctx.audio
 ctx.audio.music('drive')                 // drive | storm | ending | null
 ```
 
-Main dialogue, missions, discoveries, memories and cards live in `content/` with Arabic and English side by side. Some chapter objective/status strings remain in chapter code and need the final localization pass.
+```js
+ctx.hud.setHold({ key: 'E', text, progress, pressing })   // hold prompt: keycap + bar from green to red (stage.hold uses it)
+ctx.hud.setControls('heli-air')          // keys bar at the bottom: 'heli-ground', 'heli-air', 'rover' or null (the stage sets it)
+ctx.audio.speak('viking', line.en, 'sad')                // a voice with emotion: curious | happy | sad | sleepy | scared
+ctx.audio.has('strap')                                   // true if the sound exists (stage.sound stand-ins)
+ctx.audio.setVolumes({ master, music, voice, sfx }, muted) // the player's levels from Settings
+ctx.shell.pause(true)                                    // open the pause menu
+```
+
+Main dialogue, missions, discoveries, memories and cards live in `content/` with Arabic and English side by side. Chapter code may keep writing English prompts: `src/ui/i18n.js` translates them where the interface draws them, so the whole game switches language. A new English prompt in a chapter needs one line in the dictionary in `src/ui/i18n.js`.
 
 A character:
 
