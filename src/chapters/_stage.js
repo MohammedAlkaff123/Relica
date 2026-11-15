@@ -179,10 +179,10 @@ export function setupStage(ctx, cfg) {
     },
     // Hold a key for `seconds` (in total; letting go pauses it). Shows a progress bar on the objective line.
     // Set C draws it as a keycap and one bar that fills from green to red (hud.setHold). A hold never asks
-    // for more than 2 seconds: long enough to be a choice, short enough not to feel stuck.
+    // for more than 1 second: long enough to be a choice, short enough not to feel stuck.
     hold(code, seconds, text) {
       let held = 0, shown = '';
-      const need = Math.min(seconds, 2);
+      const need = Math.min(seconds, 1); // Set C: a hold never takes more than 1 second (playtest feedback)
       const key = code.replace(/^Key/, '');
       return guarded((done) => {
         const task = (dt) => {
@@ -309,8 +309,8 @@ export function setupStage(ctx, cfg) {
       const idle = stage.controls && (controller?.speed ?? 0) < 0.1 && !controller?.flying && !ctx.cinematics.playing;
       idleLookTime = idle ? idleLookTime + dt : 0;
       // Set C: the keys bar. Always while flying the helicopter; for the rover, after a few seconds standing still.
-      const busy = !stage.controls || ctx.cinematics.playing || controller?.broken;
-      ctx.hud.setControls?.(busy || !controller ? null
+      const keysHidden = !stage.controls || ctx.cinematics.playing || controller?.broken;
+      ctx.hud.setControls?.(keysHidden || !controller ? null
         : cfg.vehicle === 'heli' ? (controller.flying ? 'heli-air' : 'heli-ground')
         : idleLookTime > 6 ? 'rover' : null);
       hero.lookBack?.(idleLookTime > 2, ctx.camera);
