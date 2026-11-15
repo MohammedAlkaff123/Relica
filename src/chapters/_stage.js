@@ -179,10 +179,10 @@ export function setupStage(ctx, cfg) {
     },
     // Hold a key for `seconds` (in total; letting go pauses it). Shows a progress bar on the objective line.
     // Set C draws it as a keycap and one bar that fills from green to red (hud.setHold). A hold never asks
-    // for more than 1 second: long enough to be a choice, short enough not to feel stuck.
+    // for more than half a second: long enough to be a choice, short enough not to feel stuck.
     hold(code, seconds, text) {
       let held = 0, shown = '';
-      const need = Math.min(seconds, 1); // Set C: a hold never takes more than 1 second (playtest feedback)
+      const need = Math.min(seconds, 0.5); // Set C: a hold never takes more than half a second (playtest feedback)
       const key = code.replace(/^Key/, '');
       return guarded((done) => {
         const task = (dt) => {
