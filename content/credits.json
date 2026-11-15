@@ -1,5 +1,5 @@
 {
-  "_readme": "Owner: Set C. Text for the title, the ending card and the credits (card.title(), card.ending(), card.credits()). The NASA photo list is built in code from public/nasa/CREDITS.csv, using only the photos named in content/memories.json. Add each new sound or tool here when it goes in.",
+  "_readme": "Owner: Set C. Text for the title, the ending card and the credits (card.title(), card.ending(), card.credits()) and the main menu's Credits. team = the five of us, shown first. Every heading and line has English and Arabic. The NASA photo list is built in code from public/nasa/CREDITS.csv, using only the photos named in content/memories.json. Add each new sound or tool here when it goes in.",
   "title": {
     "name": "RELICA: Still Here",
     "line": {
@@ -23,23 +23,24 @@
   },
   "credits": [
     {
-      "heading": "Made by",
-      "lines": [
-        "Ziad · engine and gameplay",
-        "Abdulkarim · worlds and characters",
-        "Abdullatif · story text, data, interface and sound",
-        "Moayad · camera, cutscenes and look",
-        "Mohammed · story, feel, testing and pitch"
-      ]
-    },
-    {
       "heading": "Built for",
+      "title": {
+        "en": "Built for",
+        "ar": "صُنعت للمشاركة في"
+      },
       "lines": [
-        "NASA Space Apps Challenge 2026 · Abandoned but not Forgotten"
+        {
+          "en": "NASA Space Apps Challenge 2026 · Abandoned, but not Forgotten",
+          "ar": "تحدي ناسا لتطبيقات الفضاء 2026 · مهجورة، لكنها لم تُنسَ"
+        }
       ]
     },
     {
       "heading": "Code libraries",
+      "title": {
+        "en": "Code libraries",
+        "ar": "المكتبات البرمجية"
+      },
       "lines": [
         "Three.js (MIT)",
         "Rapier (Apache-2.0)",
@@ -48,27 +49,120 @@
     },
     {
       "heading": "Fonts",
+      "title": {
+        "en": "Fonts",
+        "ar": "الخطوط"
+      },
       "lines": [
-        "Space Grotesk, IBM Plex Mono, IBM Plex Sans Arabic (SIL Open Font License), via Google Fonts"
+        {
+          "en": "Inter and Noto Sans Arabic (SIL Open Font License), bundled with the game",
+          "ar": "Inter و Noto Sans Arabic (رخصة SIL المفتوحة)، مضمّنة مع اللعبة"
+        }
       ]
     },
     {
       "heading": "Sound",
+      "title": {
+        "en": "Sound",
+        "ar": "الصوت"
+      },
       "lines": [
-        "All sounds and music are generated in code with the Web Audio API"
+        {
+          "en": "All sounds, voices and music are generated in code with the Web Audio API",
+          "ar": "كل الأصوات والموسيقى وأصوات الشخصيات مولّدة برمجيًا باستخدام Web Audio API"
+        }
       ]
     },
     {
       "heading": "Facts",
+      "title": {
+        "en": "Facts",
+        "ar": "الحقائق"
+      },
       "lines": [
-        "Mission facts and NASA sources are listed in content/facts.json. Controls and compressed timelines are storytelling devices."
+        {
+          "en": "Mission facts and their NASA sources are listed in content/facts.json. Controls and compressed timelines are storytelling devices.",
+          "ar": "حقائق المهمات ومصادرها من ناسا مدرجة في content/facts.json. أسلوب التحكم واختصار الزمن من أدوات السرد."
+        }
       ]
     },
     {
       "heading": "AI use",
+      "title": {
+        "en": "AI use",
+        "ar": "استخدام الذكاء الاصطناعي"
+      },
       "lines": [
-        "Claude Code helped write code and draft text. Every use is listed in AI_USE.md"
+        {
+          "en": "Claude Code helped write code and draft text. Every use is listed in AI_USE.md",
+          "ar": "ساعدت أداة Claude Code في كتابة الشيفرة وصياغة النصوص، وكل استخدام مسجّل في AI_USE.md"
+        }
       ]
+    },
+    {
+      "heading": "Partner",
+      "title": {
+        "en": "Challenge",
+        "ar": "التحدي"
+      },
+      "lines": [
+        {
+          "en": "NASA Space Apps Challenge logo used to show our participation. No NASA endorsement is implied.",
+          "ar": "شعار تحدي ناسا لتطبيقات الفضاء يشير إلى مشاركتنا فقط، ولا يعني تأييدًا من ناسا."
+        }
+      ]
+    }
+  ],
+  "team": [
+    {
+      "name": {
+        "en": "Abdullatif Alkhanbashi",
+        "ar": "عبد اللطيف الخنبشي"
+      },
+      "role": {
+        "en": "Story text, data, interface and sound",
+        "ar": "النصوص والبيانات والواجهة والصوت"
+      }
+    },
+    {
+      "name": {
+        "en": "Moayad Bahashwan",
+        "ar": "مؤيد باحشوان"
+      },
+      "role": {
+        "en": "Director: camera, cutscenes and look",
+        "ar": "الإخراج: الكاميرا والمشاهد والهوية البصرية"
+      }
+    },
+    {
+      "name": {
+        "en": "Abdulkarim Aljundubi",
+        "ar": "عبد الكريم الجندبي"
+      },
+      "role": {
+        "en": "Worlds and characters",
+        "ar": "العوالم والشخصيات"
+      }
+    },
+    {
+      "name": {
+        "en": "Mohammed Alkaff",
+        "ar": "محمد الكاف"
+      },
+      "role": {
+        "en": "Director: story, feel, testing and pitch",
+        "ar": "الإخراج: القصة والإحساس والاختبار والعرض"
+      }
+    },
+    {
+      "name": {
+        "en": "Ziad Alshinqiti",
+        "ar": "زياد الشنقيطي"
+      },
+      "role": {
+        "en": "Engine and gameplay",
+        "ar": "المحرّك وأسلوب اللعب"
+      }
     }
   ]
 }

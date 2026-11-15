@@ -1,61 +1,118 @@
-// Full-screen title card for chapters and the ending. Owner: Set C.
+// Full-screen cards: chapter titles, the title screen, the ending and the credits. Owner: Set C.
 //
 //   await card.show('The Moon', 'Taurus–Littrow valley · December 1972')     a plain card
-//   await card.show({ title: 'The Moon', mission: 'Apollo 17 · Lunar Roving Vehicle',
-//                     place: 'Taurus–Littrow valley', dates: 'December 1972' })
+//   await card.show({ title, mission, place, dates, sub })
 //   await card.chapter('moon')       the same, with the text from content/chapters.json
 //   await card.title()               title screen        (text in content/credits.json)
-//   await card.ending()              the final card: "The conversations are imagined..."
-//   await card.credits()             credits, with only the NASA photos the game shows
+//   await card.ending()              the final card: what is imagined and what is real
+//   await card.credits()             credits: the team, then sources, with only the NASA photos the game shows
+//
+// Text is shown in the player's language. Chapter code may pass English, or "English · عربي" pairs.
 import { el } from './dom.js';
 import { loadJSON } from '../core/content.js';
+import { prefs, pick } from './prefs.js';
+import { t, translate, registerPairs } from './i18n.js';
+import { keycap } from './keys.js';
 
 export function createCard(root, prompt) {
   const box = el('div', 'card hidden', root);
-  const mission = el('div', 'mission-name', box);
-  const title = el('h1', '', box);
-  const titleAr = el('div', 'title-ar', box);
-  titleAr.lang = 'ar';
-  titleAr.dir = 'rtl';
-  const sub = el('p', '', box);
-  const facts = el('div', 'card-facts', box);
-  facts.dir = 'auto'; // Arabic lines here read right to left, so the full stop lands in the right place
-  el('div', 'hint', box, 'Press Enter');
+  const sheet = el('div', 'card-sheet', box);
+  const mission = el('div', 'mission-name', sheet);
+  const title = el('h1', '', sheet);
+  const sub = el('p', 'card-sub', sheet);
+  const facts = el('div', 'card-facts', sheet);
+  const next = continueButton(sheet);
 
-  // Credits roll: its own scrolling panel.
+  // Credits roll: its own scrolling page.
   const rollBox = el('div', 'credits hidden', root);
   const roll = el('div', 'roll', rollBox);
-  el('div', 'hint', rollBox, 'Press Enter');
+  const rollNext = continueButton(rollBox);
+
+  function continueButton(parent) {
+    const b = el('button', 'next-btn', parent);
+    b.type = 'button';
+    b.append(keycap('Enter'));
+    const w = el('span', '', b, t('hud.next'));
+    w.dataset.t = 'hud.next';
+    return b;
+  }
 
   const texts = loadJSON('content/credits.json').catch((err) => {
     console.warn('content/credits.json could not be loaded', err);
     return {};
   });
-
-  // Chapter texts load in the background; card.chapter() waits for them if needed.
-  const chapters = loadJSON('content/chapters.json').catch((err) => {
+  const chapters = loadJSON('content/chapters.json').then((c) => { registerPairs(c); return c; }).catch((err) => {
     console.warn('content/chapters.json could not be loaded', err);
     return {};
   });
 
+  let shownCard = null;
+  const show = (value) => (value && typeof value === 'object' ? pick(value) : translate(value ?? ''));
   function fill(c) {
-    title.textContent = c.title ?? '';
-    titleAr.textContent = c.titleAr ?? '';
-    mission.textContent = c.mission ?? '';
-    sub.textContent = c.sub ?? '';
+    shownCard = c;
+    title.textContent = show(c.title);
+    mission.textContent = show(c.mission);
+    sub.textContent = show(c.sub);
     facts.textContent = '';
-    for (const part of [c.place, c.dates]) if (part) el('span', '', facts, part);
-    for (const node of [titleAr, mission, sub, facts]) node.classList.toggle('hidden', !node.textContent);
+    for (const part of [c.place, c.dates]) {
+      const s = show(part);
+      if (s) el('span', '', facts, s);
+    }
+    for (const node of [mission, sub, facts]) node.classList.toggle('hidden', !node.textContent);
   }
+  prefs.subscribe(() => {
+    if (shownCard) fill(shownCard);
+    for (const n of root.querySelectorAll('.card [data-t], .credits [data-t]')) n.textContent = t(n.dataset.t);
+    if (!rollBox.classList.contains('hidden')) drawCredits();
+  });
 
   // Only the newest card may hide the box, so a card opened over another never hides the new one.
   let shown = 0;
-  async function open(c) {
+  async function open(c, kind = '') {
     const me = ++shown;
+    box.className = 'card' + (kind ? ' ' + kind : '');
     fill(c);
-    box.classList.remove('hidden');
     await prompt.wait();
-    if (me === shown) box.classList.add('hidden');
+    if (me === shown) { box.classList.add('hidden'); shownCard = null; }
+  }
+
+  let creditsData = null;
+  function drawCredits() {
+    const { t: c, photos } = creditsData;
+    roll.textContent = '';
+    const logo = el('img', 'credits-logo', roll);
+    logo.src = 'public/brand/logos/relica-lockup-ivory-1200.png';
+    logo.alt = 'Relica';
+    el('h1', '', roll, t('credits.title'));
+    el('h2', '', roll, t('credits.team'));
+    const team = el('ul', 'credits-team', roll);
+    for (const m of c.team ?? []) {
+      const li = el('li', '', team);
+      el('strong', '', li, pick(m.name));
+      el('span', '', li, pick(m.role));
+    }
+    for (const block of c.credits ?? []) {
+      if (block.heading === 'Made by') continue;
+      el('h2', '', roll, pick(block.title ?? block.heading));
+      for (const line of block.lines) el('p', '', roll, pick(line));
+    }
+    if (photos.length) {
+      el('h2', '', roll, t('credits.photos'));
+      for (const p of photos) {
+        const line = el('p', 'photo-credit', roll);
+        el('span', '', line, translate(p.title) + ' ');
+        const id = el('bdi', '', line, `NASA/${p.center} · ${p.nasa_id}`);
+        id.dir = 'ltr';
+      }
+    }
+    const partners = el('div', 'credit-partners', roll);
+    const sym = el('img', '', partners);
+    sym.src = 'public/brand/logos/relica-symbol-ivory-256.png';
+    sym.alt = 'Relica';
+    el('span', 'times', partners, '×');
+    const sa = el('img', 'space-apps', partners);
+    sa.src = 'public/brand/partners/space-apps-white.svg';
+    sa.alt = 'NASA Space Apps Challenge';
   }
 
   return {
@@ -65,49 +122,37 @@ export function createCard(root, prompt) {
     async chapter(id) {
       const c = (await chapters)[id];
       if (!c) { console.warn(`chapter "${id}" is missing from content/chapters.json`); return; }
-      await open({ title: c.title.en, titleAr: c.title.ar, mission: c.mission?.en, place: c.place?.en, dates: c.dates?.en, sub: c.sub?.en });
+      await open({ title: c.title, mission: c.mission, place: c.place, dates: c.dates, sub: c.sub }, 'chapter-card');
     },
-    // Title screen: the game's name, its line, and "Press Enter to wake up".
+    // Title screen: the game's name and "Press Enter to wake up".
     async title() {
-      const t = (await texts).title;
-      if (!t) return;
-      box.classList.add('title-screen');
-      await open({ title: t.name, titleAr: t.line.ar, sub: t.line.en, place: t.start.en });
-      box.classList.remove('title-screen');
+      const tx = (await texts).title;
+      if (!tx) return;
+      await open({ title: { en: tx.name, ar: tx.line.ar }, sub: tx.start }, 'title-screen');
     },
     // The final card, with the line that says what is imagined and what is real.
     async ending() {
       const e = (await texts).ending;
       if (!e) return;
-      box.classList.add('ending');
-      await open({ title: e.title.en, titleAr: e.title.ar, sub: e.truth.en, place: e.truth.ar });
-      box.classList.remove('ending');
+      await open({ title: e.title, sub: e.truth }, 'ending');
     },
     // Credits: the team, libraries, fonts, sounds, and only the NASA photos the game shows.
     async credits() {
-      const [t, photos] = await Promise.all([texts, usedPhotos()]);
+      const [c, photos] = await Promise.all([texts, usedPhotos()]);
       const me = ++shown;
-      roll.textContent = '';
-      el('h1', '', roll, 'Credits');
-      for (const block of t.credits ?? []) {
-        el('h2', '', roll, block.heading);
-        for (const line of block.lines) el('p', '', roll, line);
-      }
-      if (photos.length) {
-        el('h2', '', roll, 'NASA photos (images.nasa.gov)');
-        for (const p of photos) el('p', 'photo-credit', roll, `${p.title} · NASA/${p.center} · ${p.nasa_id}`);
-      }
+      creditsData = { t: c, photos };
+      drawCredits();
       rollBox.classList.remove('hidden');
       rollBox.scrollTop = 0;
       await prompt.wait();
       if (me === shown) rollBox.classList.add('hidden');
     },
-    hide() { box.classList.add('hidden'); rollBox.classList.add('hidden'); },
+    hide() { box.classList.add('hidden'); rollBox.classList.add('hidden'); shownCard = null; },
   };
 }
 
 // The NASA photos the game shows: rows of public/nasa/CREDITS.csv whose id is in content/memories.json.
-async function usedPhotos() {
+export async function usedPhotos() {
   try {
     const [csv, memories] = await Promise.all([
       fetch('public/nasa/CREDITS.csv').then((r) => r.text()),

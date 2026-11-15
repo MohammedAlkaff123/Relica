@@ -9,6 +9,17 @@
 //   audio.loopLevel('rotor', 0.5) how hard a loop works (rotor speed, motor load), 0..1
 //   audio.music('drive')          a music cue: drive | storm | ending | null to fade out
 //   audio.setBoost(2)             overall loudness, 1 = normal, up to 4
+//   audio.has('strap')            true if the name is a known one-shot or loop (stage.sound stand-ins use it)
+//   audio.setVolumes({ master, music, voice, sfx }, muted)   the player's own levels from Settings, 0..1
+//   audio.setPaused(true)         pause menus freeze sound; false resumes it
+//
+// Voices carry emotion: audio.speak(who, text, 'sad'). The machine keeps its signature (its sound,
+// speed and register); the mood moves the pitch, the tempo, the loudness and the shape of each note:
+//   happy   +2 semitones, 12% faster, notes lift at the end, a small rising chirp after the line
+//   curious unchanged (the machine's normal voice), a question still rises
+//   sad     -3 semitones, 30% slower, softer, every note sags, a falling sigh after the line
+//   sleepy  -2 semitones, 45% slower, much softer, notes sag a little
+//   scared  +1 semitone, 20% faster, a fast tremble on every note
 //
 // Every sound is made in code (Web Audio), so nothing needs a licence and nothing downloads.
 // Sound is never allowed to break the game: every public call is wrapped in try/catch.
@@ -36,39 +47,108 @@ let master = null;
 let boost = null;
 let analyser = null;
 let boostLevel = 1.5;
-const bus = {};
+let bus = {};
+let user = {};
+// The player's levels (Settings). Each bus feeds one of these groups before the master.
+const USER_GROUP = { event: 'sfx', ui: 'sfx', ambience: 'sfx', voice: 'voice', music: 'music' };
+const levels = { master: 0.8, music: 0.7, voice: 0.9, sfx: 0.85, muted: false };
+// A slider position (0..1) to gain: a gentle curve, so the middle of the slider sounds like the middle.
+const sliderGain = (v) => (v <= 0 ? 0 : Math.pow(v, 1.6));
 
-// The signal chain: sound -> bus (dB level) -> master -> glue (gentle compressor) -> boost -> limiter -> speakers
+// Builds the whole mix on a context (the live one, or an offline one used to measure a sound silently).
+// sound -> bus (dB level) -> player group level -> master -> glue (gentle compressor) -> boost -> limiter -> out
+function buildChain(c) {
+  const m = c.createGain();
+  m.gain.value = levels.muted ? 0 : sliderGain(levels.master) / sliderGain(0.8);
+  const glue = c.createDynamicsCompressor();
+  glue.threshold.value = -14;
+  glue.knee.value = 10;
+  glue.ratio.value = 2.5;
+  glue.attack.value = 0.005;
+  glue.release.value = 0.25;
+  const b = c.createGain();
+  b.gain.value = boostLevel;
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -1.5;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.08;
+  const a = c.createAnalyser();
+  a.fftSize = 2048;
+  m.connect(glue).connect(b).connect(limiter).connect(a).connect(c.destination);
+  const u = {};
+  for (const g of ['sfx', 'voice', 'music']) {
+    u[g] = c.createGain();
+    u[g].gain.value = sliderGain(levels[g]) / sliderGain(defaultsFor(g));
+    u[g].connect(m);
+  }
+  const buses = {};
+  for (const [name, db] of Object.entries(MIX_DB)) {
+    buses[name] = c.createGain();
+    buses[name].gain.value = dbToGain(db);
+    buses[name].connect(u[USER_GROUP[name]]);
+  }
+  return { master: m, boost: b, analyser: a, bus: buses, user: u };
+}
+// The default slider positions are the reference: at the defaults the mix is exactly the dB table above.
+const defaultsFor = (g) => ({ sfx: 0.85, voice: 0.9, music: 0.7 })[g];
+
+let measuring = false;
 function context() {
   if (!ac) {
     ac = new (window.AudioContext || window.webkitAudioContext)();
-    master = ac.createGain();
-    master.gain.value = 1;
-    const glue = ac.createDynamicsCompressor();
-    glue.threshold.value = -14;
-    glue.knee.value = 10;
-    glue.ratio.value = 2.5;
-    glue.attack.value = 0.005;
-    glue.release.value = 0.25;
-    boost = ac.createGain();
-    boost.gain.value = boostLevel;
-    const limiter = ac.createDynamicsCompressor();
-    limiter.threshold.value = -1.5;
-    limiter.knee.value = 0;
-    limiter.ratio.value = 20;
-    limiter.attack.value = 0.001;
-    limiter.release.value = 0.08;
-    analyser = ac.createAnalyser();
-    analyser.fftSize = 2048;
-    master.connect(glue).connect(boost).connect(limiter).connect(analyser).connect(ac.destination);
-    for (const [name, db] of Object.entries(MIX_DB)) {
-      bus[name] = ac.createGain();
-      bus[name].gain.value = dbToGain(db);
-      bus[name].connect(master);
-    }
+    ({ master, boost, analyser, bus, user } = buildChain(ac));
   }
-  if (ac.state === 'suspended') ac.resume();
+  if (!measuring && ac.state === 'suspended' && !paused) ac.resume();
   return ac;
+}
+
+function applyLevels() {
+  if (!ac || measuring) return;
+  const now = ac.currentTime;
+  master.gain.setTargetAtTime(levels.muted ? 0 : sliderGain(levels.master) / sliderGain(0.8), now, 0.05);
+  for (const g of ['sfx', 'voice', 'music']) user[g].gain.setTargetAtTime(sliderGain(levels[g]) / sliderGain(defaultsFor(g)), now, 0.05);
+}
+
+let paused = false;
+function setPaused(on) {
+  paused = !!on;
+  if (!ac || measuring) return;
+  if (paused && ac.state === 'running') ac.suspend();
+  if (!paused && ac.state === 'suspended') ac.resume();
+}
+
+// Renders a sound offline (nothing is heard) and returns its loudness: the RMS of the loudest
+// 300 ms, in dB of full scale, through the same mix and boost as the game. The sound test page shows it.
+export async function measure(trigger, seconds = 3) {
+  const live = { ac, master, boost, analyser, bus, user };
+  const saved = { ...levels };
+  Object.assign(levels, { master: 0.8, music: 0.7, voice: 0.9, sfx: 0.85, muted: false });
+  const off = new OfflineAudioContext(1, Math.ceil(48000 * seconds), 48000);
+  measuring = true;
+  try {
+    ac = off;
+    ({ master, boost, analyser, bus, user } = buildChain(off));
+    const result = trigger();
+    if (result && typeof result.stop === 'function') setTimeout(() => {}, 0);
+  } finally {
+    ({ ac, master, boost, analyser, bus, user } = live);
+    Object.assign(levels, saved);
+    measuring = false;
+  }
+  const buffer = await off.startRendering();
+  const d = buffer.getChannelData(0);
+  const win = Math.floor(48000 * 0.3);
+  let sum = 0, best = 0, peak = 0;
+  for (let i = 0; i < d.length; i++) {
+    sum += d[i] * d[i];
+    if (i >= win) sum -= d[i - win] * d[i - win];
+    if (i >= win - 1) best = Math.max(best, sum / win);
+    peak = Math.max(peak, Math.abs(d[i]));
+  }
+  const db = (x) => (x > 0 ? 20 * Math.log10(x) : -120);
+  return { rms: Math.round(db(Math.sqrt(best)) * 10) / 10, peak: Math.round(db(peak) * 10) / 10 };
 }
 
 // For the sound test page: the waveform of everything that is playing.
@@ -217,47 +297,60 @@ function morse(text, dot, cap) {
   return { notes: out, end: t };
 }
 
+// How each emotion changes a voice. pitch and tempo are multipliers; slide is how much each note bends
+// (above 1 lifts, below 1 sags); tremble is a fast pitch shake in cents; tail is the little phrase after the line.
+export const MOODS = {
+  curious: { pitch: 1,     tempo: 1,    vol: 1,    slide: 1,    tremble: 0,  tail: null },
+  happy:   { pitch: 1.122, tempo: 0.88, vol: 1.1,  slide: 1.05, tremble: 0,  tail: 'rise' },
+  sad:     { pitch: 0.841, tempo: 1.3,  vol: 0.7,  slide: 0.93, tremble: 0,  tail: 'fall' },
+  sleepy:  { pitch: 0.891, tempo: 1.45, vol: 0.5,  slide: 0.97, tremble: 0,  tail: null },
+  scared:  { pitch: 1.059, tempo: 0.8,  vol: 0.92, slide: 1,    tremble: 28, tail: null },
+};
+const moodOf = (name) => MOODS[name] ?? MOODS.curious;
+// A tremble alternates up and down from note to note: scared voices shake.
+const shake = (m, i) => (m.tremble ? (i % 2 ? m.tremble : -m.tremble) : 0);
+
 const VOICES = {
   ingenuity: {
-    dot: 0.035, cap: 1.8,
-    play(out, notes, loud) {
+    dot: 0.035, cap: 1.8, base: 1650, wave: 'square',
+    play(out, notes, loud, end, m) {
       const hp = context().createBiquadFilter();
       hp.type = 'highpass';
       hp.frequency.value = 900;
       hp.connect(out);
-      for (const n of notes) {
+      notes.forEach((n, i) => {
         const jitter = 1 + ((n.ch.charCodeAt(0) % 5) - 2) * 0.03;
-        osc(hp, n.at, 1650 * jitter, n.len, { type: 'square', vol: 0.32 * loud, attack: 0.002 });
-      }
+        osc(hp, n.at, 1650 * jitter * m.pitch, n.len, { type: 'square', vol: 0.32 * loud, attack: 0.002, slide: m.slide, detune: shake(m, i) });
+      });
     },
   },
 
   lrv: {
-    dot: 0.055, cap: 2.2,
-    play(out, notes, loud) {
-      for (const n of notes) {
-        const f = 820 * SCALE[n.ch.charCodeAt(0) % SCALE.length];
-        osc(out, n.at, f, n.len, { type: 'triangle', vol: 0.7 * loud, slide: 1.1, attack: 0.004 });
-        osc(out, n.at, f * 2, n.len, { type: 'sine', vol: 0.15 * loud, slide: 1.1, attack: 0.004 });
-      }
+    dot: 0.055, cap: 2.2, base: 820, wave: 'triangle',
+    play(out, notes, loud, end, m) {
+      notes.forEach((n, i) => {
+        const f = 820 * SCALE[n.ch.charCodeAt(0) % SCALE.length] * m.pitch;
+        osc(out, n.at, f, n.len, { type: 'triangle', vol: 0.7 * loud, slide: 1.1 * m.slide, attack: 0.004, detune: shake(m, i) });
+        osc(out, n.at, f * 2, n.len, { type: 'sine', vol: 0.15 * loud, slide: 1.1 * m.slide, attack: 0.004, detune: shake(m, i) });
+      });
     },
   },
 
   opportunity: {
-    dot: 0.07, cap: 2.6,
-    play(out, notes, loud) {
-      for (const n of notes) {
-        osc(out, n.at, 700, n.len, { type: 'sine', vol: 0.45 * loud, attack: 0.005 });
-        osc(out, n.at, 1400, n.len, { type: 'sine', vol: 0.12 * loud, attack: 0.005 });
-      }
+    dot: 0.07, cap: 2.6, base: 700, wave: 'sine',
+    play(out, notes, loud, end, m) {
+      notes.forEach((n, i) => {
+        osc(out, n.at, 700 * m.pitch, n.len, { type: 'sine', vol: 0.45 * loud, attack: 0.005, slide: m.slide, detune: shake(m, i) });
+        osc(out, n.at, 1400 * m.pitch, n.len, { type: 'sine', vol: 0.12 * loud, attack: 0.005, slide: m.slide, detune: shake(m, i) });
+      });
     },
   },
 
   // An old telegraph receiver: a buzzy tone through a narrow, tinny radio filter, slightly overdriven,
   // with a slow wobble in pitch (old parts), a relay click at every symbol, crackle and mains hum under it.
   viking: {
-    dot: 0.105, cap: 3.2,
-    play(out, notes, loud, end) {
+    dot: 0.105, cap: 3.2, base: 440, wave: 'square',
+    play(out, notes, loud, end, m) {
       const c = context();
       const radio = c.createBiquadFilter();
       radio.type = 'bandpass';
@@ -273,19 +366,19 @@ const VOICES = {
       const wobble = c.createOscillator();
       const wobbleDepth = c.createGain();
       wobble.frequency.value = 0.9;
-      wobbleDepth.gain.value = 9;
+      wobbleDepth.gain.value = 9 * m.pitch;
       wobble.connect(wobbleDepth);
       const t0 = c.currentTime;
       wobble.start(t0);
       wobble.stop(t0 + end + 0.5);
-      for (const n of notes) {
-        const o = osc(pre, n.at, 440, n.len, { type: 'square', vol: 0.65 * loud, attack: 0.008 });
+      notes.forEach((n, i) => {
+        const o = osc(pre, n.at, 440 * m.pitch, n.len, { type: 'square', vol: 0.65 * loud, attack: 0.008, slide: m.slide, detune: shake(m, i) });
         wobbleDepth.connect(o.frequency);
         hiss(out, n.at, 0.012, { type: 'bandpass', freq: 3200, q: 2, vol: 0.5 * loud }); // relay click
-      }
-      // Mains hum and crackle under the whole message.
-      osc(out, 0, 60, end + 0.3, { type: 'sawtooth', vol: 0.07 * loud, attack: 0.1, release: 0.2 });
-      hiss(out, 0, end + 0.3, { type: 'bandpass', freq: 2400, q: 0.7, vol: 0.06 * loud, attack: 0.1 });
+      });
+      // Mains hum and crackle under the whole message: part of the machine, so the mood leaves them alone.
+      osc(out, 0, 60, end + 0.3, { type: 'sawtooth', vol: 0.07, attack: 0.1, release: 0.2 });
+      hiss(out, 0, end + 0.3, { type: 'bandpass', freq: 2400, q: 0.7, vol: 0.06, attack: 0.1 });
       for (let i = 0; i < end * 7; i++) {
         hiss(out, (i * 0.137 + (i % 3) * 0.05) % end, 0.006, { type: 'highpass', freq: 2000, vol: 0.25 * loud });
       }
@@ -296,8 +389,8 @@ const VOICES = {
   // far away), with a soft attack, under a long dark echo. The harmonics are there so small speakers
   // still carry it; the low layer is felt on headphones.
   pioneer: {
-    dot: 0.17, cap: 4,
-    play(out, notes, loud, end) {
+    dot: 0.17, cap: 4, base: 78, wave: 'sine',
+    play(out, notes, loud, end, m) {
       const c = context();
       const lp = c.createBiquadFilter();
       lp.type = 'lowpass';
@@ -309,16 +402,17 @@ const VOICES = {
       dry.gain.value = 0.75;
       lp.connect(dry).connect(out);
       lp.connect(verb).connect(wet).connect(out);
-      for (const n of notes) {
+      const f0 = 78 * m.pitch;
+      notes.forEach((n, i) => {
         for (const [mult, vol] of [[1, 0.6], [2, 0.32], [3, 0.16], [4, 0.08]]) {
-          const o = osc(lp, n.at, 78 * mult, n.len + 0.12, { type: 'sine', vol: vol * loud, attack: 0.06, release: 0.12 });
+          const o = osc(lp, n.at, f0 * mult, n.len + 0.12, { type: 'sine', vol: vol * loud, attack: 0.06, release: 0.12, detune: shake(m, i) });
           const t = c.currentTime + n.at;
-          o.frequency.setValueAtTime(78 * mult, t);
-          o.frequency.exponentialRampToValueAtTime(78 * mult * 0.86, t + (n.len + 0.12) * 0.5);
-          o.frequency.exponentialRampToValueAtTime(78 * mult * 0.97, t + n.len + 0.12);
+          o.frequency.setValueAtTime(f0 * mult, t);
+          o.frequency.exponentialRampToValueAtTime(f0 * mult * 0.86, t + (n.len + 0.12) * 0.5);
+          o.frequency.exponentialRampToValueAtTime(f0 * mult * 0.97 * m.slide, t + n.len + 0.12);
         }
-      }
-      osc(lp, 0, 39, end + 0.6, { type: 'sine', vol: 0.35 * loud, attack: 0.3, release: 0.5 }); // sub layer
+      });
+      osc(lp, 0, 39 * m.pitch, end + 0.6, { type: 'sine', vol: 0.35 * loud, attack: 0.3, release: 0.5 }); // sub layer
     },
   },
 };
@@ -333,23 +427,33 @@ export const VOICE_SAMPLES = {
 };
 
 // Starts a line. Returns { duration, stop() } so the dialogue can cut it when the player skips ahead.
-function speak(who, text) {
+function speak(who, text, emotion) {
   const c = context();
   const v = VOICES[who] ?? VOICES.opportunity;
+  const m = moodOf(emotion);
   const out = c.createGain();
   out.connect(bus.voice);
   const line = text || VOICE_SAMPLES[who] || 'hello';
-  const loud = /!/.test(line) ? 1.2 : 1;
-  const { notes, end } = morse(line, v.dot, v.cap);
-  v.play(out, notes, loud, end);
+  const loud = (/!/.test(line) ? 1.2 : 1) * m.vol;
+  const dot = v.dot * m.tempo;
+  const { notes, end } = morse(line, dot, v.cap * Math.max(1, m.tempo * 0.9));
+  v.play(out, notes, loud, end, m);
   let duration = end;
-  // A question rises at the end, in the machine's own register.
+  const f = v.base * m.pitch;
+  const tailVol = (who === 'viking' ? 0.25 : who === 'pioneer' ? 0.35 : 0.45) * loud;
   if (/\?\s*$/.test(line)) {
-    const f = { ingenuity: 1650, lrv: 820, opportunity: 700, viking: 440, pioneer: 78 }[who] ?? 700;
-    const type = { ingenuity: 'square', lrv: 'triangle', viking: 'square' }[who] ?? 'sine';
-    const target = who === 'viking' ? out : out;
-    osc(target, end, f, v.dot * 4, { type, vol: (who === 'viking' ? 0.25 : 0.5) * loud, slide: 1.35, attack: 0.01 });
-    duration += v.dot * 4 + 0.1;
+    // A question rises at the end, in the machine's own register.
+    osc(out, duration, f, dot * 4, { type: v.wave, vol: tailVol, slide: 1.35, attack: 0.01 });
+    duration += dot * 4 + 0.1;
+  } else if (m.tail === 'rise') {
+    // Happy: two quick notes going up, a little skip of joy.
+    osc(out, duration, f * 1.26, dot * 1.6, { type: v.wave, vol: tailVol * 0.8, slide: 1.06, attack: 0.004 });
+    osc(out, duration + dot * 2, f * 1.5, dot * 2.2, { type: v.wave, vol: tailVol * 0.8, slide: 1.08, attack: 0.004 });
+    duration += dot * 4.4 + 0.1;
+  } else if (m.tail === 'fall') {
+    // Sad: one long note that sinks, like a sigh.
+    osc(out, duration + dot, f * 0.94, dot * 7, { type: v.wave, vol: tailVol * 0.7, slide: 0.7, attack: 0.03, release: dot * 4 });
+    duration += dot * 8 + 0.1;
   }
   if (who === 'pioneer') duration += 1.2; // the echo keeps going
   let stopped = false;
@@ -484,14 +588,189 @@ const SOUNDS = {
   },
 };
 
+// ---------- the sounds from Ziad's handoff (SOUND_HANDOFF.md) ----------
+// Each one follows the description in the handoff. Bus and trim put it at the loudness of its role:
+//   interface feedback (marker_beep, strap, panels_clean, battery_low, time_skip, mark, shutter)  ~ -17 dB
+//   story events (liftoff, drift_warning, rotor_twitch, fold)                                    ~ -10 dB
+// marker_beep repeats many times while driving blind, so it sits a little under the others (~ -20 dB).
+Object.assign(SOUNDS, {
+  // A short clean beacon ping. Soft edges so a long run of them does not tire the ear.
+  marker_beep: () => {
+    const o = trim('ui', 'marker_beep');
+    osc(o, 0, 1568, 0.11, { type: 'sine', vol: 0.5, attack: 0.006, release: 0.08 });
+    osc(o, 0, 3136, 0.06, { type: 'sine', vol: 0.08, attack: 0.004, release: 0.05 });
+  },
+  // A strap pulled tight: three ratchet clicks, then a soft thump as the box settles.
+  strap: () => {
+    const o = trim('ui', 'strap');
+    for (let i = 0; i < 3; i++) {
+      hiss(o, i * 0.07, 0.018, { type: 'bandpass', freq: 2600 - i * 200, q: 3, vol: 0.9 });
+      osc(o, i * 0.07, 900 - i * 60, 0.03, { type: 'square', vol: 0.12 });
+    }
+    osc(o, 0.24, 120, 0.22, { type: 'sine', vol: 0.75, slide: 0.6, attack: 0.003, release: 0.18 });
+    hiss(o, 0.24, 0.16, { type: 'lowpass', freq: 600, vol: 0.4 });
+  },
+  // The Lunar Module ascent stage lifts off. No air on the Moon: no roar in the sky, only what reaches
+  // the rover through the ground. A deep thump, a low muffled rumble that fades as the stage rises.
+  liftoff: () => {
+    const o = trim('event', 'liftoff');
+    const c = context();
+    const t = c.currentTime;
+    osc(o, 0, 70, 0.5, { type: 'sine', vol: 1, slide: 0.5, attack: 0.002, release: 0.4 });
+    hiss(o, 0, 0.25, { type: 'lowpass', freq: 400, vol: 0.8 });
+    const src = noise();
+    const f = c.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(260, t);
+    f.frequency.exponentialRampToValueAtTime(90, t + 3.5);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(1, t + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+    src.connect(f).connect(g).connect(o);
+    src.start(t);
+    src.stop(t + 3.7);
+    osc(o, 0.05, 44, 3.4, { type: 'sine', vol: 0.8, slide: 0.8, attack: 0.1, release: 2.5 });
+  },
+  // A whirlwind sweeps the panels: a whoosh, then a rising "power back" tone.
+  panels_clean: () => {
+    const o = trim('ui', 'panels_clean');
+    hiss(o, 0, 0.7, { type: 'bandpass', freq: 400, q: 1.2, vol: 0.7, attack: 0.15, sweepTo: 2600 });
+    [523, 659, 784, 1046].forEach((fr, i) => osc(o, 0.45 + i * 0.07, fr, 0.35, { type: 'triangle', vol: 0.32, attack: 0.01, release: 0.25 }));
+    osc(o, 0.45, 262, 0.6, { type: 'sine', vol: 0.25, slide: 2, attack: 0.05, release: 0.3 });
+  },
+  // A gentle warning: two notes going down. Not an alarm.
+  battery_low: () => {
+    const o = trim('ui', 'battery_low');
+    osc(o, 0, 880, 0.22, { type: 'triangle', vol: 0.45, attack: 0.01, release: 0.12 });
+    osc(o, 0.26, 659, 0.34, { type: 'triangle', vol: 0.45, attack: 0.01, release: 0.25 });
+  },
+  // Time races: a soft whoosh with a clock ticking faster and faster.
+  time_skip: () => {
+    const o = trim('ui', 'time_skip');
+    hiss(o, 0, 1.3, { type: 'bandpass', freq: 300, q: 0.8, vol: 0.45, attack: 0.4, sweepTo: 1800 });
+    let at = 0;
+    for (let i = 0; i < 14; i++) {
+      hiss(o, at, 0.012, { type: 'bandpass', freq: i % 2 ? 3400 : 2600, q: 4, vol: 0.7 });
+      at += Math.max(0.035, 0.16 * Math.pow(0.82, i));
+    }
+  },
+  // A danger marked from the air: a confirm ping like dropping a pin.
+  mark: () => {
+    const o = trim('ui', 'mark');
+    osc(o, 0, 1318, 0.12, { type: 'sine', vol: 0.45, attack: 0.003, release: 0.1 });
+    osc(o, 0.09, 1976, 0.4, { type: 'sine', vol: 0.42, attack: 0.003, release: 0.35 });
+    hiss(o, 0, 0.03, { type: 'lowpass', freq: 900, vol: 0.35 });
+  },
+  // Flight 72: the drift begins. Two tones that rub against each other and a slow wobble: uneasy, quiet.
+  drift_warning: () => {
+    const o = trim('event', 'drift_warning');
+    const a = osc(o, 0, 392, 1.6, { type: 'sine', vol: 0.4, attack: 0.25, release: 0.7 });
+    osc(o, 0, 404, 1.6, { type: 'sine', vol: 0.35, attack: 0.25, release: 0.7 });
+    const c = context();
+    const t = c.currentTime;
+    a.frequency.setValueAtTime(392, t);
+    a.frequency.linearRampToValueAtTime(380, t + 0.6);
+    a.frequency.linearRampToValueAtTime(398, t + 1.1);
+    a.frequency.linearRampToValueAtTime(370, t + 1.6);
+  },
+  // After the crash: the broken rotor tries to spin, then gives up. Weak, short, sad.
+  rotor_twitch: () => {
+    const o = trim('event', 'rotor_twitch');
+    const c = context();
+    const t = c.currentTime;
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 700;
+    lp.connect(o);
+    const m = osc(lp, 0, 22, 0.55, { type: 'sawtooth', vol: 0.6, attack: 0.02, release: 0.3 });
+    m.frequency.setValueAtTime(22, t);
+    m.frequency.exponentialRampToValueAtTime(58, t + 0.2);
+    m.frequency.exponentialRampToValueAtTime(14, t + 0.55);
+    hiss(o, 0, 0.02, { type: 'bandpass', freq: 1500, q: 2, vol: 0.4 });
+    hiss(o, 0.12, 0.25, { type: 'bandpass', freq: 500, q: 1, vol: 0.18, attack: 0.05 });
+  },
+  // The workers fold the rover: a small servo whine and four metal joints clicking into place.
+  fold: () => {
+    const o = trim('event', 'fold');
+    osc(o, 0, 340, 1.1, { type: 'sawtooth', vol: 0.06, slide: 1.4, attack: 0.1, release: 0.2 });
+    [0.15, 0.42, 0.66, 1.05].forEach((at, i) => {
+      hiss(o, at, 0.03, { type: 'bandpass', freq: 1900 + i * 150, q: 2.5, vol: 0.9 });
+      for (const [fr, v] of [[620 + i * 40, 0.25], [1710 + i * 70, 0.12], [2960, 0.06]]) {
+        osc(o, at, fr, 0.28, { type: 'sine', vol: v, attack: 0.001, release: 0.26 });
+      }
+      osc(o, at, 110, 0.12, { type: 'sine', vol: 0.4, slide: 0.6, attack: 0.002 });
+    });
+  },
+  // A camera shutter: a sharp click, a short mechanical whir, the second blade.
+  shutter: () => {
+    const o = trim('ui', 'shutter');
+    hiss(o, 0, 0.02, { type: 'highpass', freq: 2200, vol: 1 });
+    hiss(o, 0.025, 0.07, { type: 'bandpass', freq: 3800, q: 1.5, vol: 0.25 });
+    hiss(o, 0.1, 0.035, { type: 'bandpass', freq: 1300, q: 1.8, vol: 0.85 });
+    osc(o, 0.1, 160, 0.06, { type: 'sine', vol: 0.3, slide: 0.7 });
+  },
+});
+Object.assign(TRIM_DB, {
+  // Measured on the sound test page (silent offline render, RMS of the loudest 300 ms, boost 1.5).
+  // Short sounds read lower on a 300 ms window, so clicks and pings aim a few dB under the longer ones.
+  marker_beep: 12, strap: -1, liftoff: -12, panels_clean: -3, battery_low: 1, time_skip: 14,
+  mark: 2, drift_warning: -14, rotor_twitch: -6, fold: -1, shutter: 7,
+});
+
 // ---------- loops: world background, wind, hum, rotor ----------
 
 const loops = {};
-const LOOP_BUS = { wind: 'ambience', room: 'ambience', drone: 'ambience', hum: 'event', rotor: 'event' };
+const LOOP_BUS = { wind: 'ambience', room: 'ambience', drone: 'ambience', hum: 'event', rotor: 'event', dust_spray: 'event', whirlwind: 'ambience' };
 // Level of each loop inside its bus (0..1).
-const LOOP_LEVEL = { wind: 0.9, room: 0.5, drone: 0.7, hum: 0.12, rotor: 0.25 };
+const LOOP_LEVEL = { wind: 0.9, room: 0.5, drone: 0.7, hum: 0.12, rotor: 0.25, dust_spray: 0.2, whirlwind: 2.5 };
 
 const LOOP_BUILDERS = {
+  // Moon, from the fender break to the repair: dry grit spraying off the wheel. No air, so it is soft:
+  // a fine hiss with an uneven grainy flutter, as if felt through the rover's body.
+  dust_spray: (c, out) => {
+    const src = noise();
+    const f = c.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 3200;
+    f.Q.value = 0.9;
+    const grain = c.createGain();
+    grain.gain.value = 0.6;
+    const flutter = c.createOscillator();
+    flutter.type = 'square';
+    flutter.frequency.value = 17;
+    const depth = c.createGain();
+    depth.gain.value = 0.35;
+    flutter.connect(depth).connect(grain.gain);
+    src.connect(f).connect(grain).connect(out);
+    src.start(); flutter.start();
+    return {};
+  },
+  // Mars dust devils: a swirling wind that rises and falls. loopLevel sets how close the nearest one is.
+  whirlwind: (c, out) => {
+    const src = noise();
+    const f = c.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 550;
+    f.Q.value = 1.4;
+    const sweep = c.createOscillator();
+    const sweepDepth = c.createGain();
+    sweep.frequency.value = 0.35;
+    sweepDepth.gain.value = 320;
+    sweep.connect(sweepDepth).connect(f.frequency);
+    const swirl = c.createGain();
+    swirl.gain.value = 0.7;
+    const swirlLfo = c.createOscillator();
+    const swirlDepth = c.createGain();
+    swirlLfo.frequency.value = 0.9;
+    swirlDepth.gain.value = 0.3;
+    swirlLfo.connect(swirlDepth).connect(swirl.gain);
+    const near = c.createGain();
+    near.gain.value = 0;
+    src.connect(f).connect(swirl).connect(near).connect(out);
+    src.start(); sweep.start(); swirlLfo.start();
+    return { near };
+  },
   // Thin Mars wind: band-passed noise that slowly breathes. The storm makes it louder and lower.
   wind: (c, out) => {
     const src = noise();
@@ -619,6 +898,7 @@ function startMusic(name) {
   const beat = 60 / cue.bpm;
   let step = 0;
   const playStep = () => {
+    if (paused) return; // a suspended context would bunch the notes up and play them all at once on resume
     const chord = cue.chords[Math.floor(step / 4) % cue.chords.length];
     if (step % 4 === 0) chord.forEach((f) => osc(out, 0, f, beat * 4, { type: 'sine', vol: 0.18, attack: 0.3, release: 0.8 }));
     const note = cue.melody[step % cue.melody.length];
@@ -641,11 +921,44 @@ export const sfx = safe((name) => { context(); SOUNDS[name]?.(); });
 
 let windLevel = 0;
 
+// The player's levels from Settings, 0..1 each, and a mute switch. Saved by src/ui/prefs.js.
+export const setVolumes = safe((volume = {}, muted = false) => {
+  for (const k of ['master', 'music', 'voice', 'sfx']) {
+    if (typeof volume[k] === 'number' && Number.isFinite(volume[k])) levels[k] = Math.max(0, Math.min(1, volume[k]));
+  }
+  levels.muted = !!muted;
+  applyLevels();
+});
+
+export const hasSound = (name) => name in SOUNDS || name in LOOP_BUILDERS;
+export const SOUND_NAMES = () => Object.keys(SOUNDS);
+export const LOOP_NAMES = () => Object.keys(LOOP_BUILDERS);
+export const LOOP_INFO = { bus: LOOP_BUS, level: LOOP_LEVEL };
+export const TRIMS = TRIM_DB;
+
+// For the sound test page: measure a one-shot, a voice line or a loop without playing it aloud.
+export const measureSound = (name) => measure(() => SOUNDS[name]?.(), name === 'liftoff' || name === 'rumble' ? 7 : 3);
+export const measureVoice = (who, text, emotion) => measure(() => speak(who, text || VOICE_SAMPLES[who], emotion), 6);
+export function measureLoop(name, level = 1) {
+  return measure(() => {
+    const c = context();
+    const gain = c.createGain();
+    gain.gain.value = LOOP_LEVEL[name] ?? 0.5;
+    gain.connect(bus[LOOP_BUS[name] ?? 'event']);
+    const l = LOOP_BUILDERS[name](c, gain);
+    if (l.near) l.near.gain.value = level;
+    if (l.osc) l.osc.frequency.value = l.base + level * l.range;
+  }, 2);
+}
+
 export function createAudio() {
   return {
     play: sfx,
-    speak: (who, text) => {
-      try { return speak(who, text); } catch (err) { console.warn('sound:', err); return { duration: 0, stop() {} }; }
+    has: hasSound,
+    setVolumes,
+    setPaused: safe(setPaused),
+    speak: (who, text, emotion) => {
+      try { return speak(who, text, emotion); } catch (err) { console.warn('sound:', err); return { duration: 0, stop() {} }; }
     },
     beep: safe((who) => { speak(who, VOICE_SAMPLES[who] ?? 'hello'); }),
     setBoost: safe(setBoost),
@@ -666,9 +979,10 @@ export function createAudio() {
     loop: safe((name, on) => setLoop(name, !!on)),
     loopLevel: safe((name, level) => {
       const l = loops[name];
-      if (!l || !l.osc) return;
+      if (!l) return;
       const v = Math.max(0, Math.min(1, level));
-      l.osc.frequency.setTargetAtTime(l.base + v * l.range, context().currentTime, 0.1);
+      if (l.near) l.near.gain.setTargetAtTime(v, context().currentTime, 0.25); // whirlwind: distance sets loudness
+      if (l.osc) l.osc.frequency.setTargetAtTime(l.base + v * l.range, context().currentTime, 0.1);
     }),
     music: safe((name) => (name ? startMusic(name) : stopMusic())),
     stopAll: safe(() => {

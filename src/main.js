@@ -1,5 +1,8 @@
 // Boot file. Wires every system together and runs the frame loop.
-// Owner: Set A. Other sets should not need to edit this file.
+// Owner: Set A. Set C's hooks (main menu, settings, save, language) are marked "Set C".
+//
+// src/boot.js shows the landing page and the loading screen, then calls startGame(). A normal start
+// opens the main menu; ?chapter=, ?jump= and ?test still go straight into the game as before.
 import { createGame } from './core/game.js';
 import { createInput } from './core/input.js';
 import * as physics from './core/physics.js';
@@ -18,6 +21,12 @@ import { createDialogue } from './ui/dialogue.js';
 import { createMemory } from './ui/memory.js';
 import { createAudio } from './audio/audio.js';
 import { createTweak } from './dev/tweak.js';
+import { createShell } from './ui/menu.js';
+import { createMenuScene } from './ui/menuScene.js';
+import { installLocalizer } from './ui/localize.js';
+import { prefs } from './ui/prefs.js';
+import { save } from './ui/save.js';
+import { found } from './ui/discoveries.js';
 
 import opening from './chapters/opening.js';
 import moon from './chapters/moon.js';
@@ -28,12 +37,14 @@ import epilogue from './chapters/epilogue.js';
 const canvas = document.getElementById('view');
 const root = document.getElementById('ui');
 
-async function boot() {
+export async function startGame({ onStep = () => {} } = {}) {
+  onStep('data');
   const [facts, tuning, qualityData] = await Promise.all([
     loadJSON('content/facts.json'),
     loadJSON('content/tuning.json'),
     Promise.resolve(QUALITY_DATA),
   ]);
+  onStep('physics');
   await physics.initPhysics();
 
   const game = createGame(canvas);
@@ -42,6 +53,10 @@ async function boot() {
   const input = createInput();
   const prompt = createPrompt(input);
   const audio = createAudio();
+  // Set C: the player's sound levels from Settings, now and whenever they change.
+  const applySound = (p) => audio.setVolumes(p.volume, p.muted);
+  applySound(prefs.get());
+  prefs.subscribe(applySound);
   const characters = new Map(); // id -> character currently on stage
 
   const hud = createHud(root, facts);
@@ -52,6 +67,8 @@ async function boot() {
   const memory = await createMemory(root, prompt);
   const cinematics = createCinematics({ camera: game.camera, followCam, tuning, root, audio, getCharacter: (id) => characters.get(id) });
   const tweak = createTweak(tuning);
+  installLocalizer(root);
+  onStep('interface');
 
   // Everything a chapter may use. See README "The contracts".
   const ctx = {
@@ -68,6 +85,7 @@ async function boot() {
     fadeTo(0, 0);
     dialogue.hide(); memory.hide(); card.hide();
     hud.setObjective('');
+    hud.setHold?.(null);
   });
   ctx.next = chapters.next;
   ctx.goto = chapters.go;
@@ -93,22 +111,61 @@ async function boot() {
   const speed = Math.max(1, Math.min(8, Number(new URLSearchParams(location.search).get('speed')) || 1));
   ctx.clock = 0; // game seconds since the page opened
 
-  // Pause. The overlay is plain so Abdullatif's menu design can replace it; ctx.setPaused is the contract.
-  const pauseBox = document.createElement('div');
-  pauseBox.className = 'pause-overlay';
-  Object.assign(pauseBox.style, {
-    position: 'fixed', inset: '0', display: 'none', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
-    background: 'rgba(3,6,12,0.55)', color: '#eef2f6', font: '600 22px system-ui, sans-serif', zIndex: 40, gap: '8px',
-  });
-  pauseBox.innerHTML = '<div>Paused · متوقفة مؤقتًا</div><div style="font-size:14px;opacity:.75">P to continue · اضغط P للمتابعة</div>';
-  document.body.appendChild(pauseBox);
+  // Pause. ctx.setPaused is the contract: it stops game time, physics, chapters and the camera.
+  // Set C's menu (src/ui/menu.js) draws the pause screen and calls ctx.setPaused; P and the pause button open it.
   ctx.paused = false;
   ctx.setPaused = (on) => {
     ctx.paused = !!on;
-    pauseBox.style.display = ctx.paused ? 'flex' : 'none';
+    audio.setPaused(ctx.paused);
   };
+
+  // Set C: main menu, pause menu and settings. Starting a chapter from the menu saves a checkpoint.
+  const ids = list.map((c) => c.id);
+  const params = new URLSearchParams(location.search);
+  const deepLink = params.has('chapter') || params.has('jump') || params.has('test');
+  let playing = false;
+  const shell = createShell({
+    root: document.getElementById('shell'),
+    ctx,
+    chapterIds: ids,
+    onPlay(index, { restore }) {
+      // Continue: bring back the photos and discoveries collected before this checkpoint.
+      memory.collected.length = 0;
+      found.length = 0;
+      if (restore) {
+        memory.collected.push(...restore.memories);
+        found.push(...restore.discoveries);
+      }
+      playing = true;
+      shell.setInGame(true);
+      chapters.go(index);
+    },
+    onRestart() { chapters.restart(); },
+    onQuit() { stopToMenu(); },
+  });
+  ctx.shell = shell;
+  // Every chapter start is a checkpoint (not in the self-test or a deep link, which are for the team).
+  const goChapter = chapters.go;
+  chapters.go = (i, opts) => {
+    goChapter(i, opts);
+    if (!deepLink) save.write({ chapter: chapters.index, id: ids[chapters.index], memories: memory.collected.slice(), discoveries: found.slice() });
+  };
+  ctx.goto = chapters.go;
+  ctx.next = () => chapters.go(chapters.index + 1);
+  function stopToMenu() {
+    playing = false;
+    shell.setInGame(false);
+    chapters.stop();
+    showMenu();
+  }
+  function showMenu() {
+    shell.showMain(() => createMenuScene(ctx));
+  }
+
   // Leaving the tab pauses the game, so a demo is never found mid-storm with the rover gone.
-  document.addEventListener('visibilitychange', () => { if (document.hidden && !location.search.includes('test')) ctx.setPaused(true); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && !location.search.includes('test') && playing && !ctx.paused) shell.pause(true);
+  });
 
   game.start((frameDt) => {
     if (fps) {
@@ -121,9 +178,9 @@ async function boot() {
         fps.frames = 0; fps.worst = 0; fps.last = now;
       }
     }
-    // Pause: P, or the tab being hidden. The picture stays, but game time, physics, chapters and the
-    // camera stop. A menu can call ctx.setPaused(true / false) and read ctx.paused.
-    if (input.pressed('KeyP')) ctx.setPaused(!ctx.paused);
+    // Pause: P (handled by the menu), the pause button, or the tab being hidden. The picture stays, but game
+    // time, physics, chapters and the camera stop. A menu can call ctx.setPaused(true / false) and read ctx.paused.
+    if (shell.inMainMenu) { shell.menuScene?.update(frameDt); input.endFrame(); return; }
     if (ctx.paused) { input.endFrame(); return; }
     for (let step = 0; step < speed; step++) tick(frameDt);
   });
@@ -149,18 +206,19 @@ async function boot() {
   }
 
   // ?chapter=3 (same numbers as the keys) or ?chapter=mars starts there. &jump=storm also works.
-  const params = new URLSearchParams(location.search);
-  const want = params.get('chapter');
-  let first = 0;
-  if (want) first = /^\d+$/.test(want) ? Number(want) - 1 : Math.max(0, chapters.find(want));
-  chapters.go(first, { jump: params.get('jump') ?? undefined });
   window.relica = ctx; // handy in the browser console
   ctx.chapters = chapters;
-  if (params.has('test')) import('./core/selftest.js').then((t) => t.runSelfTest(ctx)).catch((err) => console.error('self-test failed to load', err));
+  onStep('ready');
+  if (deepLink) {
+    const want = params.get('chapter');
+    let first = 0;
+    if (want) first = /^\d+$/.test(want) ? Number(want) - 1 : Math.max(0, chapters.find(want));
+    playing = true;
+    shell.setInGame(true);
+    goChapter(first, { jump: params.get('jump') ?? undefined });
+    if (params.has('test')) import('./core/selftest.js').then((t) => t.runSelfTest(ctx)).catch((err) => console.error('self-test failed to load', err));
+  } else {
+    showMenu();
+  }
+  return ctx;
 }
-
-boot().catch((err) => {
-  console.error(err);
-  root.style.padding = '24px';
-  root.textContent = 'Relica failed to start: ' + err.message;
-});

@@ -22,8 +22,18 @@ export function createChapters(list, ctx, closeOverlays) {
     }, 0);
   }
 
+  // Leave the current chapter without starting another one (Set C's "Main menu" button).
+  function stop() {
+    token++;
+    closeOverlays();
+    if (current) current.dispose(ctx);
+    current = null;
+    index = -1;
+  }
+
   return {
     go,
+    stop,
     next: () => go(index + 1),
     restart: () => go(index),
     find: (id) => list.findIndex((c) => c.id === id),

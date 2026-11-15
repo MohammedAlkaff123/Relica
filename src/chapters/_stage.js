@@ -160,17 +160,29 @@ export function setupStage(ctx, cfg) {
       return guarded((done) => { objectives.goTo(x, z, text, opts).then(done); });
     },
     // Hold a key for `seconds` (in total; letting go pauses it). Shows a progress bar on the objective line.
+    // Set C draws it as a keycap and one bar that fills from green to red (hud.setHold). A hold never asks
+    // for more than 2 seconds: long enough to be a choice, short enough not to feel stuck.
     hold(code, seconds, text) {
       let held = 0, shown = '';
+      const need = Math.min(seconds, 2);
+      const key = code.replace(/^Key/, '');
       return guarded((done) => {
         const task = (dt) => {
-          if (ctx.input.down(code)) held += dt;
-          const n = Math.min(10, Math.floor((held / seconds) * 10));
-          const label = `${text}  ${'▮'.repeat(n)}${'▯'.repeat(10 - n)}`;
-          if (label !== shown) { ctx.hud.setObjective(label); shown = label; }
-          if (held >= seconds) { tasks.delete(task); ctx.hud.setObjective(''); done(); }
+          const pressing = ctx.input.down(code);
+          if (pressing) held += dt;
+          const progress = Math.min(1, held / need);
+          if (ctx.hud.setHold) {
+            const label = `${progress.toFixed(2)}${pressing}`;
+            if (label !== shown) { ctx.hud.setHold({ key, text, progress, pressing }); shown = label; }
+          } else {
+            const n = Math.min(10, Math.floor(progress * 10));
+            const label = `${text}  ${'▮'.repeat(n)}${'▯'.repeat(10 - n)}`;
+            if (label !== shown) { ctx.hud.setObjective(label); shown = label; }
+          }
+          if (held >= need) { tasks.delete(task); ctx.hud.setObjective(''); if (ctx.hud.setHold) ctx.hud.setHold({ key, text, progress: 1, confirmed: true }); done(); }
         };
         tasks.add(task);
+        stage.onDispose(() => ctx.hud.setHold?.(null));
       });
     },
 

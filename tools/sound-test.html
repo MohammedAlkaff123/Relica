@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relica · لوحة اختبار الأصوات</title>
+<link rel="icon" href="../public/brand/favicon.png">
+<style>
+  @font-face { font-family: RelicaInter; src: url(../public/brand/fonts/inter-400.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: RelicaInter; src: url(../public/brand/fonts/inter-600.woff2) format('woff2'); font-weight: 600; }
+  @font-face { font-family: RelicaArabic; src: url(../public/brand/fonts/NotoSansArabic.ttf) format('truetype'); font-weight: 100 900; }
+  :root { --archive:#F2EBDD; --paper:#FFFAF0; --ink:#101820; --copper:#96522F; --line:#CDC6B7; --muted:#59615C; --success:#42634D; --danger:#A3382E; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--archive); color: var(--ink); font: 16px/1.7 RelicaArabic, RelicaInter, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 0 20px 80px; }
+  header.top { position: sticky; top: 0; z-index: 5; background: var(--ink); color: var(--paper); padding: 14px 20px 16px; }
+  header.top .row { max-width: 1080px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+  header.top img { height: 30px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  h2 { font-size: 22px; margin: 36px 0 4px; }
+  .note { color: var(--muted); margin: 0 0 14px; font-size: 15px; }
+  canvas#wave { width: 100%; height: 64px; display: block; background: #0b1117; border-radius: 12px; margin-top: 10px; }
+  .meter { flex: 1; min-width: 140px; height: 10px; background: #26303a; border-radius: 99px; overflow: hidden; direction: ltr; }
+  .meter span { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #5E9E6E, #D9A441, #C8553D); }
+  .sliders { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 14px; }
+  .sliders label { display: flex; align-items: center; gap: 8px; }
+  input[type=range] { width: 120px; accent-color: var(--copper); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .card h3 { margin: 0; font-size: 17px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .card h3 code { font: 600 13px RelicaInter, monospace; color: var(--copper); direction: ltr; }
+  .card p { margin: 4px 0 10px; color: var(--muted); font-size: 14px; }
+  .card .when { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: 600 14px RelicaArabic, RelicaInter, sans-serif; border-radius: 99px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper); padding: 7px 16px; cursor: pointer; min-height: 38px; transition: transform .14s, background .14s; }
+  button:hover { background: var(--copper); border-color: var(--copper); }
+  button:active { transform: translateY(1px); }
+  button.ghost { background: transparent; color: var(--ink); }
+  button.ghost:hover { background: var(--ink); color: var(--paper); }
+  button.on { background: var(--success); border-color: var(--success); }
+  button:focus-visible { outline: 3px solid var(--copper); outline-offset: 2px; }
+  .db { font: 600 13px RelicaInter, monospace; direction: ltr; padding: 2px 10px; border-radius: 99px; background: var(--archive); }
+  .db.good { background: #dde9df; color: var(--success); }
+  .db.off { background: #f3dcd8; color: var(--danger); }
+  .moods { display: grid; grid-template-columns: 120px repeat(5, 1fr); gap: 6px; align-items: center; }
+  .moods .head { font-size: 13px; color: var(--muted); text-align: center; }
+  .moods b { font-size: 15px; }
+  .moods button { width: 100%; padding: 6px 4px; }
+  input#text { width: min(460px, 100%); border: 1.5px solid var(--line); background: var(--paper); border-radius: 12px; padding: 8px 12px; font: 15px RelicaInter, sans-serif; direction: ltr; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; font-size: 14px; }
+  th, td { padding: 8px 12px; text-align: start; border-bottom: 1px solid var(--line); }
+  th { background: var(--archive); font-weight: 600; }
+  td code { direction: ltr; font: 13px RelicaInter, monospace; }
+  @media (max-width: 640px) { .moods { grid-template-columns: 90px repeat(5, 1fr); font-size: 12px; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="row">
+    <img src="../public/brand/logos/relica-lockup-ivory-1200.png" alt="Relica">
+    <h1>لوحة اختبار الأصوات</h1>
+    <div class="meter" aria-hidden="true"><span id="level"></span></div>
+    <span class="db" id="peak" style="background:#26303a;color:#F2EBDD">— dB</span>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div class="sliders" id="sliders"></div>
+    <button class="ghost" id="stop" style="color:#FFFAF0;border-color:#FFFAF0">إيقاف كل شيء</button>
+  </div>
+  <div class="row"><canvas id="wave" width="1600" height="128"></canvas></div>
+</header>
+
+<main>
+  <h2>الأصوات الجديدة من زياد</h2>
+  <p class="note">كل صوت طلبه زياد في <code>SOUND_HANDOFF.md</code>. زر «قياس» يحسب علوّ الصوت بدون تشغيله (RMS لأعلى 300 ملّي ثانية، بنفس مكساج اللعبة). الهدف: الواجهة نحو −17 dB، الأحداث نحو −10 dB، وإشارة العلامة المتكررة أهدأ قليلًا.</p>
+  <div class="grid" id="newSounds"></div>
+
+  <h2>الأصوات المتكررة الجديدة</h2>
+  <p class="note">تشتغل وتتوقف مثل اللعبة. دوّامة الغبار تعلو كلما اقتربت العربة منها: حرّك المنزلق لتجرّب القرب.</p>
+  <div class="grid" id="newLoops"></div>
+
+  <h2>أصوات الشخصيات مع المشاعر</h2>
+  <p class="note">بصمة كل آلة تبقى كما هي (نوع الصوت، السرعة، الطبقة). المشاعر تغيّر النبرة: الفرح أعلى وأسرع مع قفزة صغيرة في النهاية، الحزن أخفض وأبطأ مع تنهيدة نازلة، النعاس بطيء وهادئ، الخوف سريع ويرتجف.</p>
+  <p><input id="text" placeholder="Type a line, or leave empty for each machine's sample line"></p>
+  <div class="card"><div class="moods" id="moods"></div></div>
+
+  <h2>الأصوات الموجودة سابقًا</h2>
+  <div class="grid" id="oldSounds"></div>
+
+  <h2>الموسيقى والأجواء</h2>
+  <div class="grid" id="music"></div>
+
+  <h2>جدول القياس</h2>
+  <p class="note">يقيس كل الأصوات بصمت ويقارنها بالهدف. الأخضر داخل ±3 dB من الهدف.</p>
+  <p><button id="measureAll">قِس كل الأصوات</button></p>
+  <table><thead><tr><th>الصوت</th><th>الدور</th><th>الهدف</th><th>المقاس</th><th>الذروة</th></tr></thead><tbody id="table"></tbody></table>
+</main>
+
+<script type="module">
+import { createAudio, getAnalyser, setVolumes, measureSound, measureVoice, measureLoop, MOODS, VOICE_SAMPLES } from '../src/audio/audio.js';
+const audio = createAudio();
+
+const NEW = [
+  ['marker_beep', 'إشارة العلامة', 'القمر: أثناء القيادة دون رؤية، تتسارع كلما اقتربت من المحطة الثانية', 'نقرة منارة قصيرة ونظيفة لا تُتعب الأذن عند تكرارها', 'ui', -20],
+  ['strap', 'شدّ الحزام', 'القمر: تثبيت صندوق العينات على العربة (3 مرات)', 'ثلاث نقرات شدّ ثم ارتطام خفيف', 'ui', -17],
+  ['liftoff', 'إقلاع المركبة القمرية', 'القمر: الجزء العلوي من المركبة يقلع', 'ارتطام عميق وهدير مكتوم يتلاشى، لأن القمر بلا هواء', 'event', -10],
+  ['panels_clean', 'تنظيف الألواح', 'المريخ: القيادة داخل دوّامة تنظّف الألواح الشمسية', 'هبّة هواء ثم نغمة صاعدة «عادت الطاقة»', 'ui', -17],
+  ['battery_low', 'بطارية منخفضة', 'المريخ: البطارية تحت 25%', 'تنبيه لطيف بنغمتين نازلتين، ليس إنذارًا', 'ui', -17],
+  ['time_skip', 'مرور الزمن', 'المريخ: كل قفزة زمنية في عدّاد الأيام', 'هبّة ناعمة مع ساعة تتسارع', 'ui', -17],
+  ['mark', 'تحديد خطر', 'إنجينويتي: الضغط على E فوق خطر من الجو', 'نقرة تأكيد مثل إسقاط دبوس', 'ui', -17],
+  ['drift_warning', 'بداية الانجراف', 'إنجينويتي، الرحلة 72: لحظة بدء الانجراف', 'نغمتان متنافرتان مع تمايل بطيء، قلق وهادئ', 'event', -14],
+  ['rotor_twitch', 'ارتعاش المروحة', 'إنجينويتي بعد التحطم: كل ضغطة Space', 'محرّك ضعيف يحاول الدوران ثم يموت فورًا', 'event', -12],
+  ['fold', 'طيّ العربة', 'البداية: العمال يطوون العربة', 'أزيز محرك صغير وأربع نقرات مفاصل معدنية', 'event', -10],
+  ['shutter', 'غالق الكاميرا', 'مهام التصوير: الصور التاريخية الثلاث وصورة المشتري', 'نقرة غالق وصوت ميكانيكي قصير', 'ui', -17],
+];
+const NEW_LOOPS = [
+  ['dust_spray', 'رذاذ الغبار', 'القمر: من انكسار الواقي حتى الإصلاح', 'حبيبات جافة ناعمة، مكتومة لأن القمر بلا هواء', 'event', -20],
+  ['whirlwind', 'دوّامة الغبار', 'المريخ: أثناء تجوّل الدوّامات', 'رياح تدور وتعلو وتهبط', 'ambience', -26],
+];
+const OLD = [
+  ['tick', 'إنجاز مهمة', 'ui', -17], ['discover', 'اكتشاف', 'ui', -17], ['memory', 'صورة ذكرى', 'ui', -17], ['park', 'توقف دقيق', 'ui', -17],
+  ['land', 'هبوط', 'event', -10], ['bounce', 'ارتداد الوسائد', 'event', -10], ['crack', 'كسر', 'event', -10], ['crash', 'تحطم', 'event', -10],
+  ['rumble', 'الإطلاق', 'event', -8], ['powerdown', 'انطفاء', 'event', -10], ['static', 'تشويش الراديو', 'event', -10],
+];
+const MACHINES = [['lrv', 'العربة القمرية'], ['opportunity', 'أوبورتيونيتي'], ['viking', 'فايكنغ 1'], ['ingenuity', 'إنجينويتي'], ['pioneer', 'بايونير 10']];
+const MOOD_AR = { curious: 'عادي', happy: 'فرح', sad: 'حزن', sleepy: 'نعاس', scared: 'خوف' };
+
+const el = (tag, cls, parent, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; parent?.appendChild(n); return n; };
+const ROLE = { ui: 'واجهة', event: 'حدث', ambience: 'أجواء', voice: 'صوت شخصية' };
+
+function dbBadge(parent) { return el('span', 'db', parent, '— dB'); }
+function showDb(badge, r, target) {
+  badge.textContent = `${r.rms} dB`;
+  badge.className = 'db ' + (Math.abs(r.rms - target) <= 3 ? 'good' : 'off');
+  badge.title = `peak ${r.peak} dB · target ${target} dB`;
+}
+
+// Sliders: the same levels the game's Settings change.
+const vol = { master: 0.8, music: 0.7, voice: 0.9, sfx: 0.85 };
+const sliders = document.getElementById('sliders');
+for (const [k, label] of [['master', 'الصوت العام'], ['music', 'الموسيقى'], ['voice', 'أصوات الشخصيات'], ['sfx', 'المؤثرات']]) {
+  const l = el('label', '', sliders, label);
+  const r = el('input', '', l); r.type = 'range'; r.min = 0; r.max = 1; r.step = 0.01; r.value = vol[k];
+  r.addEventListener('input', () => { vol[k] = Number(r.value); setVolumes(vol, false); });
+}
+setVolumes(vol, false);
+
+const newBox = document.getElementById('newSounds');
+for (const [name, ar, when, desc, role, target] of NEW) {
+  const c = el('div', 'card', newBox);
+  const h = el('h3', '', c, ar); el('code', '', h, name);
+  el('div', 'when', c, when);
+  el('p', '', c, desc);
+  const a = el('div', 'actions', c);
+  el('button', '', a, 'تشغيل').addEventListener('click', () => audio.play(name));
+  const m = el('button', 'ghost', a, 'قياس');
+  const badge = dbBadge(a);
+  el('span', 'note', a, `الهدف ${target} dB · ${ROLE[role]}`);
+  m.addEventListener('click', async () => showDb(badge, await measureSound(name), target));
+}
+
+const loopBox = document.getElementById('newLoops');
+for (const [name, ar, when, desc, role, target] of NEW_LOOPS) {
+  const c = el('div', 'card', loopBox);
+  const h = el('h3', '', c, ar); el('code', '', h, name);
+  el('div', 'when', c, when);
+  el('p', '', c, desc);
+  const a = el('div', 'actions', c);
+  const b = el('button', '', a, 'تشغيل');
+  let on = false;
+  b.addEventListener('click', () => { on = !on; audio.loop(name, on); if (name === 'whirlwind') audio.loopLevel(name, Number(range?.value ?? 1)); b.textContent = on ? 'إيقاف' : 'تشغيل'; b.classList.toggle('on', on); });
+  let range = null;
+  if (name === 'whirlwind') {
+    const l = el('label', 'note', a, 'القرب');
+    range = el('input', '', l); range.type = 'range'; range.min = 0; range.max = 1; range.step = 0.01; range.value = 1;
+    range.addEventListener('input', () => audio.loopLevel(name, Number(range.value)));
+  }
+  const m = el('button', 'ghost', a, 'قياس');
+  const badge = dbBadge(a);
+  m.addEventListener('click', async () => showDb(badge, await measureLoop(name, 1), target));
+}
+
+const moods = document.getElementById('moods');
+el('span', 'head', moods, '');
+for (const mood of Object.keys(MOODS)) el('span', 'head', moods, MOOD_AR[mood]);
+const textBox = document.getElementById('text');
+let current = null;
+for (const [who, ar] of MACHINES) {
+  el('b', '', moods, ar);
+  for (const mood of Object.keys(MOODS)) {
+    el('button', mood === 'curious' ? 'ghost' : '', moods, MOOD_AR[mood]).addEventListener('click', () => {
+      current?.stop();
+      current = audio.speak(who, textBox.value.trim() || VOICE_SAMPLES[who], mood);
+    });
+  }
+}
+
+const oldBox = document.getElementById('oldSounds');
+for (const [name, ar, role, target] of OLD) {
+  const c = el('div', 'card', oldBox);
+  const h = el('h3', '', c, ar); el('code', '', h, name);
+  const a = el('div', 'actions', c);
+  el('button', '', a, 'تشغيل').addEventListener('click', () => audio.play(name));
+  const m = el('button', 'ghost', a, 'قياس');
+  const badge = dbBadge(a);
+  m.addEventListener('click', async () => showDb(badge, await measureSound(name), target));
+}
+
+const musicBox = document.getElementById('music');
+for (const [name, ar] of [['drive', 'موسيقى القيادة الحرّة'], ['storm', 'موسيقى العاصفة'], ['ending', 'موسيقى النهاية']]) {
+  const c = el('div', 'card', musicBox);
+  const h = el('h3', '', c, ar); el('code', '', h, name);
+  const a = el('div', 'actions', c);
+  el('button', '', a, 'تشغيل').addEventListener('click', () => audio.music(name));
+  el('button', 'ghost', a, 'إيقاف').addEventListener('click', () => audio.music(null));
+}
+for (const [world, ar] of [['mars', 'رياح المريخ'], ['factory', 'غرفة التجهيز'], ['space', 'الفضاء السحيق'], ['moon', 'القمر (صمت)']]) {
+  const c = el('div', 'card', musicBox);
+  const h = el('h3', '', c, ar); el('code', '', h, 'setWorld · ' + world);
+  const a = el('div', 'actions', c);
+  el('button', '', a, 'تشغيل').addEventListener('click', () => audio.setWorld(world));
+  el('button', 'ghost', a, 'إيقاف').addEventListener('click', () => audio.setWorld(null));
+}
+
+document.getElementById('stop').addEventListener('click', () => { audio.stopAll(); current?.stop(); document.querySelectorAll('button.on').forEach((b) => { b.classList.remove('on'); b.textContent = 'تشغيل'; }); });
+
+document.getElementById('measureAll').addEventListener('click', async (e) => {
+  const body = document.getElementById('table');
+  body.textContent = '';
+  e.target.disabled = true;
+  const rows = [
+    ...NEW.map(([n, ar, , , role, target]) => [n, ar, role, target, () => measureSound(n)]),
+    ...NEW_LOOPS.map(([n, ar, , , role, target]) => [n, ar, role, target, () => measureLoop(n, 1)]),
+    ...OLD.map(([n, ar, role, target]) => [n, ar, role, target, () => measureSound(n)]),
+    ...MACHINES.map(([who, ar]) => [who, ar + ' (عادي)', 'voice', -10, () => measureVoice(who, '', 'curious')]),
+  ];
+  for (const [n, ar, role, target, run] of rows) {
+    const r = await run();
+    const tr = el('tr', '', body);
+    const td = el('td', '', tr, ar + ' '); el('code', '', td, n);
+    el('td', '', tr, ROLE[role]);
+    el('td', '', tr, `${target} dB`);
+    showDb(el('span', '', el('td', '', tr)), r, target);
+    el('td', '', tr, `${r.peak} dB`);
+  }
+  e.target.disabled = false;
+});
+
+// Live meter and waveform of whatever is playing.
+const canvas = document.getElementById('wave'), g = canvas.getContext('2d');
+const level = document.getElementById('level'), peakBox = document.getElementById('peak');
+let analyser = null, data = null, hold = -120;
+function draw() {
+  requestAnimationFrame(draw);
+  if (!analyser) return;
+  analyser.getFloatTimeDomainData(data);
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.strokeStyle = '#D9A441'; g.lineWidth = 3; g.beginPath();
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) {
+    sum += data[i] * data[i];
+    const x = (i / data.length) * canvas.width, y = (0.5 - data[i] / 2) * canvas.height;
+    i ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.stroke();
+  const db = 20 * Math.log10(Math.sqrt(sum / data.length) || 1e-6);
+  level.style.width = Math.max(0, Math.min(100, (db + 60) / 60 * 100)) + '%';
+  hold = Math.max(db, hold - 0.4);
+  peakBox.textContent = `${hold > -90 ? hold.toFixed(1) : '—'} dB`;
+}
+document.addEventListener('click', () => { if (!analyser) { analyser = getAnalyser(); data = new Float32Array(analyser.fftSize); } }, { capture: true });
+draw();
+</script>
+</body>
+</html>
