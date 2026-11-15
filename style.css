@@ -763,4 +763,7 @@ body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
 .stage-fact { margin: 10px 0 0; padding: 8px 12px; border-radius: var(--r-sm); background: rgba(255, 250, 240, 0.06); font-size: 13.5px; line-height: 1.55; color: #D8D2C5; }
 @media (max-width: 700px) { .stage { grid-template-columns: 1fr; gap: 16px; } .card.stage-card .card-sheet { padding: 24px 18px 18px; max-height: 92vh; overflow-y: auto; } .stage-machine img { aspect-ratio: 16 / 9; } }
 @media (prefers-reduced-motion: reduce) { .planet { animation: none; } }
-
+/* Letterbox shots: the subtitle sits above the bottom bar, never under it */
+.dialogue { z-index: 3; }
+#ui:has(.bars:not(.hidden)) .dialogue { bottom: calc(11vh + 12px); }
+#ui:has(.bars:not(.hidden)) .finding { bottom: calc(11vh + 120px); }

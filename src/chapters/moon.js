@@ -233,15 +233,15 @@ export default makeChapter({
     const ascent = lm.getObjectByName('ascent') ?? lm;
     s.actors.ascent = ascent;
     s.hero.lookAt?.(ascent); // the rover's camera follows it up
-    // The player is the camera operator in Houston: the climb starts when the game's countdown ends.
-    await liftoffCamera(s, ctx, {
-      onLiftoff() {
-        let up = 0;
-        s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
-        s.fx.liftoff?.(ascent);
-        s.sound('liftoff', 'rumble');
-      },
-    });
+    // The player is the camera operator in Houston: the game's TV picture shows the climb.
+    await liftoffCamera(s, ctx);
+    // Then the real lift-off, in 3D, as the conversation's first shot looks up at it. It used to
+    // start with the game's countdown, behind the game panel, so by the time the shot looked for
+    // it the cabin was a dot 200 m up. The climb is slow at first and speeds up, as on Apollo 17.
+    let up = 0;
+    s.every((dt) => { up += dt; ascent.position.y = 0.5 * 1.6 * up * up; });
+    s.fx.liftoff?.(ascent);
+    s.sound('liftoff', 'rumble');
     s.hero.setEmotion('sad');
     await s.do(ctx.cinematics.conversation('moon_liftoff', 'ch1_left_behind', s.hero.object, { lrv: s.hero.object, ascent }, ctx.dialogue));
     s.mission.discover('rover_filmed');
