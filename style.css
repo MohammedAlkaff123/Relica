@@ -719,3 +719,23 @@ body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
 .gauge-dot { width: 10px; height: 10px; margin-inline-start: -5px; border-width: 2px; }
 @media (max-height: 720px) { .hud { width: 200px; } .hud .row-label, .hud .row-value, .gauge-word { font-size: 11.5px; } }
 
+/* Screen layout (playtest): pause + settings top start corner, world card under them; mission card top end corner. */
+.hud-buttons { inset-inline-end: auto; inset-inline-start: 16px; }
+.hud { top: 72px; inset-inline-start: 16px; }
+.mission { top: 16px; inset-inline-end: 16px; width: 248px; padding: 10px 12px 6px; }
+.mission-label { font-size: 11px; }
+.mission h2 { margin: 1px 0 6px; font-size: 14.5px; line-height: 1.35; }
+.mission .tasks li { gap: 8px; padding: 5px 0; font-size: 12.5px; line-height: 1.4; }
+.mission .check { flex-basis: 15px; height: 15px; margin-top: 1px; }
+.mission .tasks li.done .check::after { left: 3.5px; top: 0.5px; width: 3.5px; height: 7px; }
+.mission .bonus { font-size: 12px; padding: 6px 10px; }
+@media (max-width: 960px) { .mission { width: min(230px, 40vw); } .hud { width: min(210px, 40vw); } }
+@media (max-width: 560px) { .mission { top: 16px; width: min(220px, 56vw); } }
+
+/* Dialogue: words in one column, the Skip / Continue button in its own column, so they never overlap. */
+.dialogue { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: end; }
+.dialogue .who, .dialogue .line-main, .dialogue .line-second { grid-column: 1; }
+.dialogue .line-main, .dialogue .line-second { padding-inline-end: 0; }
+.dialogue-foot { position: static; grid-column: 2; grid-row: 1 / span 3; align-self: end; margin: 0; }
+@media (max-width: 560px) { .dialogue { grid-template-columns: minmax(0, 1fr); } .dialogue-foot { grid-column: 1; grid-row: auto; justify-content: flex-end; margin-top: 4px; } }
+
