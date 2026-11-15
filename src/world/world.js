@@ -253,7 +253,17 @@ export function buildWorld(name, scene, { quality = initialQuality() } = {}) {
   let sunDisc = null;
   if (look.disc) {
     sunDisc = new THREE.Group();
-    sunDisc.position.copy(sunDirection).multiplyScalar(1400);
+    // The dot is drawn lower than the light really comes from, and no further than a glance to
+    // the side of the way the hero first faces (+z), so the player sees it without looking up.
+    // The light and the shadows keep the true direction. `discAt` in the look table overrides it;
+    // in deep space the Sun stays where it is: there the player has to turn and find it.
+    const discDirection = sunDirection.clone();
+    if (look.discAt) discDirection.set(...look.discAt).normalize();
+    else if (look.ground !== null) {
+      const side = THREE.MathUtils.clamp(Math.atan2(sunDirection.x, sunDirection.z), -0.32, 0.32), rise = THREE.MathUtils.degToRad(look.discHeight ?? 3); // the follow camera shows only a thin strip of sky
+      discDirection.set(Math.sin(side) * Math.cos(rise), Math.sin(rise), Math.cos(side) * Math.cos(rise));
+    }
+    sunDisc.position.copy(discDirection).multiplyScalar(1400);
     const discSize = look.discSize ?? 30;
     const disc = new THREE.Mesh(new THREE.CircleGeometry(discSize, 32), new THREE.MeshBasicMaterial({ color: look.disc, fog: false }));
     disc.name = 'disc';

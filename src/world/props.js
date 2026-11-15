@@ -29,6 +29,7 @@
 // The people are built here from boxes, so they can have joints.
 import * as THREE from 'three';
 import { softPoints } from './softPoints.js';
+import { metalSurface } from './surface.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { presetFor, initialQuality } from './quality.js';
 import { shareResources } from './resources.js';
@@ -291,8 +292,61 @@ function rolling(group, radius) {
   return group;
 }
 
+// The Lunar Module's lift-off. The chapter only raises the `ascent` part; when this sees it leave
+// the deck it lights the engine under it and throws scraps of gold foil off the descent stage,
+// as the Apollo 17 TV pictures show. The scraps fly in clean arcs (no air) and stay where they land.
+function launching(group) {
+  const GRAVITY = 1.62;
+  let ascent = null, flame = null, scraps = null, time = 0, lit = false;
+  group.userData.updateFigure = (dt) => {
+    if (!ascent) {
+      ascent = group.getObjectByName('ascent');
+      if (!ascent) return; // the model has not arrived yet
+      flame = new THREE.Group();
+      const outer = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.6, 8), new THREE.MeshBasicMaterial({ color: 0xffb060, transparent: true, opacity: 0.75, depthWrite: false }));
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.6, 8), new THREE.MeshBasicMaterial({ color: 0xfff4d8, transparent: true, opacity: 0.95, depthWrite: false }));
+      outer.rotation.x = inner.rotation.x = Math.PI; // points down
+      outer.position.y = -1.3; inner.position.y = -0.8;
+      flame.add(outer, inner);
+      flame.position.y = 2.8; // under the cabin's engine bell
+      flame.visible = false;
+      ascent.add(flame);
+    }
+    const height = ascent.position.y;
+    if (!lit && height > 0.02) {
+      lit = true; time = 0;
+      const foil = [flat(0xc9a24a), flat(0xe6c66a), flat(0xb9bcc2)];
+      foil.forEach((m) => { m.side = THREE.DoubleSide; });
+      const sheet = new THREE.PlaneGeometry(0.3, 0.22);
+      scraps = Array.from({ length: 28 }, (_, i) => {
+        const m = new THREE.Mesh(sheet, foil[i % 3]), a = Math.random() * Math.PI * 2, r = 0.6 + Math.random() * 1.2;
+        m.position.set(Math.cos(a) * r, 2.95, Math.sin(a) * r);
+        const out = 3 + Math.random() * 8;
+        m.userData = { v: new THREE.Vector3(Math.cos(a) * out, 1 + Math.random() * 5, Math.sin(a) * out), spin: 4 + Math.random() * 9, down: false };
+        m.scale.setScalar(0.6 + Math.random() * 0.9);
+        group.add(m);
+        return m;
+      });
+    }
+    if (!lit) return;
+    time += dt;
+    // The flame burns while the cabin climbs, flickering; it thins out as the cabin gets far away.
+    flame.visible = height > 0.02 && height < 400;
+    flame.scale.set(1 + Math.sin(time * 47) * 0.12, 0.85 + Math.sin(time * 31) * 0.2 + Math.min(0.6, time * 0.5), 1 + Math.cos(time * 41) * 0.12);
+    for (const m of scraps) {
+      const u = m.userData;
+      if (u.down) continue;
+      u.v.y -= GRAVITY * dt;
+      m.position.addScaledVector(u.v, dt);
+      m.rotation.x += u.spin * dt; m.rotation.z += u.spin * 0.6 * dt;
+      if (u.v.y < 0 && m.position.y <= 0.04) { m.position.y = 0.04; m.rotation.set(-Math.PI / 2, 0, m.rotation.z); u.down = true; } // lies flat in the dust
+    }
+  };
+  return group;
+}
+
 const BUILDERS = {
-  lunarModule: () => fromFile('lunarModule', [9, 7, 9]),
+  lunarModule: () => launching(fromFile('lunarModule', [9, 7, 9])),
   astronaut: () => makeFigure('astronaut'),
   perseverance: () => rolling(fromFile('perseverance', [2.7, 1.85, 3.1]), 0.26),
 
@@ -500,14 +554,20 @@ const BUILDERS = {
 
 export const PROP_NAMES = Object.keys(BUILDERS);
 
+// Props that are spacecraft, and so get the machines' metal surface.
+const MACHINES = new Set(['lunarModule', 'perseverance']);
+
 export function createProp(name, options) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`unknown prop "${name}". Known: ${PROP_NAMES.join(', ')}`);
   const prop = build(options);
   prop.name = name;
   prop.userData.ready ??= Promise.resolve(true);
-  prop.userData.ready.then(() => prop.traverse((o) => {
-    if (o.isMesh && !o.material?.transparent) { o.castShadow = true; o.receiveShadow = true; }
-  }));
+  prop.userData.ready.then(() => {
+    prop.traverse((o) => {
+      if (o.isMesh && !o.material?.transparent) { o.castShadow = true; o.receiveShadow = true; }
+    });
+    if (MACHINES.has(name)) metalSurface(prop); // the same painted metal as the cast
+  });
   return prop;
 }

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA metal texture samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/metal-texture-samples.html
+     Six ready-made metal textures from Poly Haven (CC0, polyhaven.com), on the game's own
+     characters. They load straight from Poly Haven for this preview only, so this page needs the
+     internet; the chosen one would be stored in public/textures like the ground's sand_01.
+     "Our palette": only how light or dark each pixel is, and how rough or shiny, is taken from the
+     photo. The colours stay the characters' own, so the cartoon look survives. The models have no
+     texture coordinates, so the texture is laid on from three sides (triplanar). -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto 1fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; }
+  .cell.text { padding: 14px 16px; color: #b9c0cb; background: #141a23; font-size: 13px; line-height: 1.5; }
+  .cell.text b { color: #e9e6df; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> metal surfaces</span>
+    <span class="set">Machine: <button data-who="opportunity" class="on">Opportunity</button><button data-who="lrv">Moon rover</button><button data-who="viking">Viking</button><button data-who="ingenuity">Ingenuity</button><button data-who="pioneer">Pioneer</button></span>
+    <span class="set">Strength: <button data-strength="0.5">Light</button><button data-strength="1" class="on">Medium</button><button data-strength="1.7">Strong</button></span>
+    <span class="set">View: <button data-view="front" class="on">Front</button><button data-view="close">Close</button><button data-view="turn">Turning</button></span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { createCharacter } from '../src/characters/character.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const PH = (id, map) => `https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/${id}/${id}_${map}_1k.jpg`;
+// Picked from Poly Haven's metal category for spacecraft that are clean metal (B, C), painted
+// metal (D), or have spent years on the surface (E, F, G).
+const STYLES = [
+  { key: 'A', name: 'Now', note: 'Flat colour, as in the game today.' },
+  { key: 'B', id: 'metal_plate', name: 'Metal Plate', note: 'Clean steel sheet with faint smudges and machining marks. The quietest: reads as metal without telling a story.' },
+  { key: 'C', id: 'metal_plate_02', name: 'Metal Plate 02', note: 'Steel plate with clearer scratches and wear marks. Polished aluminium that has been handled.' },
+  { key: 'D', id: 'blue_metal_plate', name: 'Blue Metal Plate', note: 'Painted plate with small chips. Here it keeps our colours: only the chips and brush marks show through.' },
+  { key: 'E', id: 'rusty_painted_metal', name: 'Rusty Painted Metal', note: 'Paint wearing away in patches. Good for a machine that has worked a long time, without rust colour.' },
+  { key: 'F', id: 'green_metal_rust', name: 'Green Metal Rust', note: 'Old painted panels, streaked and blotched. Stronger wear; suits Viking and late Opportunity.' },
+  { key: 'G', id: 'rusty_metal_03', name: 'Rusty Metal 03', note: 'Weathered metal sheet, heavily marked. The most worn; likely too heavy for the bright machines.' },
+];
+const WORLDS = {
+  moon: { sky: 0x000000, ground: 0x8b8d92, sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3], fog: null },
+  mars: { sky: 0xd8a878, ground: 0xb0623a, sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240] },
+};
+const WHO = { lrv: ['moon', 0.3, 3.9], opportunity: ['mars', 0.3, 3.6], viking: ['mars', 0.35, 4.2], ingenuity: ['mars', 0.25, 1.9], pioneer: ['moon', 1.2, 4.6] };
+const TILE = 0.45; // metres one copy of the texture covers
+
+// ---- textures: loaded once each, with the mean brightness of the colour map ----
+const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
+const loaded = new Map();
+function texturesFor(id) {
+  if (!loaded.has(id)) loaded.set(id, Promise.all(['diff', 'rough', 'nor_gl'].map((m) => loader.loadAsync(PH(id, m)))).then(([diff, rough, nor]) => {
+    for (const t of [diff, rough, nor]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; }
+    diff.colorSpace = THREE.SRGBColorSpace;
+    const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.drawImage(diff.image, 0, 0, 64, 64);
+    const px = g.getImageData(0, 0, 64, 64).data; let sum = 0;
+    for (let i = 0; i < px.length; i += 4) sum += (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]) / 255;
+    return { diff, rough, nor, mean: sum / (px.length / 4) };
+  }));
+  return loaded.get(id);
+}
+
+const strength = { value: 1 };
+function dress(material, tex) {
+  material.roughness = 0.55; material.metalness = 0.3; // metal: it reflects the room light (scene.environment)
+  material.customProgramCacheKey = () => 'metal-triplanar';
+  material.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, { tDiff: { value: tex.diff }, tRough: { value: tex.rough }, tNor: { value: tex.nor }, uMean: { value: tex.mean }, uScale: { value: 1 / TILE }, uStrength: strength });
+    shader.vertexShader = shader.vertexShader.replace('#include <common>', 'varying vec3 vObj;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvObj = (modelMatrix * vec4(position, 1.0)).xyz - (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+      varying vec3 vObj; uniform sampler2D tDiff; uniform sampler2D tRough; uniform sampler2D tNor; uniform float uMean; uniform float uScale; uniform float uStrength;
+      // The texture seen from three sides, blended by which way the surface faces.
+      // The models carry no normals (they are shaded flat), so the facing comes from the face itself.
+      vec3 tri(sampler2D t) {
+        vec3 facing = normalize(cross(dFdx(vObj), dFdy(vObj)));
+        vec3 w = pow(abs(facing), vec3(4.0)) + 1e-4; w /= (w.x + w.y + w.z);
+        vec3 p = vObj * uScale;
+        return texture2D(t, p.zy).rgb * w.x + texture2D(t, p.xz).rgb * w.y + texture2D(t, p.xy).rgb * w.z;
+      }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        float lum = dot(tri(tDiff), vec3(0.2126, 0.7152, 0.0722));
+        diffuseColor.rgb *= clamp(1.0 + (lum - uMean) * 3.0 * uStrength, 0.3, 1.8);`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+        roughnessFactor = clamp(mix(roughnessFactor, tri(tRough).g, min(1.0, 0.55 * uStrength)), 0.18, 1.0);`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        // Dents and scratches: the photo's relief tips the surface so the light catches it.
+        normal = normalize(normal + (tri(tNor) * 2.0 - 1.0) * 0.55 * uStrength);`);
+  };
+  material.needsUpdate = true;
+}
+
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const state = { who: 'opportunity', view: 'front', strength: '1' };
+const roomLight = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const tiles = STYLES.map((v) => {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.innerHTML = `<div class="tag"><b>${v.key}</b> · ${v.name}${v.id ? ' · Poly Haven CC0' : ''}</div><div class="note">${v.note}</div>`; grid.appendChild(cell);
+  return { cell, style: v, scene: null, c: null };
+});
+const about = document.createElement('div'); about.className = 'cell text';
+about.innerHTML = '<b>How to read this</b><br>Each tile is the real game character with one Poly Haven texture laid over its own colours. <b>Strength</b> sets how much of the photo shows. <b>Close</b> and <b>Turning</b> show the shine move over the metal.<br><br>One texture can go on every machine, or a clean one on the young machines and a worn one on Viking. Tell me the letters and the strength.';
+grid.appendChild(about);
+
+let building = 0;
+async function build() {
+  const mine = ++building, [worldName, mid] = WHO[state.who], w = WORLDS[worldName];
+  await Promise.all(tiles.map(async (t) => {
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(w.sky); if (w.fog) scene.fog = new THREE.Fog(w.sky, ...w.fog);
+    const sun = new THREE.DirectionalLight(w.sun[0], w.sun[1]); sun.position.set(...w.sun[2]).multiplyScalar(20); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 50 }); sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.015;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: w.ground, roughness: 1 })); ground.receiveShadow = true;
+    scene.add(sun, new THREE.HemisphereLight(w.fill[0], w.fill[1], w.fill[2]), ground);
+    scene.environment = roomLight; scene.environmentIntensity = 0.8; // soft reflections, so metal looks like metal
+    const c = createCharacter(state.who);
+    c.object.position.y = mid;
+    scene.add(c.object);
+    const [, tex] = await Promise.all([c.ready, t.style.id ? texturesFor(t.style.id).catch(() => null) : null]);
+    if (mine !== building) return;
+    if (t.style.id && !tex) t.cell.querySelector('.note').textContent = 'Could not load this texture from Poly Haven (no internet?).';
+    const done = new Set();
+    (c.model ?? c.object).traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      if (tex && o.material?.isMeshStandardMaterial && !done.has(o.material)) {
+        o.material = o.material.clone(); // the loaded model shares its materials between copies
+        done.add(o.material); dress(o.material, tex);
+      }
+    });
+    t.scene = scene; t.c = c;
+  }));
+  if (mine === building) window.samples = { state };
+}
+
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 500);
+let last = performance.now(), time = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+  const Wd = innerWidth, H = innerHeight; renderer.setSize(Wd, H, false);
+  renderer.setScissor(0, 0, Wd, H); renderer.setViewport(0, 0, Wd, H); renderer.setClearColor(0x10141b); renderer.clear();
+  const [, mid, far] = WHO[state.who];
+  for (const t of tiles) {
+    if (!t.scene) continue;
+    t.c.update(dt);
+    t.c.object.rotation.y = state.view === 'turn' ? time * 0.5 : 0.6;
+    const r = t.cell.getBoundingClientRect();
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    const d = state.view === 'close' ? far * 0.5 : far;
+    camera.position.set(0, mid + d * 0.3, d); camera.lookAt(0, mid + 0.15, 0);
+    renderer.render(t.scene, camera);
+  }
+  requestAnimationFrame(frame);
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = btn.dataset[key];
+  if (key === 'strength') strength.value = +state.strength;
+  if (key === 'who') { tiles.forEach((t) => { t.scene = null; }); build(); }
+}));
+build();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

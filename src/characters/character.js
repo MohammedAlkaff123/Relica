@@ -21,6 +21,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { disposeObject } from '../world/resources.js';
+import { metalSurface } from '../world/surface.js';
 
 const loader = new GLTFLoader();
 const modelUrl = (id) => new URL(`../../public/models/${id}.glb`, import.meta.url).href;
@@ -28,7 +29,7 @@ const modelUrl = (id) => new URL(`../../public/models/${id}.glb`, import.meta.ur
 export const CAST = {
   lrv:         { name: 'Lunar Rover', ar: 'العربة القمرية', color: 0xd9d4c7, size: [1.6, 0.6, 2.4], wheels: true },
   opportunity: { name: 'Opportunity', ar: 'أوبورتيونيتي',  color: 0xcbb48a, size: [1.4, 0.6, 1.7], wheels: true, mast: true },
-  viking:      { name: 'Viking 1',    ar: 'فايكنغ ١',       color: 0xb8b3a6, size: [1.8, 0.7, 1.8], beard: true },
+  viking:      { name: 'Viking 1',    ar: 'فايكنغ ١',       color: 0xb8b3a6, size: [1.8, 0.7, 1.8], beard: true, look: 'elder' }, // the old one: a long tin beard
   ingenuity:   { name: 'Ingenuity',   ar: 'إنجينويتي',      color: 0x9fa7b0, size: [0.5, 0.5, 0.5], rotor: true,
                  face: { offset: [0, 0.04, 0] }, antennaScale: 0.2 },
   pioneer:     { name: 'Pioneer 10',  ar: 'بايونير ١٠',     color: 0xd8d1bd, size: [1.0, 0.6, 1.0], dish: true, modelScale: 0.4, // the model is real size: a 2.74 m dish
@@ -57,7 +58,7 @@ function flat(color, extra = {}) {
   return new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.9, ...extra });
 }
 
-export function createCharacter(id) {
+export function createCharacter(id, opts = {}) {
   const spec = CAST[id];
   if (!spec) throw new Error(`unknown character "${id}"`);
   const [sx, sy, sz] = spec.size;
@@ -138,7 +139,7 @@ export function createCharacter(id) {
   for (const side of spec.face?.eyes === 1 ? [0] : [-1, 1]) {
     const eye = new THREE.Group();
     eye.position.x = side * 0.22;
-    const white = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), flat(0xf6f4ee));
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), flat((opts.look ?? spec.look) === 'weathered' ? 0xe9dfc4 : 0xf6f4ee));
     white.scale.z = 0.5;
     const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), flat(0x14161c));
     pupil.position.z = 0.06;
@@ -150,7 +151,15 @@ export function createCharacter(id) {
     lids.push({ lid, side });
   }
 
-  if (spec.beard) {
+  // Viking is the old one. `look` picks how its age shows (opts.look, or `look` in CAST):
+  //   now       six white strands and two brows
+  //   tin       a fuller beard and bushy brows cut from crinkled tin foil
+  //   grandpa   the tin beard, a moustache, round wire glasses, heavy half-closed lids
+  //   weathered a ragged tin beard, one brow slipped, yellowed eyes, a patch, dust on the body, a bent antenna
+  //   elder     a long thin tin beard nearly to the ground, heavy brows and lids
+  const age = spec.beard ? (opts.look ?? spec.look ?? 'now') : null;
+  let lidDroop = 0;
+  if (age === 'now') {
     const hair = flat(0xecebe6);
     for (let i = 0; i < 6; i++) {
       const len = 0.25 + ((i * 7) % 4) * 0.07;
@@ -164,6 +173,44 @@ export function createCharacter(id) {
       brow.rotation.z = -side * 0.3;
       face.add(brow);
     }
+  } else if (age) {
+    // Tin foil: pale, a little shiny, so the Sun picks out each crease.
+    const tin = new THREE.MeshStandardMaterial({ color: 0xf2f5f8, emissive: 0x2a3038, flatShading: true, roughness: 0.3, metalness: 0.08, side: THREE.DoubleSide });
+    const bit = (w, h, d, x, y, z, rz = 0, rx = 0, mat = tin) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.set(rx, 0, rz); face.add(m); return m; };
+    // One strip of foil hanging from (x, y): a few short pieces, each creased the other way.
+    const strip = (x, y, len, width, lean = 0) => {
+      const n = Math.max(2, Math.round(len / 0.13)), piece = len / n;
+      for (let i = 0; i < n; i++) bit(width * (1 - i * 0.08), piece * 1.08, 0.012, x + lean * (i + 0.5) * piece, y - (i + 0.5) * piece, 0.06 + (i % 2 ? 0.018 : -0.018), lean * 0.6, i % 2 ? 0.32 : -0.32);
+    };
+    const ragged = age === 'weathered', long = age === 'elder';
+    const count = long ? 7 : 11;
+    for (let i = 0; i < count; i++) {
+      const u = i / (count - 1) - 0.5, mid = 1 - Math.abs(u) * 2; // 1 in the middle of the chin, 0 at the sides
+      let len = long ? 0.55 + mid * 0.6 : 0.26 + mid * 0.3 + ((i * 7) % 3) * 0.04;
+      if (ragged) len *= [1, 0.45, 0.9, 0.3, 1.1, 0.7, 0.25, 1, 0.5, 0.85, 0.4][i];
+      strip(u * (long ? 0.42 : 0.62), -0.17, len, long ? 0.07 : 0.075, ragged ? ((i % 3) - 1) * 0.25 : u * 0.25);
+    }
+    // Brows: two tufts each, thick, the outer ends hanging down.
+    for (const side of [-1, 1]) {
+      const slip = ragged && side > 0 ? -0.07 : 0;
+      bit(0.4, 0.075, 0.03, side * 0.29, 0.275 + slip, 0.15, -side * (0.34 + (slip ? 0.25 : 0)), 0.3);
+      bit(0.26, 0.06, 0.03, side * 0.4, 0.24 + slip, 0.165, -side * 0.62, -0.3);
+    }
+    if (age === 'grandpa' || long) lidDroop = 0.24;
+    if (age === 'grandpa') {
+      for (const side of [-1, 1]) {                       // a moustache, drooping each side
+        bit(0.26, 0.07, 0.03, side * 0.14, -0.13, 0.17, side * 0.5, 0.25);
+        bit(0.14, 0.055, 0.03, side * 0.3, -0.21, 0.165, side * 0.95, -0.25);
+      }
+      const wire = flat(0x3a3d44);                         // round wire glasses, low on the nose
+      for (const side of [-1, 1]) {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.175, 0.014, 6, 20), wire);
+        rim.position.set(side * 0.22, -0.02, 0.12); face.add(rim);
+        bit(0.2, 0.02, 0.02, side * 0.47, 0, 0.06, 0, 0, wire).rotation.y = side * 1.1; // arms
+      }
+      bit(0.1, 0.02, 0.02, 0, -0.02, 0.13, 0, 0, wire);    // bridge
+    }
+    if (ragged) bit(0.2, 0.16, 0.012, -0.5, 0.05, 0.02, 0.2, 0, flat(0x8f8a7c)); // a patch riveted on beside the face
   }
 
   // Antenna: this is the mouth. Rings leave the tip while the character talks.
@@ -226,6 +273,7 @@ export function createCharacter(id) {
 
   // Swap the boxes for the real model and move the face onto it.
   function useModel(model) {
+    metalSurface(model); // painted metal with a little shine; before the face moves onto it, so the eyes stay plain
     model.scale.setScalar(spec.modelScale ?? 1);
     model.updateMatrixWorld(true); // still outside the scene, so "world" here means character space
     const find = (name) => model.getObjectByName(name) ?? null;
@@ -286,6 +334,12 @@ export function createCharacter(id) {
       if (o.name?.startsWith('wheel_') && !o.parent?.name?.startsWith('wheel_')) character.wheels.push(o);
     });
     if (ant) parts.set('antenna', ant);
+    if (age === 'weathered') {
+      // Years of dust settled on it, and the antenna has taken a knock.
+      const dust = new THREE.Color(0xa9683f), done = new Set();
+      model.traverse((o) => { if (o.material && !done.has(o.material)) { done.add(o.material); o.material = o.material.clone(); o.material.color.lerp(dust, 0.28); } });
+      antenna.rotation.z = 0.4;
+    }
     object.remove(boxes);
     disposeObject(boxes);
     object.add(model);
@@ -342,7 +396,7 @@ export function createCharacter(id) {
       const open = blink > 0 ? 0 : now.open;
 
       // An open lid is a thin line along the top of the eye; closing, it grows down over it.
-      const shut = Math.max(0.14, 1 - Math.min(1, open));
+      const shut = Math.max(0.14 + lidDroop, 1 - Math.min(1, open)); // heavy old lids never open all the way
       for (const { lid, side } of lids) {
         lid.scale.y = shut;
         lid.position.y = 0.17 - 0.16 * shut;

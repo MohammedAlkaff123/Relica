@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA Viking samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/viking-samples.html
+     Five ways to show that Viking 1 is the old one. Each tile is the game's own character
+     (src/characters/character.js), made with createCharacter('viking', { look }). To adopt one,
+     set `look` on the viking line of CAST in that file. A is what the game has now. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto 1fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; }
+  .cell.text { padding: 14px 16px; color: #b9c0cb; background: #141a23; font-size: 13px; line-height: 1.5; }
+  .cell.text b { color: #e9e6df; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> Viking 1, the old one</span>
+    <span class="set">Mood: <button data-mood="curious" class="on">Curious</button><button data-mood="happy">Happy</button><button data-mood="sad">Sad</button><button data-mood="sleepy">Sleepy</button><button data-mood="scared">Scared</button></span>
+    <span class="set">Talking: <button data-talk="off" class="on">No</button><button data-talk="on">Yes</button></span>
+    <span class="set">View: <button data-view="front" class="on">Front</button><button data-view="close">Face</button><button data-view="side">Side</button><button data-view="turn">Turning</button></span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { createCharacter } from '../src/characters/character.js';
+
+const LOOKS = [
+  { key: 'A', look: 'now', name: 'Now', note: 'Six white strands and two brows. Reads as a moustache more than as age.' },
+  { key: 'B', look: 'tin', name: 'Tin beard', note: 'A fuller beard and bushy brows cut from crinkled tin foil. It catches the Sun, and it is made of the same stuff as the lander.' },
+  { key: 'C', look: 'grandpa', name: 'Grandfather', note: 'The tin beard with a moustache, round wire glasses low on the nose and heavy lids that never open all the way.' },
+  { key: 'D', look: 'weathered', name: 'Weathered', note: 'Age as wear: a ragged beard, one brow slipped, yellowed eyes, a riveted patch, dust on the body and a bent antenna.' },
+  { key: 'E', look: 'elder', name: 'Long beard', note: 'A long thin tin beard almost to the ground, heavy brows and lids. The oldest and the most storybook.' },
+];
+// Mars as in the game (LOOKS.mars in src/world/world.js).
+const W = { sky: 0xd8a878, ground: 0xb0623a, sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240] };
+
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const state = { mood: 'curious', talk: 'off', view: 'front' };
+
+const tiles = LOOKS.map((v) => {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.innerHTML = `<div class="tag"><b>${v.key}</b> · ${v.name}</div><div class="note">${v.note}</div>`; grid.appendChild(cell);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(W.sky); scene.fog = new THREE.Fog(W.sky, ...W.fog);
+  const sun = new THREE.DirectionalLight(W.sun[0], W.sun[1]); sun.position.set(...W.sun[2]).multiplyScalar(20); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 50 }); sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.015;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: W.ground, roughness: 1 })); ground.receiveShadow = true;
+  scene.add(sun, new THREE.HemisphereLight(W.fill[0], W.fill[1], W.fill[2]), ground);
+  const c = createCharacter('viking', { look: v.look });
+  c.object.position.y = 0.35; // half its height: the character's origin is its middle
+  c.ready.then(() => c.object.traverse((o) => { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } }));
+  scene.add(c.object);
+  return { cell, scene, c };
+});
+const about = document.createElement('div'); about.className = 'cell text';
+about.innerHTML = '<b>How to read this</b><br>Every tile is the real game character, with its blinking, moods and antenna. Try <b>Sleepy</b> and <b>Sad</b>: that is how Viking looks for most of its scene. <b>Face</b> moves the camera in close.<br><br>The looks can be mixed: for example the glasses of C on the long beard of E, or the dust of D under any beard. Tell me the letters.';
+grid.appendChild(about);
+
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 500);
+let last = performance.now(), time = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+  const Wd = innerWidth, H = innerHeight; renderer.setSize(Wd, H, false);
+  renderer.setScissor(0, 0, Wd, H); renderer.setViewport(0, 0, Wd, H); renderer.setClearColor(0x10141b); renderer.clear();
+  for (const t of tiles) {
+    t.c.setEmotion(state.mood); t.c.talk(state.talk === 'on'); t.c.update(dt);
+    t.c.object.rotation.y = state.view === 'turn' ? time * 0.6 : state.view === 'side' ? 1.2 : 0.35;
+    const r = t.cell.getBoundingClientRect();
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    if (state.view === 'close') { camera.position.set(0.5, 0.75, 3.1); camera.lookAt(0.1, 0.42, 0); }
+    else { camera.position.set(0, 1.5, 6.2); camera.lookAt(0, 0.5, 0); }
+    renderer.render(t.scene, camera);
+  }
+  requestAnimationFrame(frame);
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = btn.dataset[key];
+}));
+Promise.all(tiles.map((t) => t.c.ready)).then(() => { window.samples = { state }; });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA character texture samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/character-texture-samples.html
+     Six surface treatments for the machines, from none (A, the game now) to heavy. The models
+     carry no texture coordinates, so every treatment is drawn by the material itself from the
+     point in space it is shading: nothing to download, and it fits any of the five models. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto 1fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; }
+  .cell.text { padding: 14px 16px; color: #b9c0cb; background: #141a23; font-size: 13px; line-height: 1.5; }
+  .cell.text b { color: #e9e6df; }
+  .tag { position: absolute; left: 5px; top: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> character surfaces</span>
+    <span class="set">Machine: <button data-who="lrv" class="on">Moon rover</button><button data-who="opportunity">Opportunity</button><button data-who="viking">Viking</button><button data-who="ingenuity">Ingenuity</button><button data-who="pioneer">Pioneer</button></span>
+    <span class="set">View: <button data-view="front" class="on">Front</button><button data-view="close">Close</button><button data-view="turn">Turning</button></span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { createCharacter } from '../src/characters/character.js';
+
+const STYLES = [
+  { key: 'A', id: 0, name: 'Now', level: 'none', note: 'Flat colour, as in the game today.' },
+  { key: 'B', id: 1, name: 'Fine grain', level: 'light', note: 'A faint mottling, like sprayed paint. You feel it more than you see it; the toy look is untouched.' },
+  { key: 'C', id: 2, name: 'Hand-painted', level: 'light', note: 'Broad soft patches of tone, lighter at the top and darker underneath, like a painted model.' },
+  { key: 'D', id: 3, name: 'Panels and rivets', level: 'medium', note: 'Seams between plates, a rivet at each corner, each plate a slightly different tone. Reads as built metal.' },
+  { key: 'E', id: 4, name: 'Worn and dusty', level: 'heavy', note: 'D, plus the local dust gathered low on the body, grime streaks and bright scratches. Tells the years of service.' },
+  { key: 'F', id: 5, name: 'Foil and metal', level: 'heavy', note: 'A crinkled, shinier surface that glints as it turns, like the foil blankets on the real spacecraft.' },
+];
+const WORLDS = {
+  moon: { sky: 0x000000, ground: 0x8b8d92, dust: 0x9a9ca1, sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3], fog: null },
+  mars: { sky: 0xd8a878, ground: 0xb0623a, dust: 0xb0623a, sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95], fog: [40, 240] },
+};
+const WHO = { lrv: ['moon', 0.3, 3.9], opportunity: ['mars', 0.3, 3.6], viking: ['mars', 0.35, 4.2], ingenuity: ['mars', 0.25, 1.9], pioneer: ['moon', 1.2, 4.6] }; // world, height of its middle, camera distance
+
+// The surface is worked out in the material from where the point is in space (vP): no texture files.
+const NOISE = `
+  varying vec3 vP; uniform vec3 uDust; uniform float uFoot; uniform float uTop;
+  float h3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+  float n3(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+               mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }
+  float fbm(vec3 p) { return n3(p) * 0.5 + n3(p * 2.03) * 0.25 + n3(p * 4.1) * 0.125 + n3(p * 8.2) * 0.125; }
+  vec3 plates(vec3 d) {
+    vec3 q = vP * 3.4, g = abs(fract(q) - 0.5); float edge = max(g.x, max(g.y, g.z));
+    d *= 0.93 + 0.14 * h3(floor(q));                              // each plate its own tone
+    d *= 1.0 - 0.42 * smoothstep(0.465, 0.5, edge);               // the seam
+    vec3 r = abs(fract(q * 4.0) - 0.5);
+    d *= 1.0 - 0.3 * (1.0 - smoothstep(0.1, 0.16, length(r))) * step(0.36, edge); // rivets along it
+    return d * (0.94 + 0.12 * fbm(vP * 24.0));
+  }`;
+const PAINT = `
+  #if STYLE == 1
+    diffuseColor.rgb *= 0.86 + 0.28 * fbm(vP * 22.0);
+  #elif STYLE == 2
+    diffuseColor.rgb *= (0.9 + 0.2 * n3(vP * 2.6)) * mix(0.8, 1.08, smoothstep(uFoot, uTop, vP.y));
+  #elif STYLE == 3
+    diffuseColor.rgb = plates(diffuseColor.rgb);
+  #elif STYLE == 4
+    diffuseColor.rgb = plates(diffuseColor.rgb);
+    diffuseColor.rgb *= 0.82 + 0.18 * n3(vec3(vP.x * 9.0, vP.y * 1.2, vP.z * 9.0));                 // grime running down
+    float low = 1.0 - smoothstep(uFoot, uFoot + (uTop - uFoot) * 0.6, vP.y);
+    diffuseColor.rgb = mix(diffuseColor.rgb, uDust, clamp(low * 0.8 + (fbm(vP * 5.0) - 0.5) * 0.6, 0.0, 0.75)); // dust, thickest low down
+    float scratch = smoothstep(0.76, 0.79, n3(vec3(vP.x * 55.0, vP.y * 3.0, vP.z * 55.0)));
+    diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.4 + 0.06, scratch * 0.6);
+  #elif STYLE == 5
+    diffuseColor.rgb *= 0.92 + 0.16 * fbm(vP * 30.0);
+  #endif`;
+function dress(material, style, world, foot, top) {
+  if (!style.id) return;
+  material.defines = { ...(material.defines || {}), STYLE: style.id };
+  material.customProgramCacheKey = () => 'surface' + style.id;
+  if (style.id === 5) { material.roughness = 0.36; material.metalness = 0.18; }
+  material.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, { uDust: { value: new THREE.Color(world.dust) }, uFoot: { value: foot }, uTop: { value: top } });
+    shader.vertexShader = shader.vertexShader.replace('#include <common>', 'varying vec3 vP;\n#include <common>')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvP = (modelMatrix * vec4(position, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\n' + NOISE)
+      .replace('#include <color_fragment>', '#include <color_fragment>\n' + PAINT)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        #if STYLE == 5
+          normal = normalize(normal + (vec3(n3(vP * 34.0 + 7.0), n3(vP * 34.0 + 19.0), n3(vP * 34.0 + 31.0)) - 0.5) * 1.1); // creases
+        #endif`);
+  };
+  material.needsUpdate = true;
+}
+
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const state = { who: 'lrv', view: 'front' };
+const tiles = STYLES.map((v) => {
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.innerHTML = `<div class="tag"><b>${v.key}</b> · ${v.name} · ${v.level}</div><div class="note">${v.note}</div>`; grid.appendChild(cell);
+  return { cell, style: v, scene: null, c: null };
+});
+
+let building = 0;
+async function build() {
+  const mine = ++building, [worldName, mid] = WHO[state.who], w = WORLDS[worldName];
+  for (const t of tiles) {
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(w.sky); if (w.fog) scene.fog = new THREE.Fog(w.sky, ...w.fog);
+    const sun = new THREE.DirectionalLight(w.sun[0], w.sun[1]); sun.position.set(...w.sun[2]).multiplyScalar(20); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 50 }); sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.015;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: w.ground, roughness: 1 })); ground.receiveShadow = true;
+    scene.add(sun, new THREE.HemisphereLight(w.fill[0], w.fill[1], w.fill[2]), ground);
+    const c = createCharacter(state.who);
+    c.object.position.y = mid;
+    scene.add(c.object);
+    await c.ready;
+    if (mine !== building) return;
+    c.object.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(c.model ?? c.object), done = new Set();
+    (c.model ?? c.object).traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      if (!done.has(o.material)) { done.add(o.material); dress(o.material, t.style, w, box.min.y, box.max.y); }
+    });
+    t.scene = scene; t.c = c;
+  }
+  window.samples = { state };
+}
+
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 500);
+let last = performance.now(), time = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+  const Wd = innerWidth, H = innerHeight; renderer.setSize(Wd, H, false);
+  renderer.setScissor(0, 0, Wd, H); renderer.setViewport(0, 0, Wd, H); renderer.setClearColor(0x10141b); renderer.clear();
+  const [, mid, far] = WHO[state.who];
+  for (const t of tiles) {
+    if (!t.scene) continue;
+    t.c.update(dt);
+    t.c.object.rotation.y = state.view === 'turn' ? time * 0.5 : 0.6;
+    const r = t.cell.getBoundingClientRect();
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    const d = state.view === 'close' ? far * 0.5 : far;
+    camera.position.set(0, mid + d * 0.3, d); camera.lookAt(0, mid + 0.15, 0);
+    renderer.render(t.scene, camera);
+  }
+  requestAnimationFrame(frame);
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = btn.dataset[key];
+  if (key === 'who') { tiles.forEach((t) => { t.scene = null; }); build(); }
+}));
+build();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
