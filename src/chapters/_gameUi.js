@@ -14,7 +14,8 @@ import { fillWithKeys } from '../ui/keys.js';
 
 export const say = (text) => pick(text);
 
-export function gamePanel(s, { title, width = 520, height = 280, place = 'center' } = {}) {
+// intro (optional): one plain sentence under the title saying why we are doing this.
+export function gamePanel(s, { title, intro, width = 520, height = 280, place = 'center' } = {}) {
   const box = document.createElement('div');
   box.className = 'mini-game';
   Object.assign(box.style, {
@@ -27,6 +28,13 @@ export function gamePanel(s, { title, width = 520, height = 280, place = 'center
   const head = document.createElement('div');
   head.style.cssText = 'font-size:17px;margin-bottom:8px;letter-spacing:.2px';
   head.textContent = say(title);
+  if (intro) {
+    const why = document.createElement('div');
+    why.style.cssText = 'font:500 14px system-ui, sans-serif;line-height:1.5;opacity:.9;margin:-2px auto 8px;max-width:86vw';
+    why.style.width = `${width}px`;
+    why.textContent = say(intro);
+    head.append(why);
+  }
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   canvas.style.cssText = `display:block;width:${width}px;max-width:86vw;border-radius:8px;background:#05070c;touch-action:none`;
