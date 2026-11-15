@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Relica trailer edit</title>
+<!-- The trailer's edit. Opened by compose.mjs; also works by hand at
+     http://localhost:5173/tools/trailer/compose.html (press "Preview" to scrub).
+     Every second of the 30 follows TRAILER_HANDOFF.md. Pictures come from out/<clip>/ (captured from
+     the game by capture.mjs) and from public/nasa/ (NASA's originals). Titles are drawn by the
+     browser, so the Arabic is shaped correctly, in the game's own Arabic font. -->
+<style>
+  @font-face { font-family: RelicaArabic; src: url(../../public/brand/fonts/NotoSansArabic.ttf) format('truetype'); font-weight: 100 900; }
+  body { margin: 0; background: #111; color: #ddd; font: 14px system-ui; direction: ltr; }
+  canvas { width: 960px; height: 540px; display: block; background: #000; }
+  #bar { padding: 8px; display: flex; gap: 10px; align-items: center; }
+</style>
+<script type="importmap">{ "imports": { "mp4-muxer": "./node_modules/mp4-muxer/build/mp4-muxer.mjs" } }</script>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="bar"><input id="t" type="range" min="0" max="899" value="0" style="width:700px"><span id="lbl"></span></div>
+<script type="module">
+import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
+
+const W = 1920, H = 1080, FPS = 30, TOTAL = 30 * FPS, RATE = 48000;
+// willReadFrequently keeps the canvas in ordinary memory: the encoder is given its pixels directly,
+// because a GPU canvas reads back as black in a windowless Chrome.
+const canvas = document.getElementById('c'), g = canvas.getContext('2d', { willReadFrequently: true });
+const ink = '#F2EBDD', copper = '#E3A23C';
+
+// ---------- pictures ----------
+const cache = new Map();
+const pad = (n) => String(n).padStart(4, '0');
+function img(url) {
+  if (!cache.has(url)) cache.set(url, fetch(url).then((r) => { if (!r.ok) throw new Error('missing ' + url); return r.blob(); }).then((b) => createImageBitmap(b)));
+  return cache.get(url);
+}
+const clip = (name, n) => img(`out/${name}/${pad(Math.max(1, n))}.jpg`);
+const nasa = (path) => img('../../public/nasa/' + path);
+const brand = (path) => img('../../public/brand/' + path);
+
+// Draw a picture over the whole frame. crop = [x, y, w, h] of the source; zoom > 1 pushes in.
+function cover(bm, { crop = null, zoom = 1, panX = 0, alpha = 1 } = {}) {
+  let [sx, sy, sw, sh] = crop ?? [0, 0, bm.width, bm.height];
+  const want = W / H;
+  if (sw / sh > want) { const nw = sh * want; sx += (sw - nw) / 2 + panX * (sw - nw) / 2; sw = nw; } else { const nh = sw / want; sy += (sh - nh) / 2; sh = nh; }
+  const zw = sw / zoom, zh = sh / zoom;
+  g.globalAlpha = alpha;
+  g.drawImage(bm, sx + (sw - zw) / 2, sy + (sh - zh) / 2, zw, zh, 0, 0, W, H);
+  g.globalAlpha = 1;
+}
+// Draw a picture inside a box, keeping its shape.
+function contain(bm, [bx, by, bw, bh], alpha = 1) {
+  const k = Math.min(bw / bm.width, bh / bm.height), w = bm.width * k, h = bm.height * k;
+  g.globalAlpha = alpha;
+  g.drawImage(bm, bx + (bw - w) / 2, by + (bh - h) / 2, w, h);
+  g.globalAlpha = 1;
+}
+const black = (a = 1) => { g.globalAlpha = a; g.fillStyle = '#000'; g.fillRect(0, 0, W, H); g.globalAlpha = 1; };
+const ramp = (f, a, b) => Math.min(1, Math.max(0, (f - a) / (b - a)));
+const ease = (u) => u * u * (3 - 2 * u);
+
+// A title in the lower part of the frame, faded in and out at its ends.
+function title(text, f, from, to, { y = 930, size = 60 } = {}) {
+  if (f < from || f >= to) return;
+  const a = Math.min(ramp(f, from, from + 9), 1 - ramp(f, to - 9, to));
+  g.save();
+  // A soft dark band behind the words, so they read over any picture.
+  const band = g.createLinearGradient(0, y - size * 1.9, 0, H);
+  band.addColorStop(0, 'rgba(0,0,0,0)'); band.addColorStop(0.45, 'rgba(0,0,0,0.5)'); band.addColorStop(1, 'rgba(0,0,0,0.62)');
+  g.globalAlpha = a; g.fillStyle = band; g.fillRect(0, y - size * 1.9, W, H);
+  g.direction = 'rtl';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = `700 ${size}px RelicaArabic`;
+  g.shadowColor = 'rgba(0,0,0,0.85)'; g.shadowBlur = 24;
+  g.fillStyle = ink;
+  g.fillText(text, W / 2, y - (1 - ease(a)) * -10);
+  g.shadowBlur = 0;
+  // A short copper line under it, the colour of the game's signal rings.
+  const w = Math.min(g.measureText(text).width * 0.32, 220);
+  g.fillStyle = copper; g.fillRect(W / 2 - w / 2, y + size * 0.72, w, 4);
+  g.restore();
+}
+function credit(text, a = 1) {
+  g.save(); g.globalAlpha = a * 0.85; g.direction = 'ltr'; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.font = '500 24px RelicaArabic'; g.fillStyle = ink; g.shadowColor = '#000'; g.shadowBlur = 8;
+  g.fillText(text, 48, H - 44); g.restore();
+}
+// A quiet star field for the logo cards (fixed, no twinkle).
+let stars = null;
+function starfield(a = 1) {
+  if (!stars) { let s = 7; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647); stars = Array.from({ length: 420 }, () => [r() * W, r() * H, r() < 0.9 ? 1 + r() * 1.2 : 2 + r() * 1.5, 0.25 + r() * 0.7]); }
+  g.fillStyle = '#02030a'; g.fillRect(0, 0, W, H);
+  for (const [x, y, rad, o] of stars) { g.globalAlpha = o * a; g.fillStyle = '#f2ebdd'; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill(); }
+  g.globalAlpha = 1;
+}
+
+// ---------- the timeline: frame numbers at 30 fps ----------
+// The two puzzle panels, enlarged but stopping above the title band.
+const FENDER_CROP = [436, 285, 1049, 590], GRIND_CROP = [436, 325, 1049, 590];
+const PHOTO_BOX = [460, 195, 1000, 690];
+const MONTAGE = [ // 16.0-20.0 s: five machines, 0.8 s each
+  ['hop', 8], ['grind', 266, GRIND_CROP], ['viking', 20], ['heli_below', 60], ['pioneer', 22],
+];
+
+async function frame(f) {
+  g.globalAlpha = 1; g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+
+  if (f < 60) {                                   // 0-2: landing = the lift-off, backwards
+    cover(await clip('liftoff', 105 - Math.round(f * 0.98)));
+    black(1 - ramp(f, 0, 14));
+  } else if (f < 90) {                            // 2-3: logo and "Still here."
+    const k = f - 60;
+    starfield(1);
+    const logo = await brand('logos/relica-lockup-ivory-1200.png');
+    const a = ramp(k, 0, 8), s = 0.92 + 0.08 * ease(ramp(k, 0, 30));
+    const w = 760 * s, h = w * logo.height / logo.width;
+    g.globalAlpha = a; g.drawImage(logo, W / 2 - w / 2, H / 2 - h / 2 - 50, w, h); g.globalAlpha = 1;
+    title('ما زلتُ هنا.', f, 64, 90, { y: H / 2 + h / 2 + 30, size: 54 });
+  } else if (f < 180) {                           // 3-6: NASA archive -> the game
+    const i = Math.floor((f - 90) / 30), k = (f - 90) % 30;
+    const [photo, credText, model, pan] = [
+      ['apollo_lunar_roving_vehicle/as17-137-20979.jpg', 'NASA/JSC', 'model_lrv', 0],
+      ['opportunity_rover/PIA21708.jpg', 'NASA/JPL/Cornell', 'model_oppy', 1],
+      ['ingenuity_helicopter/PIA23882.jpg', 'NASA/JPL', 'model_heli', 0],
+    ][i];
+    const x = ease(ramp(k, 11, 21)); // the cross-fade
+    const bm = await nasa(photo);
+    if (pan) { // the Orion panorama is very wide: show its middle, drifting
+      const ph = bm.height, pw = ph * W / H;
+      cover(bm, { crop: [(bm.width - pw) * (0.42 + 0.1 * k / 30), 0, pw, ph], zoom: 1 });
+    } else cover(bm, { zoom: 1.02 + 0.04 * k / 30 });
+    credit(credText, 1 - x);
+    cover(await clip(model, 8 + k), { alpha: x });
+    title('من أرشيف ناسا… إلى عالم ريليكا.', f, 92, 178);
+  } else if (f < 270) {                           // 6-9: physics: the Moon hop, then lift-off on Mars
+    const k = f - 180;
+    if (k < 46) cover(await clip('hop', 8 + k));
+    else cover(await clip('heli_below', 39 + (k - 46)));
+    if (k >= 43 && k < 49) black(0.6 * (1 - Math.abs(k - 46) / 3));
+    title('محاكاة واقعية للفيزياء.', f, 184, 268);
+  } else if (f < 390) {                           // 9-13: the historic photo task
+    const k = f - 270;
+    if (k < 48) cover(await clip('photo', 1 + k));
+    else {
+      const still = await clip('photo', 47), orig = await nasa('opportunity_rover/PIA20285.jpg');
+      cover(still);
+      black(0.55);
+      const x = ease(ramp(k, 56, 74));
+      g.drawImage(still, PHOTO_BOX[0], PHOTO_BOX[1], PHOTO_BOX[2], PHOTO_BOX[3], PHOTO_BOX[0], PHOTO_BOX[1], PHOTO_BOX[2], PHOTO_BOX[3]);
+      g.fillStyle = '#0b0d10'; g.globalAlpha = x; g.fillRect(...PHOTO_BOX); g.globalAlpha = 1;
+      contain(orig, PHOTO_BOX, x);
+      g.strokeStyle = copper; g.lineWidth = 3; g.globalAlpha = 0.9; g.strokeRect(...PHOTO_BOX); g.globalAlpha = 1;
+      if (x > 0.5) credit('NASA/JPL-Caltech · PIA20285', ramp(k, 70, 80));
+      if (k < 54) { g.fillStyle = '#fff'; g.globalAlpha = 0.9 * (1 - (k - 48) / 6); g.fillRect(0, 0, W, H); g.globalAlpha = 1; } // the shutter
+    }
+    title('استكشف المشهد الذي وثّقته ناسا.', f, 274, 388);
+  } else if (f < 480) {                           // 13-16: the dust guard
+    const k = f - 390;
+    if (k < 62) cover(await clip('fender', 86 + k), { crop: FENDER_CROP });
+    else cover(await clip('dust', 40 + (k - 62)));
+    title('مهمة مستوحاة من أحداث أبولو 17.', f, 394, 478);
+  } else if (f < 600) {                           // 16-20: five machines, five journeys
+    const k = f - 480, i = Math.min(4, Math.floor(k / 24)), [name, start, crop] = MONTAGE[i];
+    cover(await clip(name, start + (k % 24)), { crop: crop ?? null });
+    if (k % 24 < 2) { g.fillStyle = '#fff'; g.globalAlpha = 0.25; g.fillRect(0, 0, W, H); g.globalAlpha = 1; } // a beat on each cut
+    title('خمس آلات. خمس رحلات.', f, 482, 598);
+  } else if (f < 720) {                           // 20-24: faces
+    const k = f - 600, i = Math.min(2, Math.floor(k / 40)), j = k % 40;
+    const [name, start] = [['face_oppy', 6], ['face_heli', 2], ['face_lrv', 14]][i];
+    cover(await clip(name, start + j), { zoom: 1.0 + 0.05 * j / 40 });
+    if (j < 4 && i > 0) black(0.5 * (1 - j / 4));
+    title('لكل آلة حكاية.', f, 604, 712);
+    if (k > 108) black(ramp(k, 108, 120) * 0.9); // into the farewell
+  } else if (f < 810) {                           // 24-27: lift-off, no words
+    const k = f - 720;
+    cover(await clip('liftoff', 7 + k));
+    black(0.9 * (1 - ramp(k, 0, 8)));
+  } else {                                        // 27-30: black, then the two logos on stars
+    const k = f - 810;
+    if (k < 14) { cover(await clip('liftoff', 97)); black(ramp(k, 0, 14)); return; }
+    starfield(ramp(k, 22, 44));
+    const a = ease(ramp(k, 30, 52));
+    const relica = await brand('logos/relica-lockup-ivory-1200.png'), apps = await img('out/partner-logo.png');
+    const rh = 170, rw = rh * relica.width / relica.height, ah = 170, aw = ah * apps.width / apps.height;
+    const gap = 120, total = rw + gap + aw, x0 = W / 2 - total / 2, y = H / 2 - 110;
+    g.globalAlpha = a;
+    g.drawImage(relica, x0, y, rw, rh);
+    g.fillStyle = 'rgba(242,235,221,0.35)'; g.fillRect(x0 + rw + gap / 2 - 1, y + 10, 2, rh - 20);
+    g.drawImage(apps, x0 + rw + gap, y + (rh - ah) / 2, aw, ah);
+    g.globalAlpha = 1;
+    g.save(); g.globalAlpha = a * 0.7; g.font = '500 26px RelicaArabic'; g.direction = 'rtl'; g.textAlign = 'center'; g.fillStyle = ink;
+    g.fillText('الصور: NASA / JPL / JSC / ARC', W / 2, H - 70); g.restore();
+  }
+}
+
+// ---------- sound, made here like the game's own (no audio files) ----------
+async function soundtrack() {
+  const ctx = new OfflineAudioContext(2, RATE * 30, RATE);
+  const master = ctx.createGain(); master.gain.value = 2.0; // the compressor below keeps peaks in check
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = 0.004; comp.release.value = 0.2;
+  master.connect(comp).connect(ctx.destination);
+  const noiseBuf = ctx.createBuffer(1, RATE * 2, RATE); { const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const noise = (t, dur, { type = 'lowpass', f0 = 800, f1 = f0, q = 0.7, gain = 0.3, attack = 0.01, release = dur * 0.8 } = {}) => {
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const filt = ctx.createBiquadFilter(); filt.type = type; filt.Q.value = q;
+    filt.frequency.setValueAtTime(f0, t); filt.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    const env = ctx.createGain(); env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(gain, t + attack);
+    env.gain.setValueAtTime(gain, t + dur - release); env.gain.linearRampToValueAtTime(0, t + dur);
+    src.connect(filt).connect(env).connect(master); src.start(t); src.stop(t + dur + 0.05);
+  };
+  const tone = (t, freq, dur, { type = 'sine', gain = 0.2, attack = 0.01, glide = null, out = master } = {}) => {
+    const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
+    const env = ctx.createGain(); env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(gain, t + attack);
+    env.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(env).connect(out); o.start(t); o.stop(t + dur + 0.05);
+  };
+  const bell = (t, f, gain = 0.12) => { tone(t, f, 2.4, { gain }); tone(t, f * 2.01, 1.4, { gain: gain * 0.35 }); tone(t, f * 3.02, 0.8, { gain: gain * 0.15 }); };
+  const kick = (t, gain = 0.6) => { tone(t, 120, 0.45, { gain, glide: 40 }); noise(t, 0.08, { f0: 3000, gain: gain * 0.15 }); };
+
+  // Music: a slow pad in D minor that grows, peaks at the lift-off, stops in the black, then one last chord.
+  const pad = ctx.createGain(); pad.gain.value = 0;
+  const warm = ctx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 900;
+  pad.connect(warm).connect(master);
+  const lv = pad.gain;
+  lv.setValueAtTime(0, 0); lv.linearRampToValueAtTime(0.05, 2); lv.linearRampToValueAtTime(0.09, 9); lv.linearRampToValueAtTime(0.12, 16);
+  lv.linearRampToValueAtTime(0.16, 20); lv.linearRampToValueAtTime(0.13, 23.5); lv.linearRampToValueAtTime(0.3, 26.4);
+  lv.linearRampToValueAtTime(0.0, 27.3); lv.setValueAtTime(0, 28.1); lv.linearRampToValueAtTime(0.1, 28.6); lv.linearRampToValueAtTime(0.0, 30);
+  warm.frequency.setValueAtTime(600, 0); warm.frequency.linearRampToValueAtTime(1400, 20); warm.frequency.linearRampToValueAtTime(2600, 26.4);
+  const CHORDS = [[0, [146.8, 220, 293.7, 349.2]], [6, [116.5, 174.6, 233.1, 293.7]], [12, [130.8, 196, 261.6, 329.6]], [16, [146.8, 220, 293.7, 440]],
+    [20, [116.5, 174.6, 233.1, 349.2]], [24, [130.8, 196, 261.6, 392]], [28.1, [146.8, 220, 293.7, 440]]];
+  CHORDS.forEach(([t, notes], i) => {
+    const end = i + 1 < CHORDS.length ? CHORDS[i + 1][0] + 0.6 : 30;
+    for (const f of notes) for (const det of [-3, 3]) {
+      const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.detune.value = det;
+      const e = ctx.createGain(); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.18, t + 0.8); e.gain.setValueAtTime(0.18, end - 0.6); e.gain.linearRampToValueAtTime(0, end);
+      o.connect(e).connect(pad); o.start(t); o.stop(end + 0.1);
+    }
+  });
+  // A soft pulse under the montage, five beats on the five cuts, then a rise into the faces.
+  [16.0, 16.8, 17.6, 18.4, 19.2].forEach((t) => kick(t, 0.32));
+  noise(19.2, 0.9, { type: 'bandpass', f0: 300, f1: 2400, q: 1.2, gain: 0.12, attack: 0.8, release: 0.1 });
+
+  // Effects at their pictures.
+  noise(0, 2.1, { f0: 160, f1: 90, gain: 0.5, attack: 0.3, release: 0.9 });            // landing rumble
+  bell(2.15, 587.3, 0.12);                                                                 // logo
+  [3.35, 4.35, 5.35].forEach((t) => noise(t, 0.5, { type: 'bandpass', f0: 500, f1: 3500, q: 1.5, gain: 0.22, attack: 0.3, release: 0.2 })); // whooshes
+  noise(6.25, 0.35, { f0: 600, f1: 200, gain: 0.25 });                                     // the hop pushes off
+  tone(7.4, 70, 0.4, { gain: 0.35, glide: 45 });                                           // and lands, slowly
+  { // rotor spinning up
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(30, 7.55); o.frequency.linearRampToValueAtTime(46, 9);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
+    const e = ctx.createGain(); e.gain.setValueAtTime(0, 7.55); e.gain.linearRampToValueAtTime(0.16, 8); e.gain.setValueAtTime(0.16, 8.8); e.gain.linearRampToValueAtTime(0, 9.05);
+    o.connect(lp).connect(e).connect(master); o.start(7.55); o.stop(9.1);
+  }
+  noise(10.6, 0.06, { type: 'highpass', f0: 2500, gain: 0.22, attack: 0.002 }); noise(10.68, 0.05, { type: 'highpass', f0: 1800, gain: 0.16, attack: 0.002 }); // shutter
+  noise(10.75, 0.9, { type: 'bandpass', f0: 2000, f1: 600, q: 1, gain: 0.1, attack: 0.2 }); // into the original
+  bell(12.5, 880, 0.07);
+  [13.25, 13.75, 14.25, 14.6].forEach((t) => { tone(t, 1300, 0.08, { type: 'square', gain: 0.05 }); noise(t, 0.05, { f0: 2400, gain: 0.12 }); }); // pieces click in
+  bell(15.0, 784, 0.1); bell(15.12, 1174.7, 0.06);                                         // fixed
+  // Two machine voices, short and low (the game's beeps).
+  [[20.5, 660, 4], [22.7, 990, 3]].forEach(([t, f, n]) => { for (let i = 0; i < n; i++) tone(t + i * 0.14, f, 0.09, { type: 'square', gain: 0.025 }); });
+  // The lift-off: a rumble that builds with the climb.
+  noise(24.0, 3.2, { f0: 120, f1: 380, gain: 0.75, attack: 0.25, release: 0.4 });
+  noise(24.05, 0.4, { f0: 3000, f1: 400, gain: 0.25, attack: 0.005 });
+  bell(28.25, 293.7, 0.1); bell(28.3, 440, 0.06);                                          // the logos
+  return ctx.startRendering();
+}
+
+// ---------- encode ----------
+window.render = async ({ bitrate = 7e6, frames = TOTAL, peek = [] } = {}) => {
+  await document.fonts.load('700 60px RelicaArabic');
+  const target = new ArrayBufferTarget();
+  const muxer = new Muxer({ target, fastStart: 'in-memory',
+    video: { codec: 'avc', width: W, height: H, frameRate: FPS },
+    audio: { codec: 'aac', numberOfChannels: 2, sampleRate: RATE } });
+  const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => { throw e; } });
+  venc.configure({ codec: 'avc1.640028', width: W, height: H, bitrate, framerate: FPS, latencyMode: 'quality', avc: { format: 'avc' } });
+  const seen = [];
+  for (let f = 0; f < frames; f++) {
+    await frame(f);
+    const px = g.getImageData(0, 0, W, H).data;
+    const vf = new VideoFrame(px, { format: 'RGBA', codedWidth: W, codedHeight: H, timestamp: Math.round(f * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+    venc.encode(vf, { keyFrame: f % FPS === 0 });
+    vf.close();
+    if (peek.includes(f)) seen.push([f, canvas.toDataURL('image/jpeg', 0.7)]);
+    while (venc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 5));
+    if (f % 90 === 0) console.log('frame', f);
+  }
+  await venc.flush();
+
+  const audio = await soundtrack();
+  const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => { throw e; } });
+  aenc.configure({ codec: 'mp4a.40.2', sampleRate: RATE, numberOfChannels: 2, bitrate: 192000 });
+  const L = audio.getChannelData(0), R = audio.getChannelData(1), STEP = 4800;
+  for (let i = 0; i < audio.length; i += STEP) {
+    const n = Math.min(STEP, audio.length - i), data = new Float32Array(n * 2);
+    data.set(L.subarray(i, i + n), 0); data.set(R.subarray(i, i + n), n);
+    const ad = new AudioData({ format: 'f32-planar', sampleRate: RATE, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(i * 1e6 / RATE), data });
+    aenc.encode(ad); ad.close();
+  }
+  await aenc.flush();
+  muxer.finalize();
+  window.__mp4 = new Uint8Array(target.buffer);
+  return { bytes: window.__mp4.length, peek: seen };
+};
+window.chunk = (i, size) => { const part = window.__mp4.subarray(i, i + size); let s = ''; for (let k = 0; k < part.length; k += 32768) s += String.fromCharCode(...part.subarray(k, k + 32768)); return btoa(s); };
+window.drawAt = async (f) => { await document.fonts.load('700 60px RelicaArabic'); await frame(f); return canvas.toDataURL('image/jpeg', 0.75); };
+
+// Scrubbing by hand.
+const t = document.getElementById('t'), lbl = document.getElementById('lbl');
+t.addEventListener('input', async () => { await frame(+t.value); lbl.textContent = (t.value / FPS).toFixed(2) + ' s'; });
+window.ready = true;
+</script>
+</body>
+</html>
