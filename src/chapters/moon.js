@@ -120,9 +120,10 @@ export default makeChapter({
       await s.shot('moon_first_look');
       await climbOn(s, crew);
       await s.shot('moon_arrival');
-      await s.say('ch1_intro');
 
+      // Its first remarks pass by in the small caption while the player is already driving.
       s.unlockControls();
+      s.say('ch1_intro', { ambient: true });
       await park(s, ctx, STOP1, 'Drive the crew to science stop 1', 1);
 
       // Stop 1: the crew collects rocks. The rover's eyes follow them.
@@ -171,8 +172,7 @@ export default makeChapter({
         beepIn = 0.25 + Math.min(1.5, Math.hypot(p.x - STOP2[0], p.z - STOP2[1]) / 30);
       }
     });
-    await s.say('ch1_dust');
-    s.hero.setEmotion('sad');
+    s.say('ch1_dust', { ambient: true }); // said while driving blind; the player is not stopped
     await stop2;
     stopBeeping();
     s.mission.done(2);
@@ -224,7 +224,11 @@ export default makeChapter({
     s.lockControls();
     await s.until((dt) => s.controller.turnToward(LM[0], LM[1], dt));
     await climbOff(s, crew);
-    await Promise.all(crew.map((c, i) => s.moveTo(c, LM[0] + (i ? 1 : -1), LM[1] + 3, 6)));
+    // They walk away without a word. The rover asks where; all it gets back is a hum.
+    s.hero.lookAt?.(crew[0]);
+    const walk = Promise.all(crew.map((c, i) => s.moveTo(c, LM[0] + (i ? 1 : -1), LM[1] + 3, 6)));
+    await s.say('ch1_leaving');
+    await walk;
     // At the ladder they turn back toward the rover for a moment.
     for (const c of crew) c.rotation.y = Math.atan2(s.hero.object.position.x - c.position.x, s.hero.object.position.z - c.position.z);
     await perform(s, crew, 'farewell', 1.5);
@@ -243,6 +247,8 @@ export default makeChapter({
     await s.do(ctx.cinematics.conversation('moon_liftoff', 'ch1_left_behind', s.hero.object, { lrv: s.hero.object, ascent }, ctx.dialogue));
     s.mission.discover('rover_filmed');
     await s.wait(2);
+    // The real machine and what it did, before the story moves on.
+    await s.tribute('as17-146-22367');
     await s.shot('moon_to_mars');
     ctx.next();
   },

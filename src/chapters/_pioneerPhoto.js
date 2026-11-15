@@ -4,8 +4,11 @@ import { mission } from './_mission.js';
 import { revealPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
 
+import { counterJump } from './_timeJump.js';
+
 const CONE = 8 * Math.PI / 180;
 const difference = (target, yaw) => Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
+const TILT = 0.5; // how far W/S can tilt the camera up or down
 
 export async function photographJupiter(s, ctx) {
   const m = mission(ctx, 'epilogue_photo');
@@ -14,14 +17,16 @@ export async function photographJupiter(s, ctx) {
   ctx.hud.setStat('planned', '21 months');
   await s.do(ctx.card.chapter('epilogue_photo'));
   s.hero.setEmotion('curious');
-  const state = s.photoState = { phase: 'frame', targetYaw: 0.42, captured: false, sent: false };
-  const earthYaw = -0.65;
+  // Jupiter sits a little above the horizon and Earth a little below, so both A/D and W/S are needed.
+  const state = s.photoState = { phase: 'frame', targetYaw: 0.42, targetPitch: 0.16, pitch: 0, captured: false, sent: false };
+  const earthYaw = -0.65, earthPitch = -0.12;
+  const offBy = (yaw, pitch) => Math.hypot(difference(yaw, s.hero.object.rotation.y), pitch - state.pitch);
   const objects = s.add(new THREE.Group());
   const materials = [];
   const latitudeColors = [0xd9c3a6, 0xb59b7f, 0xe4cfad, 0xc99b73, 0xead5b6, 0xb58261, 0xe4c6a0, 0xb48b70, 0xd7bc9c, 0xe4d1b6];
   // Simple bands provide a readable Jupiter silhouette without requiring another image asset.
   const jupiter = new THREE.Group();
-  jupiter.position.set(Math.sin(state.targetYaw) * 80, s.hero.object.position.y, Math.cos(state.targetYaw) * 80);
+  jupiter.position.set(Math.sin(state.targetYaw) * 80, s.hero.object.position.y + Math.tan(state.targetPitch) * 80, Math.cos(state.targetYaw) * 80);
   for (let i = 0; i < latitudeColors.length; i++) {
     const material = new THREE.MeshBasicMaterial({ color: latitudeColors[i] });
     materials.push(material);
@@ -31,7 +36,7 @@ export async function photographJupiter(s, ctx) {
   const earthMaterial = new THREE.MeshBasicMaterial({ color: 0xa8d6ff });
   materials.push(earthMaterial);
   const earth = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8), earthMaterial);
-  earth.position.set(Math.sin(earthYaw) * 65, s.hero.object.position.y, Math.cos(earthYaw) * 65);
+  earth.position.set(Math.sin(earthYaw) * 65, s.hero.object.position.y + Math.tan(earthPitch) * 65, Math.cos(earthYaw) * 65);
   objects.add(earth);
 
   const overlay = el('div', 'pioneer-viewfinder', document.getElementById('ui'));
@@ -48,12 +53,20 @@ export async function photographJupiter(s, ctx) {
   const direction = new THREE.Vector3();
   const look = new THREE.Vector3();
   const aim = () => {
-    direction.set(Math.sin(s.hero.object.rotation.y), 0, Math.cos(s.hero.object.rotation.y));
+    const yaw = s.hero.object.rotation.y;
+    direction.set(Math.sin(yaw), 0, Math.cos(yaw));
     ctx.camera.position.copy(s.hero.object.position).addScaledVector(direction, 8);
+    direction.set(Math.sin(yaw) * Math.cos(state.pitch), Math.sin(state.pitch), Math.cos(yaw) * Math.cos(state.pitch));
     look.copy(ctx.camera.position).add(direction);
     ctx.camera.lookAt(look);
   };
-  const stopCamera = s.every(aim);
+  // W/S tilt the camera up and down; A/D (the chapter's tick) turn it.
+  const tilt = (dt) => {
+    if (!s.controls) return;
+    const v = (ctx.input.down('KeyW', 'ArrowUp') ? 1 : 0) - (ctx.input.down('KeyS', 'ArrowDown') ? 1 : 0);
+    state.pitch = THREE.MathUtils.clamp(state.pitch + v * 0.5 * dt, -TILT, TILT);
+  };
+  const stopCamera = s.every((dt) => { tilt(dt); aim(); });
   let cleaned = false;
   const cleanup = () => {
     if (cleaned) return;
@@ -73,11 +86,10 @@ export async function photographJupiter(s, ctx) {
   aim();
 
   await s.until(() => {
-    const off = difference(state.targetYaw, s.hero.object.rotation.y);
-    const aligned = Math.abs(off) < CONE;
+    const aligned = offBy(state.targetYaw, state.targetPitch) < CONE;
     reticle.classList.toggle('aligned', aligned);
     if (aligned) m.done(0);
-    ctx.hud.setObjective(aligned ? 'Space: capture Jupiter · التقط صورة للمشتري' : 'A / D: frame Jupiter · ضع المشتري داخل الإطار');
+    ctx.hud.setObjective(aligned ? 'Space: capture Jupiter · التقط صورة للمشتري' : 'A / D and W / S: frame Jupiter · ضع المشتري داخل الإطار');
     if (!aligned || !ctx.input.pressed('Space')) return false;
     state.captured = true;
     s.sound('shutter', 'tick');
@@ -112,10 +124,10 @@ export async function photographJupiter(s, ctx) {
   s.unlockControls();
   let held = 0;
   await s.until((dt) => {
-    const aligned = Math.abs(difference(earthYaw, s.hero.object.rotation.y)) < CONE;
+    const aligned = offBy(earthYaw, earthPitch) < CONE;
     reticle.classList.toggle('aligned', aligned);
     held = aligned ? held + dt : 0;
-    ctx.hud.setObjective(aligned ? `Sending image ${Math.min(100, Math.floor(held * 50))}% · جارٍ إرسال الصورة` : 'A / D: turn toward Earth to send · اتجه نحو الأرض للإرسال');
+    ctx.hud.setObjective(aligned ? `Sending image ${Math.min(100, Math.floor(held * 50))}% · جارٍ إرسال الصورة` : 'A / D and W / S: turn toward Earth to send · اتجه نحو الأرض للإرسال');
     return held >= 2;
   });
   state.sent = true;
@@ -131,8 +143,8 @@ export async function photographJupiter(s, ctx) {
   await s.fade(true, 0.5);
   cleanup();
   ctx.hud.setObjective('');
-  ctx.hud.setStat('date', '1973 → 2003');
-  await s.card('21 months planned. More than 30 years.', 'مهمة مقررة من ٢١ شهرًا امتدت أكثر من ٣٠ سنة.');
+  // The years pass on the counter. How long Pioneer lasted is told only in its service record at the end.
+  await counterJump(s, { en: 'Year', ar: 'السنة', from: 1973, to: 2003, plain: true, onValue: (v) => ctx.hud.setStat('date', String(Math.round(v))) });
   ctx.hud.setWorld('space');
   await s.fade(false, 0.5);
 }

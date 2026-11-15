@@ -215,3 +215,46 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
 .launch-eyes { position: absolute; left: 50%; top: 50%; display: flex; gap: 34px; transform: translate(-50%,-50%); }
 .launch-eyes span { display: block; width: 62px; height: 9px; border-radius: 50%; background: #f1ede4; box-shadow: 0 0 18px #e3bb7766; transition: height .6s; }
 .launch-eyes.weightless span { height: 50px; }
+
+/* Passing remarks: a small caption low on the screen while the player keeps control (dialogue.js, ambient) */
+.caption {
+  position: absolute; left: 50%; bottom: 4vh; transform: translateX(-50%);
+  width: max-content; max-width: min(620px, 88vw); padding: 6px 16px 8px; text-align: center;
+  background: #080c14b3; border-radius: 4px; border-bottom: 2px solid var(--speaker, var(--foil)); pointer-events: none;
+}
+.caption .who { display: flex; justify-content: center; gap: 10px; font: 500 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--speaker, var(--foil)); }
+.caption .who-ar { font: 600 11px var(--arabic); letter-spacing: 0; }
+.caption .ar { font: 500 18px/1.5 var(--arabic); unicode-bidi: plaintext; min-height: 1.5em; }
+.caption .en { font-size: 13px; color: var(--dim); min-height: 1.3em; }
+.caption[data-who="lrv"]         { --speaker: #e3a23c; }
+.caption[data-who="opportunity"] { --speaker: #e8835a; }
+.caption[data-who="viking"]      { --speaker: #cdbf98; }
+.caption[data-who="ingenuity"]   { --speaker: #7cc6ea; }
+.caption[data-who="pioneer"]     { --speaker: #b7a8ec; }
+.dialogue[data-who="crew"], .caption[data-who="crew"] { --speaker: #e8e6df; }
+.cinema .caption, .photo-mode .caption { display: none; }
+
+/* Viking's flashback: the 3D view like an old photograph, dark at the edges */
+body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
+.flashback-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, #1a0f05cc 100%); animation: flashback-flicker 0.35s steps(2) infinite; }
+.flashback-label { position: absolute; top: 88px; left: 50%; transform: translateX(-50%); padding: 3px 12px; font: 500 12px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: #f1e3c4; background: #1a0f05aa; border: 1px solid #f1e3c455; white-space: nowrap; }
+.flashback-label [lang="ar"] { font: 600 14px var(--arabic); letter-spacing: 0; }
+@keyframes flashback-flicker { from { opacity: 1; } to { opacity: 0.93; } }
+@media (prefers-reduced-motion: reduce) { .flashback-veil { animation: none; } }
+
+/* Time skip: a counter racing in the middle of the screen (_timeJump.js) */
+.time-jump { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; text-align: center; pointer-events: none; text-shadow: 0 2px 16px #000; }
+.time-jump .label { font: 500 14px var(--mono); letter-spacing: 0.3em; text-transform: uppercase; color: var(--foil); }
+.time-jump .label [lang="ar"] { font: 600 16px var(--arabic); letter-spacing: 0; }
+.time-jump .number { font: 500 clamp(64px, 13vw, 150px)/1.05 var(--mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: #f1ede4; filter: blur(1.2px); transition: filter 0.25s, color 0.25s, transform 0.25s; }
+.time-jump.landed .number { filter: none; color: var(--foil); transform: scale(1.06); }
+
+/* An instrument finding: a small note in the bottom left corner that fades by itself (mars.js finding) */
+.finding { position: absolute; left: 16px; bottom: 16px; max-width: min(340px, 30vw); padding: 6px 14px 7px; border-left: 3px solid #8fd18b; background: rgba(12, 16, 26, 0.7); border: 1px solid #8fd18b88; border-radius: 4px; pointer-events: none; animation: photo-reveal 0.35s ease-out; transition: opacity 0.5s; }
+.finding .en { font-size: 14px; }
+.finding .ar { font: 400 14px var(--arabic); color: var(--dim); }
+.finding.out { opacity: 0; }
+.cinema .finding, .photo-mode .finding { display: none; }
+
+/* A machine's service record under its real photo (memory.show with tribute) */
+.memory .service-label { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc7b9; font: 500 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: #5b5b5b; }

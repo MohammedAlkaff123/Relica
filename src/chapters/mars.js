@@ -4,7 +4,7 @@
 // airbag bounce (A/D nudge) into a small crater -> rover rolls out -> pebbles (hold E)
 // -> time skip past sol 90 -> long drive on solar power: dust dims the panels, whirlwinds clean them
 // -> time skip -> layered rock (hold E, grind) -> the rim (hold E, the view) -> time skip
-// -> sunset radio call with Viking -> the 2018 dust storm: the rover slows to a stop however hard W
+// -> sunset radio call with Viking, with Viking's 1976 flashback in the middle -> the 2018 dust storm: the rover slows to a stop however hard W
 // is held -> cutscene 2
 // Pitch-mode jumps: 'viking' (key 7), 'storm' (key 8).
 //
@@ -22,6 +22,7 @@ import { makeChapter } from './_stage.js';
 import { makeProp } from './_props.js';
 import { mission, factNumber } from './_mission.js';
 import { captureHistoricPhoto } from './_historicPhoto.js';
+import { counterJump } from './_timeJump.js';
 import { el } from '../ui/dom.js';
 import { createCharacter } from '../characters/character.js';
 
@@ -95,6 +96,7 @@ export default makeChapter({
       await investigate(s, ctx, 'Hold E: scan the tilted layers in the rock',
         'Cross-lamination: evidence of ripples made by flowing water.', 'طبقات متقاطعة: دليل على تموّجات صنعها ماء جارٍ.');
       waterSign(); m.discover('ripples_water');
+      await s.wait(4.5); // time to read the last finding before the rover speaks
       await s.say('ch2_water');
       // Three different clues support ancient water, not a discovery of present-day drinking water.
       await timeSkip(s, SKIP[0], showSol);
@@ -148,18 +150,25 @@ export default makeChapter({
       s.power.level = Math.min(s.power.level, 1 - level);
       s.controller.speedScale = Math.max(0, 1 - level * 1.1);
       if (level > 0.6) s.hero.setEmotion('sleepy');
-      if (level > 0.5 && !stormLine) stormLine = s.say('ch2_storm', { keepControls: true });
+      if (level > 0.5 && !stormLine) stormLine = s.say('ch2_storm', { ambient: true });
       return level >= 1;
     });
     ctx.hud.setObjective('No sunlight reaches the panels. Last contact: 10 June 2018.');
-    await s.wait(5); // 30 s in all
+    await s.wait(4); // 30 s in all
+    // The battery dies in the middle of a word: the line is cut, and everything goes dark with it.
+    await s.say('ch2_storm_cut', { ambient: true });
     s.sound('powerdown');
     s.lockControls();
-    if (stormLine) await stormLine;
-    await s.say('ch2_storm_presence');
-    await s.wait(2);
+    s.hero.setEmotion('sleepy');
+    await s.fade(true, 0.12);
+    await s.wait(2.5);
     m.discover('opportunity_storm');
-    await s.card('More than fourteen years of discovery', 'Evidence of ancient water sent home. Last contact: 10 June 2018.');
+    ctx.hud.setObjective('');
+    // The real machine and what it did, before the story moves on.
+    await s.tribute('PIA20285');
+    // Viking is part of this chapter too: its own photo and record follow.
+    await s.tribute('PIA00565');
+    await s.fade(false, 1);
     let rise=0;
     const clearSky=s.every((dt)=>{rise+=dt;s.storm.setLevel(Math.max(0,1-rise/5));});
     await s.shot('storm_to_jezero');
@@ -286,22 +295,16 @@ async function landing(s, ctx) {
 }
 
 // The sol counter races forward over the mars_day shot (the Sun crossing the sky).
-// Until that shot exists: fade to black while the counter spins.
+// Until that shot exists: fade to black while the counter spins. A large centred counter shows the jump.
 async function timeSkip(s, to, show) {
   s.lockControls();
   s.sound('time_skip');
-  const from = s.sol;
-  let t = 0;
-  const spin = s.until((dt) => {
-    t = Math.min(1, t + dt / 2.6);
-    s.sol = from + (to - from) * t * t;
-    show();
-    return t >= 1;
-  });
-  if (await s.shot('mars_day')) { await spin; return; }
-  await s.fade(true, 0.6);
-  await spin;
-  await s.fade(false, 0.8);
+  // A big counter in the middle of the screen races through the sols, so the jump in time is plain to see.
+  const count = counterJump(s, { en: 'Sol', ar: 'اليوم المريخي', from: s.sol, to, onValue: (v) => { s.sol = v; show(); } });
+  const filmed = await s.shot('mars_day');
+  if (!filmed) await s.fade(true, 0.6);
+  await count;
+  if (!filmed) await s.fade(false, 0.8);
 }
 
 // The radio call. Viking stands far away; the camera cuts to it and back.
@@ -314,20 +317,9 @@ async function radioCall(s, ctx) {
   viking.setEmotion('sleepy');
   s.viking = viking;
   ctx.characters.set('viking', viking);
-  // Historical work comes before the explicitly imagined, decades-later radio exchange.
-  await s.card('Viking 1 · Chryse Planitia · 1976', 'First successful U.S. Mars landing · أول هبوط أمريكي ناجح على المريخ');
-  const remembered = mission(ctx, 'viking');
-  ctx.hud.setContext('Viking 1', 'Chryse Planitia · August 1976');
-  await captureHistoricPhoto(s, ctx, 'PIA10738');
-  remembered.done(0);
-  ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
-  await s.hold('KeyE', 2, 'Hold E: deliver a soil sample to the biology experiments');
-  remembered.done(1);
-  await s.card('A search for life, not a confirmed discovery', 'The experiments found no definitive evidence of life. · لم تؤكّد التجارب وجود حياة.');
-  s.mission.discover('viking_first');
-  ctx.hud.setWorld('mars'); ctx.hud.setStat('date', '2017 · imagined conversation');
-  ctx.hud.setMission('mars');
-  for (let i=0;i<5;i++) if (s.mission.isDone(i)) ctx.hud.completeTask(i);
+  // The imagined, decades-later radio exchange comes first. Half-way through, Viking tells its story
+  // and the player lives it as a flashback (the real 1976 work); then the call picks up again.
+  ctx.hud.setStat('date', '2017 · imagined conversation');
   const fiction=el('div','fiction-label',document.getElementById('ui'),'Imagined conversation · حوار متخيّل');
   s.onDispose(()=>fiction.remove());
   s.hero.setEmotion('curious');
@@ -335,11 +327,54 @@ async function radioCall(s, ctx) {
   await s.wait(1);
   ctx.followCam.setTarget(viking.object, 1.1);
   await s.shot('viking_wakes', viking.object);
-  await s.do(ctx.cinematics.conversation('ch2_viking_call', 'ch2_viking_call', s.hero.object, { opportunity: s.hero.object, viking: viking.object }, ctx.dialogue));
+  const talk = (id) => s.do(ctx.cinematics.conversation('ch2_viking_call', id, s.hero.object, { opportunity: s.hero.object, viking: viking.object }, ctx.dialogue));
+  await talk('ch2_viking_call');
+  fiction.style.display = 'none';
+  await vikingFlashback(s, ctx, viking);
+  fiction.style.display = '';
+  await talk('ch2_viking_call_2');
   fiction.remove();
+  // Viking's service record comes at the end of the chapter, after Opportunity's.
   ctx.followCam.setTarget(s.hero.object, 1);
   s.hero.setEmotion('sad');
   await s.wait(1);
+}
+
+// Viking's story, played as a memory: 1976, tinted like an old photograph. The player takes Viking's
+// picture and delivers its soil sample, then the scene returns to the call.
+async function vikingFlashback(s, ctx, viking) {
+  const ui = document.getElementById('ui');
+  s.sound('time_skip');
+  await s.fade(true, 0.8);
+  document.body.classList.add('flashback'); // style.css: the 3D view turns sepia
+  const veil = el('div', 'flashback-veil', ui);
+  const label = el('div', 'flashback-label', veil, 'Viking’s memory · 1976 · ');
+  const ar = el('span', '', label, 'ذكرى فايكنغ');
+  ar.lang = 'ar'; ar.dir = 'rtl';
+  const end = () => { document.body.classList.remove('flashback'); veil.remove(); };
+  s.onDispose(end);
+  const remembered = mission(ctx, 'viking');
+  ctx.hud.setContext('Viking 1', 'Chryse Planitia · August 1976');
+  ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
+  viking.setEmotion('happy');
+  await s.fade(false, 0.8);
+  await s.card('Viking 1 · Chryse Planitia · 1976', 'First successful U.S. Mars landing · أول هبوط أمريكي ناجح على المريخ');
+  await captureHistoricPhoto(s, ctx, 'PIA10738');
+  remembered.done(0);
+  ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
+  await s.hold('KeyE', 2, 'Hold E: deliver a soil sample to the biology experiments');
+  remembered.done(1);
+  await s.card('A search for life, not a confirmed discovery', 'The experiments found no definitive evidence of life. · لم تؤكّد التجارب وجود حياة.');
+  s.mission.discover('viking_first');
+  // Back to the present.
+  s.sound('time_skip');
+  await s.fade(true, 0.8);
+  end();
+  viking.setEmotion('sleepy');
+  ctx.hud.setWorld('mars'); ctx.hud.setStat('date', '2017 · imagined conversation');
+  ctx.hud.setMission('mars');
+  for (let i=0;i<5;i++) if (s.mission.isDone(i)) ctx.hud.completeTask(i);
+  await s.fade(false, 0.8);
 }
 
 // Each observation needs a stopped rover and an instrument action; driving into a ring is not science.
@@ -355,5 +390,20 @@ async function investigate(s, ctx, instruction, result, arabic) {
   s.hero.lookAt?.(target);
   await s.hold('KeyE',2.5,instruction);
   cleanup(); s.hero.lookAt?.(null);
-  await s.card(result,arabic);
+  finding(s, result, arabic);
+}
+
+// What the instruments found: a small note in the corner that fades by itself. It never stops play.
+function finding(s, en, ar, seconds = 4.5) {
+  document.querySelector('.finding')?.remove(); // only the newest note shows
+  const box = el('div', 'finding', document.getElementById('ui'));
+  el('div', 'en', box, en);
+  const a = el('div', 'ar', box, ar); a.lang = 'ar'; a.dir = 'rtl';
+  let t = 0;
+  const stop = s.every((dt) => {
+    t += dt;
+    if (t > seconds - 0.5) box.classList.add('out');
+    if (t > seconds) { stop(); box.remove(); }
+  });
+  s.onDispose(() => box.remove());
 }

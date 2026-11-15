@@ -4,7 +4,7 @@
 // title card -> wake -> on the stand: W/S spin the wheels, A/D steer them (the driving tutorial,
 // it cannot go anywhere) -> two workers fold it -> black, launch rumble -> chapter 1
 //
-// Waiting on others (works without them): shots opening_wake, launch (Moayad); dialogue ch0_fold (Set C);
+// Waiting on others (works without them): shots opening_wake, launch (Moayad); dialogue ch0_wheels, ch0_fold (Set C);
 // shot earth_goodbye (Moayad). The test stand and the two workers are part of Set B's factory room.
 // Mission "Wake up" (STORY.md section 8): spin your wheels, steer left and right.
 import { makeChapter } from './_stage.js';
@@ -36,6 +36,8 @@ export default makeChapter({
     ctx.hud.setObjective('W and S: try your wheels');
     await s.until(() => s.tutorial.spun > 1.2);
     m.done(0);
+    // It only notices its wheels once it has watched them turn. A passing remark: the tutorial goes on.
+    s.say('ch0_wheels', { ambient: true });
     ctx.hud.setObjective('A and D: try your steering');
     await s.until(() => s.tutorial.steered > 1.2);
     m.done(1);
@@ -47,9 +49,10 @@ export default makeChapter({
     // Set B's two workers stand by the test stand (env.workers); they step up to the rover.
     const workers = s.env.workers?.length ? s.env.workers : [s.prop('worker', -3.4, 1.6), s.prop('worker', 3.5, -0.4)];
     await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.5 : -1.5, 0.2, 2)));
+    // The people speak first ("let's go"); only then does the rover ask where. Then it is folded.
+    await s.say('ch0_fold');
     s.hero.setEmotion('scared');
     s.sound('fold');
-    await s.say('ch0_fold');
     await s.until((dt) => {
       const sc = s.hero.object.scale;
       const k = 1 - Math.exp(-3 * dt);

@@ -26,7 +26,9 @@ export async function createMemory(root, prompt) {
   const collected = [];
   const src = (p) => `public/nasa/${p.group}/${p.nasa_id}.jpg`;
   const titleOf = (p) => overrides[p.nasa_id]?.title ?? p.title;
-  const credit = (p) => `${overrides[p.nasa_id]?.taken ?? p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`;
+  // outsidePack: the photo was added from images.nasa.gov later, not from the data pack; the credit says so.
+  const credit = (p) => `${overrides[p.nasa_id]?.taken ?? p.date_created.slice(0, 4)} · NASA/${p.center} · ${p.nasa_id}`
+    + (overrides[p.nasa_id]?.outsidePack ? ' · from images.nasa.gov, not our data pack · من موقع ناسا، ليست من حزمة البيانات' : '');
   const tributeIds = Object.keys(overrides).filter((id) => overrides[id]?.tribute && photos.has(id));
 
   function bilingual(parent, text, className = 'desc') {
@@ -104,7 +106,8 @@ export async function createMemory(root, prompt) {
         img.src = src(p);
       });
     },
-    async show(id, { reveal = false } = {}) {
+    // tribute: show the machine's verified service record under the photo instead of the photo caption.
+    async show(id, { reveal = false, tribute = false } = {}) {
       const p = photos.get(id);
       if (!p) { console.warn(`memory "${id}" is not in public/nasa/metadata.json`); return; }
       if (!collected.includes(id)) collected.push(id);
@@ -116,9 +119,11 @@ export async function createMemory(root, prompt) {
         photo(el('div', 'photo', frame), p);
         el('h3', '', frame, titleOf(p));
         el('div', 'meta', frame, credit(p));
-        if (o.caption) {
-          el('div', 'desc', frame, o.caption.en);
-          const ar = el('div', 'desc ar', frame, o.caption.ar ?? '');
+        const words = tribute && o.tribute ? o.tribute : o.caption;
+        if (tribute && o.tribute) el('div', 'service-label', frame, 'Service record · سجلّ الخدمة');
+        if (words) {
+          el('div', 'desc', frame, words.en);
+          const ar = el('div', 'desc ar', frame, words.ar ?? '');
           ar.lang = 'ar';
           ar.dir = 'rtl';
         } else {

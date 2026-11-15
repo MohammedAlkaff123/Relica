@@ -23,6 +23,8 @@
 //   await stage.hold('KeyE', 2, 'Hold E to study the pebbles')
 //   await stage.until(() => condition)        checked every frame
 //   await stage.card(title, sub) / say(dialogueId) / photo(nasaId) / shot(shotId, anchor)
+//   stage.say(dialogueId, { ambient: true })  a passing remark while the player keeps driving
+//   await stage.tribute(nasaId)               the machine's real photo and service record
 //   stage.every((dt) => {...})                per-frame task, removed with the chapter; returns remove()
 //   stage.onDispose(() => {...})              runs when the chapter is left (stop a sound loop...)
 //   stage.add(object3d)                       added to the scene, removed with the chapter
@@ -177,13 +179,17 @@ export function setupStage(ctx, cfg) {
     // ---- other people's systems, wrapped so a chapter switch stops the script ----
     do: after,
     card: (title, sub) => after(ctx.card.show(title, sub)),
-    async say(id, { keepControls = false } = {}) {
+    // ambient: a passing remark in the small caption; the player keeps control and no key is needed.
+    async say(id, { keepControls = false, ambient = false } = {}) {
+      if (ambient) keepControls = true;
       const resume=stage.controls;
       if (!keepControls) stage.lockControls();
-      try { return await after(ctx.dialogue.play(id)); }
+      try { return await after(ctx.dialogue.play(id, { ambient })); }
       finally { if (stage.alive && !keepControls) stage.controls=resume; }
     },
     photo: (id) => after(ctx.memory.show(id)),
+    // The end of a machine's chapter: its real NASA photo with its service record (memories.json "tribute").
+    tribute: (id) => after(ctx.memory.show(id, { tribute: true })),
     // A missing shot file is not fatal: the script carries on after a short pause.
     // Returns true if the shot played, false if it does not exist yet.
     async shot(id, anchor = hero.object) {

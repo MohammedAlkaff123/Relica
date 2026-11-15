@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { mission, factNumber } from './_mission.js';
 import { placesOf } from '../world/terrain.js';
+import { counterJump } from './_timeJump.js';
 
 // Dates as short labels, each matching a verified fact: ingenuity_first_flight, ingenuity_total.
 const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
@@ -104,7 +105,14 @@ export default makeChapter({
       m.done(0);
       band.visible = false;
       await land(s, ctx, pad, 'Let go of Space to land on the pad');
-      await s.photo('PIA23882');
+      // The real photo and service record wait for the end of the chapter.
+      s.lockControls();
+      await s.say('ch3_first_flight');
+
+      // Time passes: the five demonstration flights are done. The flight counter races to the next one.
+      await s.fade(true, 0.6);
+      await counterJump(s, { en: 'Flight', ar: 'الرحلة', from: 1, to: 6, seconds: 1.8, onValue: (v) => { flight = v; showFlight(); } });
+      await s.fade(false, 0.6);
 
       // Flights 2 and 3: scout the road and mark the dangers. The route bends around each mark.
       await s.card('Beyond the five-flight demonstration', 'Now an aerial scout for Perseverance · الآن تستكشف الطريق لبيرسيفيرانس');
@@ -121,7 +129,8 @@ export default makeChapter({
         const pulse = recoveryTime < 3 ? 0 : Math.sin(Math.min(1,(recoveryTime-3)/4)*Math.PI);
         heli.drift.tilt = pulse*.18; heli.drift.x = pulse*.7;
         if (pulse>.6) s.hero.setEmotion('scared');
-        if (recoveryTime>=7) { recovered=true;heli.drift.tilt=heli.drift.x=0;s.hero.setEmotion('happy');s.say('ch3_recover',{keepControls:true}).catch(()=>{}); }
+        // A passing remark: it shows for a few seconds and goes, the flight continues.
+        if (recoveryTime>=7) { recovered=true;heli.drift.tilt=heli.drift.x=0;s.hero.setEmotion('happy');s.say('ch3_recover',{ambient:true}).catch(()=>{}); }
       });
       for (const f of [2, 3]) {
         flight = f + 4;
@@ -130,15 +139,19 @@ export default makeChapter({
         s.unlockControls();
         for (const d of dangers.filter((x) => x.flight === f)) {
           await s.goTo(d.at[0], d.at[1], `Fly over ${d.name}`, { radius: 6 });
-          ctx.navigation.set(d.at[0], d.at[1], d.name, { radius: 6, arrival: 'Press E: report the hazard' });
-          ctx.hud.setObjective(`Press E above ${d.name} to report it to the rover`);
+          ctx.navigation.set(d.at[0], d.at[1], d.name, { radius: 6, arrival: 'In the air: press E to report the hazard' });
+          // The hazard is marked from the air. Landed beside it, the player is asked to take off again.
           await s.until(() => {
             const p = heli.position;
-            return heli.flying && ctx.input.pressed('KeyE') && Math.hypot(p.x - d.at[0], p.z - d.at[1]) < Math.max(8, d.at[2]);
+            const near = Math.hypot(p.x - d.at[0], p.z - d.at[1]) < Math.max(8, d.at[2]);
+            ctx.hud.setObjective(near && !heli.flying
+              ? 'Mark it from the air: hold Space to take off, then press E'
+              : `While flying, press E above ${d.name} to report it`);
+            return heli.flying && near && ctx.input.pressed('KeyE');
           });
           ctx.navigation.clear();
           d.marked = true;
-          s.prop('flag', d.at[0], d.at[1]);
+          plantFlag(s, d.at[0], d.at[1], d.at[2]);
           route.avoid(d.at[0], d.at[1], d.at[2]);
           s.sound('mark', 'park');
           m.progress(1, ++marked, 3);
@@ -152,11 +165,14 @@ export default makeChapter({
       // The big rover drives the safe route the helicopter found.
       s.lockControls();
       ctx.hud.setObjective('The rover follows your safe route');
+      // The camera rides with the big rover so the player watches it take the road they found.
+      ctx.followCam.setTarget(rover, 1.3);
       await route.drive(rover);
+      ctx.followCam.setTarget(s.hero.object, 0.6);
       ctx.hud.setObjective('');
 
       // Montage: the counter passes 5 and keeps going.
-      const spin = s.until((dt) => { flight = Math.min(MISSION.total - 1, flight + dt * 25); showFlight(); return flight >= MISSION.total - 1; });
+      const spin = counterJump(s, { en: 'Flight', ar: 'الرحلة', from: flight, to: MISSION.total - 1, seconds: 3, onValue: (v) => { flight = v; showFlight(); } });
       if (!(await s.shot('flights_montage'))) await s.fade(true, 0.8);
       await spin;
       m.discover('ingenuity_72');
@@ -191,7 +207,8 @@ export default makeChapter({
         if (k > 0.3) s.hero.setEmotion('scared');
         if (!s.warned) { s.warned = true; s.sound('drift_warning'); }
       }
-      if (air > 12 && !lastPush) lastPush=s.say('ch3_last_push',{keepControls:true});
+      // A passing remark, no Enter: the player is busy fighting the drift.
+      if (air > 12 && !lastPush) lastPush=s.say('ch3_last_push',{ambient:true});
       if (air > 16) heli.noLift = true;
       return heli.noLift && !heli.flying;
     });
@@ -208,9 +225,9 @@ export default makeChapter({
     if(lastPush) await lastPush;
     await s.shot('last_flight');
     s.unlockControls();
+    s.say('ch3_crash', { ambient: true }).catch(() => {});
     ctx.hud.setObjective('Space: try to lift off again');
     await s.until(()=>ctx.input.pressed('Space'));
-    await s.say('ch3_crash');
 
     // On the sand. Space only makes the rotor twitch. Nothing else.
     ctx.hud.setObjective('Space: try once more · Enter: let the rover continue');
@@ -225,8 +242,9 @@ export default makeChapter({
     await s.wait(1);
     s.moveTo(rover, 30, 40, 14).catch(() => {});
     await s.say('ch3_goodbye');
-    await s.say('ch3_grounded');
     await s.wait(2);
+    // The real machine and what it did, before the story moves on.
+    await s.tribute('PIA23882');
     await s.shot('mars_to_space');
     ctx.next();
   },
@@ -242,6 +260,14 @@ export default makeChapter({
     if (pct !== s.batShown) { s.batShown = pct; s.battery(heli.battery); }
   },
 });
+
+// A hazard flag, planted on the ground. It stands at the hazard's near edge (towards the start), where
+// the ground is solid, so it never hangs over the cliff's drop or sinks into the sand.
+function plantFlag(s, x, z, r = 8) {
+  const len = Math.hypot(x, z) || 1;
+  const fx = x - (x / len) * r * 0.5, fz = z - (z / len) * r * 0.5;
+  return s.prop('flag', fx, fz);
+}
 
 // A landing pad: a ring flat on the ground.
 function makePad(s, x, z) {

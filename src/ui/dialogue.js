@@ -8,6 +8,11 @@
 // The text types out letter by letter. Enter while it is typing shows the whole line; Enter again continues.
 // In auto mode Enter skips ahead to the next line. A line can set its own hold time with "hold": seconds.
 // While a line is up, the speaker (if on stage) shows the emotion and sends signal rings.
+//
+//   dialogue.play('ch1_intro', { ambient: true })   a passing remark: a small caption low on the screen.
+//       The player keeps driving; nothing waits for Enter and the camera is left alone.
+// A line with "cut": true vanishes the moment it finishes typing (the speaker is cut off mid-word).
+// Speakers who are not machines (the crew) are named in PEOPLE below.
 import { el } from './dom.js';
 import { loadJSON } from '../core/content.js';
 import { CAST } from '../characters/character.js';
@@ -21,26 +26,36 @@ const holdFor = (line, voiceSeconds = 0) =>
 const segmenter = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('ar', { granularity: 'grapheme' }) : null;
 const letters = (text) => (segmenter ? Array.from(segmenter.segment(text), (s) => s.segment) : Array.from(text));
 
+// Speakers with no character model.
+const PEOPLE = { crew: { name: 'Crew', ar: 'الطاقم' } };
+
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 
 export async function createDialogue(root, prompt, audio, getCharacter, followCam) {
   const script = await loadJSON('content/dialogue.json');
-  const box = el('div', 'dialogue hidden', root);
-  const who = el('div', 'who', box);
-  const whoEn = el('span', '', who);
-  const whoAr = el('span', 'who-ar', who);
-  whoAr.lang = 'ar';
-  const ar = el('div', 'ar', box);
-  ar.dir = 'rtl';
-  ar.lang = 'ar';
-  const en = el('div', 'en', box);
-  const hint = el('div', 'hint', box, 'Enter to continue');
+  // Two boxes with the same parts: the full dialogue box, and the small caption for passing remarks.
+  // The caption has its own class so nothing mistakes it for a box that waits for Enter.
+  function makeBox(className) {
+    const box = el('div', `${className} hidden`, root);
+    const who = el('div', 'who', box);
+    const whoEn = el('span', '', who);
+    const whoAr = el('span', 'who-ar', who);
+    whoAr.lang = 'ar';
+    const ar = el('div', 'ar', box);
+    ar.dir = 'rtl';
+    ar.lang = 'ar';
+    const en = el('div', 'en', box);
+    return { box, whoEn, whoAr, ar, en };
+  }
+  const full = makeBox('dialogue');
+  const caption = makeBox('caption');
+  const hint = el('div', 'hint', full.box, 'Enter to continue');
 
   let generation = 0;
   let typing = null; // the running typewriter, so Enter can finish it
 
   // Types both lines together, so the Arabic and the English finish at the same moment.
-  function type(line) {
+  function type(line, { ar, en }) {
     const a = letters(line.ar);
     const e = letters(line.en);
     const total = Math.max(a.length, e.length, 1);
@@ -79,17 +94,21 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
   }
 
   return {
-    async play(id, { auto = false, camera = true, onLine } = {}) {
+    async play(id, { auto = false, ambient = false, camera = true, onLine } = {}) {
       const token = ++generation;
+      if (typing) typing.stop(); // a new conversation replaces whatever was still typing
+      const view = ambient ? caption : full;
+      (ambient ? full : caption).box.classList.add('hidden');
+      const { box, whoEn, whoAr } = view;
       const lines = script[id];
       if (!lines) { console.warn(`dialogue "${id}" is missing from content/dialogue.json`); return; }
       hint.textContent = auto ? 'Enter to skip' : 'Enter to continue';
       for (const [index, line] of lines.entries()) {
         if (token !== generation) break;
         const speaker = getCharacter(line.who);
-        const cast = CAST[line.who];
+        const cast = CAST[line.who] ?? PEOPLE[line.who];
         onLine?.(line, index);
-        if (camera && followCam?.enabled && speaker) followCam.talkTo(speaker.object);
+        if (camera && !ambient && followCam?.enabled && speaker) followCam.talkTo(speaker.object);
         box.dataset.who = line.who;
         whoEn.textContent = cast?.name ?? line.who;
         whoAr.textContent = cast?.ar ?? '';
@@ -99,7 +118,16 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
         const voice = audio.speak ? audio.speak(line.who, line.en) : (audio.beep(line.who), null);
 
         // 1. Type the line. Enter shows it all at once.
-        const t = type(line);
+        const t = type(line, view);
+        if (ambient) {
+          // A passing remark: types, stays long enough to read, and goes. No key is needed.
+          await t.finished;
+          await sleep(line.cut ? 0.1 : holdFor(line, voice?.duration));
+          if (speaker) speaker.talk(false);
+          if (voice) voice.stop();
+          if (token !== generation) break;
+          continue;
+        }
         let result = await Promise.race([
           t.finished.then(() => 'typed'),
           waitForPlayer().then((r) => { t.stop(); return r; }),
@@ -107,7 +135,8 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
         if (result === 'typed') prompt.cancel(); // typing ended first: drop the wait we started
 
         // 2. Wait for Enter, or for the hold time in auto mode.
-        if (result !== 'cancel') result = await waitForPlayer(auto ? holdFor(line, voice?.duration) : undefined);
+        if (line.cut && result !== 'cancel') result = 'time';
+        else if (result !== 'cancel') result = await waitForPlayer(auto ? holdFor(line, voice?.duration) : undefined);
         if (speaker) speaker.talk(false);
         if (voice) voice.stop();
         if (result === 'cancel') break;
@@ -115,13 +144,14 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
       if (token === generation) {
         if (typing) typing.stop();
         box.classList.add('hidden');
-        if (camera) followCam?.release();
+        if (camera && !ambient) followCam?.release();
       }
     },
     hide() {
       generation++; followCam?.release();
       if (typing) typing.stop();
-      box.classList.add('hidden');
+      full.box.classList.add('hidden');
+      caption.box.classList.add('hidden');
     },
   };
 }
