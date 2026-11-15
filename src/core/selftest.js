@@ -276,7 +276,8 @@ export async function runSelfTest(ctx) {
     const s = await go(4);
     await until(() => { if (prompting()) tap('Enter'); return s.photoState?.phase === 'frame' && s.controls; }, 30);
     const photo = s.photoState;
-    const yaw = (a) => { s.hero.object.rotation.y = a; s.spinRate = 0; };
+    // Aims left/right; the camera tilt (W/S) is set to the target's height too.
+    const yaw = (a) => { s.hero.object.rotation.y = a; s.spinRate = 0; if (photo.targetPitch != null) photo.pitch = photo.targetPitch; };
     // Pointing at Earth before anything is captured must not send.
     yaw(-0.65);
     await waitGame(2.5);
@@ -459,7 +460,8 @@ export async function runSelfTest(ctx) {
       };
       if (o.startsWith('Hold Space') || o.startsWith('Keep holding')) return ['Space'];
       if (o.startsWith('Hold it') || o.startsWith('Too low') || o.startsWith('Too high')) return h.altitude < 2.9 ? ['Space'] : [];
-      if (o.startsWith('Press E')) { memo.e = !memo.e; return [h.altitude < 3.5 ? 'Space' : null, memo.e ? 'KeyE' : null].filter(Boolean); }
+      // Hazards are marked from the air: "While flying, press E…" (or "Mark it from the air…" after landing).
+      if (o.startsWith('Press E') || /press E/i.test(o)) { memo.e = !memo.e; return [h.altitude < 3.5 ? 'Space' : null, memo.e ? 'KeyE' : null].filter(Boolean); }
       if (o.includes('pad') || o.startsWith('Not on the pad')) {
         const pad = ctx.scene.children.find((c) => c.userData?.pad && c.visible);
         if (!pad) return [];
@@ -478,6 +480,8 @@ export async function runSelfTest(ctx) {
         const angle = Math.atan2(Math.sin(delta), Math.cos(delta));
         if (photo.phase === 'scan') return [];
         if (Math.abs(angle) > 0.03) return [angle > 0 ? 'KeyA' : 'KeyD'];
+        const tilt = (photo.targetPitch ?? 0) - (photo.pitch ?? 0);
+        if (Math.abs(tilt) > 0.03) return [tilt > 0 ? 'KeyW' : 'KeyS'];
         return photo.phase === 'frame' ? ['Space'] : [];
       }
       if (!objective().includes('turn back')) return [];
@@ -511,7 +515,7 @@ export async function runSelfTest(ctx) {
         if (playGame()) { await sleep(25); continue; }
         const keys = ctx.stage === s && s.alive ? bots[id](s, memo) : [];
         // E is only ever pressed when the game itself asks for it.
-        if (keys.includes('KeyE') && !/Hold E|Press E/.test(objective())) usedEToFinish = true;
+        if (keys.includes('KeyE') && !/Hold E|press E/i.test(objective())) usedEToFinish = true;
         setKeys(keys);
         await sleep(25);
       }

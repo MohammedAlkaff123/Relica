@@ -23,6 +23,8 @@
 //   await stage.hold('KeyE', 2, 'Hold E to study the pebbles')
 //   await stage.until(() => condition)        checked every frame
 //   await stage.card(title, sub) / say(dialogueId) / photo(nasaId) / shot(shotId, anchor)
+//   stage.chat(dialogueId)                    a passing remark while the player keeps driving
+//   await stage.tribute(nasaId)               the machine's real photo and service record
 //   stage.every((dt) => {...})                per-frame task, removed with the chapter; returns remove()
 //   stage.onDispose(() => {...})              runs when the chapter is left (stop a sound loop...)
 //   stage.add(object3d)                       added to the scene, removed with the chapter
@@ -224,6 +226,8 @@ export function setupStage(ctx, cfg) {
       return p;
     },
     photo: (id) => after(ctx.memory.show(id)),
+    // The end of a machine's chapter: its real NASA photo with its service record (memories.json "tribute").
+    tribute: (id) => after(ctx.memory.show(id, { tribute: true })),
     // A missing shot file is not fatal: the script carries on after a short pause.
     // Returns true if the shot played, false if it does not exist yet.
     async shot(id, anchor = hero.object) {
@@ -353,7 +357,11 @@ export function makeChapter(cfg) {
     async start(ctx, opts = {}) {
       const s = stage = setupStage(ctx, cfg);
       ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
-      await ctx.quality?.attach(s); // the new world starts in the chosen graphics mode
+      // The new world starts in the chosen graphics mode. That waits for the world's textures: a texture
+      // that stalls or fails to download must not leave the screen black, so wait at most 4 seconds
+      // and carry on (the quality still applies when the textures arrive).
+      const graphics = Promise.resolve(ctx.quality?.attach(s)).catch((err) => console.warn('graphics quality not applied', err));
+      await Promise.race([graphics, new Promise((r) => setTimeout(r, 4000))]);
       // Chapter changes: the camera snaps behind the new hero (no swoop from the last shot), the first
       // frame of the new world is drawn under black, then it fades in. A script that fades on its own
       // (or a chapter with startBlack) keeps control of the fade.

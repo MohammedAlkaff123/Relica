@@ -664,3 +664,33 @@ body:has(.navigation:not(.hidden)) .controls-hint { bottom: 96px; }
 .finding.leaving { opacity: 0; }
 .dialogue:not(.hidden) ~ .finding { bottom: 210px; } /* a conversation has the bottom of the screen: move up */
 @keyframes finding-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* Viking's flashback: the 3D view like an old photograph, dark at the edges */
+body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
+.flashback-veil { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, #1a0f05cc 100%); animation: flashback-flicker 0.35s steps(2) infinite; }
+.flashback-label { position: absolute; top: 88px; left: 50%; transform: translateX(-50%); padding: 3px 12px; font: 500 12px var(--font); letter-spacing: 0.12em; text-transform: uppercase; color: #f1e3c4; background: #1a0f05aa; border: 1px solid #f1e3c455; white-space: nowrap; }
+.flashback-label [lang="ar"] { font: 600 14px RelicaArabic, system-ui, sans-serif; letter-spacing: 0; }
+@keyframes flashback-flicker { from { opacity: 1; } to { opacity: 0.93; } }
+@media (prefers-reduced-motion: reduce) { .flashback-veil { animation: none; } }
+
+/* Time skip: a counter racing in the middle of the screen (_timeJump.js) */
+/* The launch from inside the folded rover (cinematic.js, shot.eyes): engine glow from below, a slit of
+   light through the closed panel, shaking while the rocket climbs; cool and still once weightless. */
+.launch-light { position: absolute; inset: 0; pointer-events: none; --burn: 0; }
+.launch-light ~ .launch-eyes, .launch-eyes { z-index: 1; }
+.launch-glow { position: absolute; inset: -20px; background: radial-gradient(ellipse 95% 75% at 50% 112%, rgba(255, 150, 70, 0.85), rgba(255, 110, 40, 0.32) 45%, transparent 80%); opacity: var(--burn); }
+.launch-slit { position: absolute; left: 18%; right: 18%; top: 22%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, rgba(255, 214, 160, 0.8), transparent); box-shadow: 0 0 18px 4px rgba(255, 170, 90, 0.35); opacity: calc(0.25 + var(--burn) * 0.6); }
+.launch-label { position: absolute; left: 50%; bottom: 16vh; transform: translateX(-50%); font: 600 13px var(--font); letter-spacing: 0.08em; color: rgba(242, 235, 221, 0.7); }
+.launch-light.weightless .launch-glow { opacity: 0.35; background: radial-gradient(ellipse 60% 50% at 50% 110%, rgba(120, 160, 220, 0.35), transparent 70%); transition: opacity 1.5s, background 1.5s; }
+.launch-light.weightless .launch-slit { opacity: 0.2; background: linear-gradient(90deg, transparent, rgba(170, 200, 255, 0.6), transparent); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .launch-light { transform: none !important; } }
+
+.time-jump { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; text-align: center; pointer-events: none; text-shadow: 0 2px 16px #000; }
+.time-jump .label { font: 500 14px var(--font); letter-spacing: 0.3em; text-transform: uppercase; color: var(--copper-light); }
+.time-jump .label [lang="ar"] { font: 600 16px RelicaArabic, system-ui, sans-serif; letter-spacing: 0; }
+.time-jump .number { font: 500 clamp(64px, 13vw, 150px)/1.05 var(--font); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: #f1ede4; filter: blur(1.2px); transition: filter 0.25s, color 0.25s, transform 0.25s; }
+.time-jump.landed .number { filter: none; color: var(--copper-light); transform: scale(1.06); }
+
+/* A machine's service record under its real photo (memory.show with tribute) */
+.memory .service-label { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc7b9; font: 500 11px var(--font); letter-spacing: 0.1em; text-transform: uppercase; color: #5b5b5b; }
+.memory .outside-pack { margin-top: 2px; font-style: italic; }

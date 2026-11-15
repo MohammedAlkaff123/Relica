@@ -3,27 +3,35 @@
     {
       "who": "note",
       "ar": "",
-      "en": "Owner: Set C with Mohammed. Arabic register approved by Mohammed on 14 Nov: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Ingenuity has a feminine voice and a determined fighter arc. ch3_recover (once after a successful recovery) and ch3_last_push (during the final struggle) are authored for the chapter integration; they are not wired into gameplay yet. ch3_crash belongs after the landing, with the failed rotor attempt. Each line is one breath, under 12 English words. Every line is final text from STORY.md section 3, checked against facts.json -> missions. ch3_grounded is a copy of ch3_goodbye, kept only because src/chapters/sky.js still asks for ch3_grounded; delete it once the chapter uses ch3_goodbye. who = lrv | opportunity | viking | ingenuity | pioneer. emotion = curious | happy | scared | sad | sleepy."
+      "en": "Owner: Set C with Mohammed. Arabic register approved by Mohammed on 14 Nov: simple Modern Standard Arabic, one register for every machine; Viking sounds older and slower. Ingenuity has a feminine voice and a determined fighter arc. Mohammed's story pass, 14 Nov: question and exclamation marks carry the feeling (the voice follows them); no machine says 'I'm still here' at the end of its own chapter, only together in ep_voices. Passing remarks play as a small caption while the player keeps control (stage.say(id, { ambient: true })): ch0_wheels, ch1_intro, ch1_dust, ch2_storm, ch2_storm_cut, ch3_recover, ch3_last_push, ch3_crash. A line with \"cut\": true vanishes the moment it is typed: Opportunity loses power mid-word. The Viking call is in two halves, ch2_viking_call and ch2_viking_call_2, with Viking's 1976 flashback played between them. Sol numbers in the lines match the counter in src/chapters/mars.js (120, then 4,712). Each line is one breath. Facts are checked against facts.json -> missions. who = lrv | opportunity | viking | ingenuity | pioneer | crew (the people beside the rover; no model speaks). emotion = curious | happy | scared | sad | sleepy."
     }
   ],
   "ch0_wake": [
     {
       "who": "lrv",
       "emotion": "sleepy",
-      "ar": "…أوه. اشتغلتُ.",
-      "en": "…Oh. I'm on."
-    },
+      "ar": "…أوه! إنّني أعمل!",
+      "en": "…Oh! I'm working!"
+    }
+  ],
+  "ch0_wheels": [
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "عجلات! لديّ عجلات!",
-      "en": "Wheels! I have wheels!"
+      "ar": "أوه! لديّ عجلات!",
+      "en": "Oh! I have wheels!"
     }
   ],
   "ch0_fold": [
     {
+      "who": "crew",
+      "emotion": "happy",
+      "ar": "هيّا، لننطلق!",
+      "en": "Come on, let's go!"
+    },
+    {
       "who": "lrv",
-      "emotion": "scared",
+      "emotion": "curious",
       "ar": "إلى أين سنذهب؟",
       "en": "Where are we going?"
     }
@@ -32,14 +40,14 @@
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "كلّ شيء هنا خفيف.",
-      "en": "Everything is so light here."
+      "ar": "كلّ شيء هنا خفيف!",
+      "en": "Everything is so light here!"
     },
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "تمسّكا! سأحملكما.",
-      "en": "Hold on. I'll carry you."
+      "ar": "تمسّكا! سأحملكما!",
+      "en": "Hold on! I'll carry you!"
     },
     {
       "who": "lrv",
@@ -52,16 +60,36 @@
     {
       "who": "lrv",
       "emotion": "sad",
-      "ar": "آسف… ملأتُ المكان بالغبار.",
-      "en": "I'm sorry. I'm making a mess."
+      "ar": "آسف… ملأتُ المكان بالغبار!",
+      "en": "I'm sorry… I'm making a mess!"
     }
   ],
   "ch1_fixed": [
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "أصلحتماني… بخريطة!",
-      "en": "You fixed me. With a map!"
+      "ar": "يا لها من فكرة رائعة! أصلحتماني بخريطة!",
+      "en": "What a brilliant idea! You fixed me with a map!"
+    },
+    {
+      "who": "lrv",
+      "emotion": "happy",
+      "ar": "ما أذكاكما!",
+      "en": "How clever you are!"
+    }
+  ],
+  "ch1_leaving": [
+    {
+      "who": "lrv",
+      "emotion": "curious",
+      "ar": "إلى أين أنتما ذاهبان؟",
+      "en": "Where are you two going?"
+    },
+    {
+      "who": "crew",
+      "emotion": "sad",
+      "ar": "همممممم…",
+      "en": "Hmmmmm…"
     }
   ],
   "ch1_left_behind": [
@@ -76,34 +104,40 @@
       "emotion": "sad",
       "ar": "…سأنتظر هنا.",
       "en": "…I'll wait here."
-    },
-    {
-      "who": "lrv",
-      "emotion": "sad",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
     }
   ],
   "ch2_intro": [
     {
       "who": "opportunity",
-      "emotion": "curious",
-      "ar": "تسعون يومًا. هذا كل ما طلبوه مني.",
-      "en": "Ninety days. That's all they asked."
+      "emotion": "happy",
+      "ar": "سأؤدّي مهمّتي على أكمل وجه!",
+      "en": "I will do my mission as well as I can!"
     },
     {
       "who": "opportunity",
       "emotion": "curious",
-      "en": "Did water once flow here? The rocks remember.",
-      "ar": "هل جرى الماء هنا يومًا؟ الصخور تحفظ الدليل."
+      "ar": "تسعون يومًا؟ أستطيع إكمالها! هذا كلّ ما طلبوه منّي.",
+      "en": "Ninety days? I can do that! It's all they asked."
+    },
+    {
+      "who": "opportunity",
+      "emotion": "curious",
+      "ar": "هل جرى الماء هنا يومًا؟ أظنّ أنّ الصخور ستجيبني.",
+      "en": "Did water once flow here? I think the rocks will tell me."
     }
   ],
   "ch2_sol90": [
     {
       "who": "opportunity",
       "emotion": "happy",
-      "ar": "تسعون… وما زلتُ قادرًا على المتابعة.",
-      "en": "Ninety. …I can keep going."
+      "ar": "إنّه اليوم ١٢٠! لم أظنّ أنّني سأصمد أكثر من تسعين يومًا…",
+      "en": "Sol 120! I never thought I'd last past ninety…"
+    },
+    {
+      "who": "opportunity",
+      "emotion": "happy",
+      "ar": "لكن ها أنا أفعلها الآن!",
+      "en": "But here I am, doing it!"
     }
   ],
   "ch2_orion": [
@@ -124,20 +158,40 @@
     {
       "who": "viking",
       "emotion": "happy",
-      "en": "Viking 1. America’s first successful Mars landing. 1976.",
-      "ar": "أنا فايكنغ ١. حقّقت أول هبوط أمريكي ناجح على المريخ عام ١٩٧٦."
+      "ar": "أنا فايكنغ ١. حقّقتُ أوّل هبوط أمريكي ناجح على المريخ عام ١٩٧٦.",
+      "en": "Viking 1. America’s first successful Mars landing. 1976."
     },
     {
       "who": "opportunity",
       "emotion": "curious",
-      "ar": "أنا أوبورتيونيتي. أعطوني تسعين يومًا.",
-      "en": "Opportunity. They gave me ninety days."
+      "ar": "أنا أوبورتيونيتي! أرسلوني لأبحث عن آثار الماء في صخور المريخ.",
+      "en": "I'm Opportunity! They sent me to find signs of water in the rocks."
+    },
+    {
+      "who": "opportunity",
+      "emotion": "happy",
+      "ar": "كانت مهمّتي تسعين يومًا… لكنّني الآن في اليوم ٤٧١٢!",
+      "en": "My mission was ninety days… but this is sol 4,712!"
     },
     {
       "who": "viking",
       "emotion": "happy",
-      "ar": "وأعطوني تسعين أيضًا. فأعطيتُهم ستّ سنوات.",
-      "en": "They gave me ninety too. I gave them six years."
+      "ar": "هه هه هه! وأنا ظننتُ أنّ رحلتي تسعون يومًا… فأكملتُ ستّ سنوات من الخدمة!",
+      "en": "Heh heh heh! I thought mine was ninety days too… I served six years!"
+    },
+    {
+      "who": "viking",
+      "emotion": "sleepy",
+      "ar": "دعني أخبرك ماذا وجدت…",
+      "en": "Let me tell you what I found…"
+    }
+  ],
+  "ch2_viking_call_2": [
+    {
+      "who": "viking",
+      "emotion": "happy",
+      "ar": "هكذا صوّرتُ المريخ وفحصتُ تربته. كانت تلك مهمّتي.",
+      "en": "That is how I photographed Mars and tested its soil. That was my mission."
     },
     {
       "who": "opportunity",
@@ -148,98 +202,101 @@
     {
       "who": "viking",
       "emotion": "sleepy",
-      "ar": "أحيانًا… لكن ما اكتشفناه يبقى.",
-      "en": "Sometimes… but what we discovered remains."
+      "ar": "أحيانًا… لكن ما اكتشفناه سيبقى للأبد.",
+      "en": "Sometimes… but what we discovered will remain forever."
     },
     {
       "who": "viking",
       "emotion": "happy",
-      "ar": "واصل يا صغيري. ما زال هناك ما تكتشفه.",
-      "en": "Keep going, little one. There's still more to discover."
+      "ar": "واصل أيّها الصغير! ما زال هناك ما تكتشفه.",
+      "en": "Keep going, little one! There's still more to discover."
     }
   ],
   "ch2_storm": [
     {
       "who": "opportunity",
       "emotion": "sleepy",
-      "ar": "السماء تتحوّل إلى اللون البنّي.",
-      "en": "The sky is turning brown."
+      "ar": "السماء تتحوّل إلى اللون البنّي…",
+      "en": "The sky is turning brown…"
     },
     {
       "who": "opportunity",
+      "emotion": "scared",
+      "ar": "الغبار يحجب الشمس!",
+      "en": "The dust is hiding the Sun!"
+    }
+  ],
+  "ch2_storm_cut": [
+    {
+      "who": "opportunity",
       "emotion": "sleepy",
-      "en": "The dust is hiding the Sun. My panels can’t recharge.",
-      "ar": "الغبار يحجب الشمس. ألواحي لا تستطيع شحن البطارية."
+      "ar": "لا أستطيع أن أشحـ",
+      "en": "I can't rechar",
+      "cut": true
     }
   ],
   "ch3_intro": [
     {
       "who": "ingenuity",
-      "emotion": "scared",
-      "ar": "الهواء رقيق… لكنني سأحاول.",
-      "en": "The air is thin… but I'll try."
+      "emotion": "curious",
+      "ar": "كلّ ما طلبوه منّي هو إكمال خمس رحلات طيران… لأُثبت أنّ الطيران على المريخ ممكن!",
+      "en": "All they asked of me was five flights… to prove that flying on Mars is possible!"
     },
     {
       "who": "ingenuity",
-      "emotion": "curious",
-      "ar": "خمس رحلات؟ لنبدأ بالأولى.",
-      "en": "Five flights? Let's start with one."
+      "emotion": "scared",
+      "ar": "الهواء هنا خفيف… لكنّني سأحاول الطيران!",
+      "en": "The air here is thin… but I will try to fly!"
+    },
+    {
+      "who": "ingenuity",
+      "emotion": "happy",
+      "ar": "هيّا، لنبدأ بأوّل رحلة!",
+      "en": "Come on, let's start the first flight!"
+    }
+  ],
+  "ch3_first_flight": [
+    {
+      "who": "ingenuity",
+      "emotion": "happy",
+      "ar": "لقد أكملتُ أوّل رحلة طيران بنجاح! يا للروعة!",
+      "en": "I finished my first flight! How wonderful!"
+    },
+    {
+      "who": "ingenuity",
+      "emotion": "happy",
+      "ar": "أظنّ أنّني أستطيع إثبات ذلك!",
+      "en": "I think I can prove it!"
     }
   ],
   "ch3_scout": [
     {
       "who": "ingenuity",
       "emotion": "happy",
-      "ar": "اتبعني، أرى الطريق!",
-      "en": "Follow me. I can see the way."
+      "ar": "اتبعني! أستطيع أن أرى الطريق لكي تعبر.",
+      "en": "Follow me! I can see the way for you to cross."
     }
   ],
   "ch3_crash": [
     {
       "who": "ingenuity",
       "emotion": "sad",
-      "ar": "هيا… مرةً أخرى.",
-      "en": "Come on… once more."
+      "ar": "سأحاول قليلًا بعد… سأحاول مرّةً أخرى!",
+      "en": "A little more… I'll try again!"
     }
   ],
   "ch3_goodbye": [
     {
       "who": "ingenuity",
       "emotion": "sad",
-      "ar": "تابع طريقك. أمامك عمل.",
-      "en": "Go on. You have work to do."
+      "ar": "أظنّ أنّ هذه هي النهاية…",
+      "en": "I think this is the end…"
     },
     {
       "who": "ingenuity",
       "emotion": "happy",
-      "ar": "اثنتان وسبعون. عددتُها.",
-      "en": "Seventy-two. I counted."
-    },
-    {
-      "who": "ingenuity",
-      "emotion": "sad",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
-    }
-  ],
-  "ch3_grounded": [
-    {
-      "who": "ingenuity",
-      "emotion": "sad",
-      "ar": "تابع طريقك. أمامك عمل.",
-      "en": "Go on. You have work to do."
-    },
-    {
-      "who": "ingenuity",
-      "emotion": "happy",
-      "ar": "اثنتان وسبعون. عددتُها.",
-      "en": "Seventy-two. I counted."
-    },
-    {
-      "who": "ingenuity",
-      "emotion": "sad",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "اثنتان وسبعون رحلة! لقد عددتُها.",
+      "en": "Seventy-two flights! I counted them."
     }
   ],
   "ep_drift": [
@@ -252,80 +309,78 @@
     {
       "who": "pioneer",
       "emotion": "sleepy",
-      "ar": "وفي العام نفسه، وصلت عربة صغيرة إلى القمر.",
-      "en": "The same year as a little rover on the Moon."
+      "ar": "أسبح في الفضاء وحدي… أطفو وحيدًا في الفراغ.",
+      "en": "I drift through space alone… floating by myself in the void."
     }
   ],
   "ep_voices": [
     {
       "who": "lrv",
       "emotion": "happy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "ما زلتُ هنا!",
+      "en": "I'm still here!"
     },
     {
       "who": "viking",
       "emotion": "happy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "ما زلتُ هنا!",
+      "en": "I'm still here!"
     },
     {
       "who": "opportunity",
       "emotion": "happy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "ما زلتُ هنا!",
+      "en": "I'm still here!"
     },
     {
       "who": "ingenuity",
       "emotion": "happy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "ما زلتُ هنا!",
+      "en": "I'm still here!"
     }
   ],
   "ep_last": [
     {
       "who": "pioneer",
       "emotion": "happy",
-      "ar": "أسمعكم… أسمعكم جميعًا.",
-      "en": "I hear you. All of you."
+      "ar": "أسمعكم… أسمعكم جميعًا!",
+      "en": "I hear you! All of you!"
     }
   ],
   "ch3_recover": [
     {
       "who": "ingenuity",
       "emotion": "happy",
-      "ar": "ما زلتُ قادرةً على المواصلة.",
-      "en": "I can keep going."
+      "ar": "ما زلتُ قادرةً على المواصلة!",
+      "en": "I can keep going!"
     }
   ],
   "ch3_last_push": [
     {
       "who": "ingenuity",
       "emotion": "scared",
-      "ar": "هيا… قليلًا بعد.",
-      "en": "Come on… a little more."
+      "ar": "ماذا يحدث؟!",
+      "en": "What's happening?!"
+    },
+    {
+      "who": "ingenuity",
+      "emotion": "scared",
+      "ar": "أظنّ أنّني سأسقط!",
+      "en": "I think I'm going to fall!"
     }
   ],
   "ch2_water": [
     {
       "who": "opportunity",
       "emotion": "happy",
-      "en": "Three clues. This dry place has a watery past.",
-      "ar": "ثلاثة أدلّة. لهذا المكان الجاف ماضٍ عرف الماء."
+      "ar": "أظنّ أنّ ثلاثة أدلّة كافية!",
+      "en": "I think three clues are enough!"
     },
     {
       "who": "opportunity",
       "emotion": "curious",
-      "en": "I’ll send the evidence home. Then keep looking.",
-      "ar": "سأرسل الأدلّة إلى الأرض، ثم أواصل البحث."
-    }
-  ],
-  "ch2_storm_presence": [
-    {
-      "who": "opportunity",
-      "emotion": "sleepy",
-      "ar": "ما زلتُ هنا.",
-      "en": "I'm still here."
+      "ar": "لهذا المكان الجافّ تاريخ… لقد عرف الماء يومًا!",
+      "en": "This dry place has a history… It once knew water!"
     }
   ]
 }

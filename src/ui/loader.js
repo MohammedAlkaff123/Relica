@@ -101,7 +101,16 @@ export async function preloadAll(onProgress = () => {}) {
       const url = new URL(f.path, location.href).href;
       let got = 0;
       try {
-        const bytes = await download(url, (n) => { got += n; loaded += n; report(); });
+        // A dropped connection fails one download now and then: try each file up to three times.
+        let bytes;
+        for (let attempt = 1; ; attempt++) {
+          try { bytes = await download(url, (n) => { got += n; loaded += n; report(); }); break; }
+          catch (err) {
+            loaded -= got; got = 0;
+            if (attempt >= 3) throw err;
+            await new Promise((r) => setTimeout(r, 400 * attempt));
+          }
+        }
         const ext = f.path.split('.').pop().toLowerCase();
         const type = TYPES[ext] ?? 'application/octet-stream';
         if (f.group === 'photos' || f.group === 'textures') {

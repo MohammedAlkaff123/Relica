@@ -9,13 +9,18 @@ export function createCinematics({ camera, followCam, tuning, root, audio, getCh
   const bars=el('div','bars hidden',root), years=el('div','years hidden',root), cache=new Map();
   const eyes=el('div','launch-eyes hidden',root);
   el('span','',eyes);el('span','',eyes);
+  // The launch, seen from inside the folded rover: engine light leaking in from below and a shaking
+  // frame while the rocket climbs; then a still, cool light once it is weightless (shot.eyes).
+  const launchLight=el('div','launch-light hidden',root);
+  el('div','launch-glow',launchLight);el('div','launch-slit',launchLight);
+  el('div','launch-label',launchLight,'Inside the rocket · داخل الصاروخ');
   let active=null, generation=0, clock=0;
   const vector=new THREE.Vector3(), other=new THREE.Vector3();
   const load=(id)=> { if(!cache.has(id))cache.set(id,loadJSON(`content/shots/${id}.json`));return cache.get(id); };
   function finish(cancelled=false) {
     const old=active;active=null;
     root.classList.remove('cinema');bars.classList.add('hidden');years.classList.add('hidden');
-    eyes.classList.add('hidden');
+    eyes.classList.add('hidden');launchLight.classList.add('hidden');
     followCam.enabled=true;followCam.snap();
     if(cancelled)fadeTo(0,0);
     old?.resolve?.();
@@ -23,7 +28,7 @@ export function createCinematics({ camera, followCam, tuning, root, audio, getCh
   function begin(shot, anchor, bindings, type) {
     finish();followCam.release();followCam.enabled=false;root.classList.add('cinema');
     bars.classList.toggle('hidden',!shot.letterbox);years.classList.toggle('hidden',!shot.years);
-    eyes.classList.toggle('hidden',!shot.eyes);
+    eyes.classList.toggle('hidden',!shot.eyes);launchLight.classList.toggle('hidden',!shot.eyes);
     const origin=anchor?.getWorldPosition(new THREE.Vector3())??new THREE.Vector3();
     const rotation=anchor?.getWorldQuaternion(new THREE.Quaternion())??new THREE.Quaternion();
     active={shot,anchor,bindings:{hero:anchor,...bindings},origin,rotation,type,t:0,event:0};
@@ -53,7 +58,15 @@ export function createCinematics({ camera, followCam, tuning, root, audio, getCh
     const s=active;s.t+=dt;
     if(s.type==='dialogue'){if(s.frame)draw(s.frame,s.frame,0,s);return;}
     const keys=s.shot.keys,end=keys.at(-1).t,t=Math.min(s.t,end);
-    if(s.shot.eyes){eyes.classList.toggle('weightless',t>=7);eyes.style.transform=`translate(-50%,-50%) rotate(${t<7?Math.sin(t*19)*2.5:0}deg)`;}
+    if(s.shot.eyes){
+      const climbing=t<7, rise=Math.min(1,t/1.5); // the engines build up over the first second and a half
+      const jx=climbing?(Math.random()-.5)*9*rise:0, jy=climbing?(Math.random()-.5)*7*rise:0;
+      eyes.classList.toggle('weightless',!climbing);
+      eyes.style.transform=`translate(calc(-50% + ${jx}px),calc(-50% + ${jy}px)) rotate(${climbing?Math.sin(t*19)*2.5:0}deg)`;
+      launchLight.classList.toggle('weightless',!climbing);
+      launchLight.style.transform=`translate(${jx*.6}px,${jy*.6}px)`;
+      launchLight.style.setProperty('--burn',climbing?(rise*(.75+Math.random()*.25)).toFixed(2):'0');
+    }
     let i=0;while(i<keys.length-2&&t>=keys[i+1].t)i++;
     const a=keys[i],b=keys[Math.min(i+1,keys.length-1)];
     draw(a,b,ease(THREE.MathUtils.clamp((t-a.t)/Math.max(b.t-a.t,.0001),0,1)),s);

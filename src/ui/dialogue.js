@@ -27,6 +27,9 @@ const letters = (text) => (segmenter ? Array.from(segmenter.segment(text), (s) =
 
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 
+// Speakers who are not machines (the crew beside the rover) and so are not in CAST.
+const PEOPLE = { crew: { name: 'Crew', ar: 'الطاقم' } };
+
 export async function createDialogue(root, prompt, audio, getCharacter, followCam) {
   const script = await loadJSON('content/dialogue.json');
   const box = el('div', 'dialogue hidden', root);
@@ -59,7 +62,7 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
     second.classList.toggle('hidden', !prefs.get().secondary);
     nextWord.textContent = auto ? t('hud.skip') : t('hud.next');
     if (current) {
-      const cast = CAST[current.who];
+      const cast = CAST[current.who] ?? PEOPLE[current.who];
       whoName.textContent = first === 'ar' ? cast?.ar ?? current.who : cast?.name ?? current.who;
     }
   }
@@ -148,7 +151,9 @@ export async function createDialogue(root, prompt, audio, getCharacter, followCa
         if (result === 'typed') prompt.cancel(); // typing ended first: drop the wait we started
 
         // 2. Wait for Enter, or for the hold time in auto mode.
-        if (result !== 'cancel') result = await waitForPlayer(isAuto ? holdFor(line, voice?.duration) : undefined);
+        // A line with "cut": true ends the moment it is typed: the speaker is cut off mid-word.
+        if (line.cut && result !== 'cancel') result = 'time';
+        else if (result !== 'cancel') result = await waitForPlayer(isAuto ? holdFor(line, voice?.duration) : undefined);
         if (speaker) speaker.talk(false);
         if (voice) voice.stop();
         if (result === 'cancel') break;
