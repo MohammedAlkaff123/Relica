@@ -231,14 +231,41 @@ export function setupStage(ctx, cfg) {
     // A missing shot file is not fatal: the script carries on after a short pause.
     // Returns true if the shot played, false if it does not exist yet.
     async shot(id, anchor = hero.object) {
-      let destination=null;
+      let destination=null, craft=null, stopCraft=null;
       const points={moon_to_mars:[8,34,60],storm_to_jezero:[50,26,90],mars_to_space:[25,70,90]};
+      // The trip between chapters: a small spacecraft leaves the camera and flies off toward the next
+      // destination while the shot zooms in. cam = the shot's camera spot once it looks at the
+      // destination; t0..t1 = when the craft flies (seconds into the shot).
+      const trips={moon_to_mars:{cam:[-3,1.4,-4],t0:2.2,t1:9.6},storm_to_jezero:{cam:[-2,30,-3],t0:5,t1:9.6},mars_to_space:{cam:[1.5,1,2],t0:5.6,t1:11.6}};
+      const toWorld=(v)=>new THREE.Vector3().fromArray(v).applyQuaternion(anchor.quaternion).add(anchor.position);
       if(points[id]){
         destination=new THREE.Mesh(new THREE.SphereGeometry(id==='moon_to_mars'?3: .3,24,16),new THREE.MeshBasicMaterial({color:id==='moon_to_mars'?0xb76c43:0xffe3b0,fog:false}));
-        destination.position.fromArray(points[id]).applyQuaternion(anchor.quaternion).add(anchor.position);
+        destination.position.copy(toWorld(points[id]));
         scene.add(destination);
       }
-      const cleanup=()=>{if(destination){scene.remove(destination);destination.geometry.dispose();destination.material.dispose();destination=null;}};
+      if(trips[id]){
+        const trip=trips[id], from=toWorld(trip.cam), to=destination.position.clone();
+        craft=makeCraft();
+        craft.scale.setScalar(2.6); // big enough to read as a spacecraft, not a dot, at the end of the zoom
+        craft.visible=false;
+        scene.add(craft);
+        const a=from.clone().lerp(to,.12), b=from.clone().lerp(to,.72);
+        let t=0;
+        stopCraft=stage.every((dt)=>{
+          t+=dt;
+          const u=Math.min(1,Math.max(0,(t-trip.t0)/(trip.t1-trip.t0)));
+          craft.visible=t>=trip.t0;
+          const e=1-(1-u)**2; // quick off the mark, then easing as it shrinks into the distance
+          craft.position.lerpVectors(a,b,e);
+          craft.lookAt(to);
+          craft.userData.flame.scale.setScalar(.8+Math.sin(t*30)*.2);
+        });
+      }
+      const cleanup=()=>{
+        stopCraft?.();stopCraft=null;
+        if(craft){scene.remove(craft);craft.traverse((o)=>{o.geometry?.dispose();o.material?.dispose();});craft=null;}
+        if(destination){scene.remove(destination);destination.geometry.dispose();destination.material.dispose();destination=null;}
+      };
       stage.onDispose(cleanup);
       try {
         await after(ctx.cinematics.play(id, anchor, { ...stage.actors, hero: anchor }));
@@ -387,4 +414,27 @@ export function makeChapter(cfg) {
       stage = null;
     },
   };
+}
+
+// The little spacecraft seen between chapters: a body, two solar panels, a dish and an engine glow.
+// Bright, unlit colours so it reads as a clear shape against space and a planet. Points along +Z.
+// Seen from behind it shows: two blue wings, a pale round body and the engine glow.
+function makeCraft() {
+  const g = new THREE.Group();
+  const mat = (color) => new THREE.MeshBasicMaterial({ color, fog: false });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.55, 10), mat(0xe8e2d4));
+  body.rotation.x = Math.PI / 2; g.add(body);
+  for (const side of [-1, 1]) {
+    // The panels face backwards, toward the camera that watches it leave, so they read as wings.
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.3, 0.02), mat(0x3c6fb3));
+    panel.position.x = side * 0.52; g.add(panel);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.03, 0.025), mat(0xd9dde3));
+    frame.position.set(side * 0.52, 0, -0.005); g.add(frame);
+  }
+  const dish = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.1, 14, 1, true), mat(0xfaf6ee));
+  dish.rotation.x = -Math.PI / 2; dish.position.z = 0.33; g.add(dish);
+  const flame = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 10), new THREE.MeshBasicMaterial({ color: 0xffb35c, fog: false, transparent: true, opacity: 0.9 }));
+  flame.rotation.x = -Math.PI / 2; flame.position.z = -0.5; g.add(flame);
+  g.userData.flame = flame;
+  return g;
 }

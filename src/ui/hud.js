@@ -94,8 +94,12 @@ export function createHud(root, facts) {
     const box = objective.classList.contains('hidden') ? null : objective.getBoundingClientRect();
     discovery.style.top = (box && box.height ? box.bottom + 12 : 16) + 'px';
   }
+  // One message at a time: a discovery waits while something else is talking on screen (a dialogue
+  // line, a finding, a card, a photo, a mini-game or a cutscene), then shows on a clear screen.
+  const screenBusy = () => document.querySelector('.cinema, .dialogue:not(.hidden), .finding:not(.hidden):not(.leaving), .card:not(.hidden), .memory:not(.hidden), .mini-game');
   function nextDiscovery() {
     if (discoveryTimer || !discoveryQueue.length) return;
+    if (screenBusy()) { discoveryTimer = setTimeout(() => { discoveryTimer = null; nextDiscovery(); }, 400); return; }
     shownDiscovery = discoveryQueue.shift();
     drawDiscovery();
     discovery.classList.remove('hidden', 'out');
@@ -460,12 +464,14 @@ export function createHud(root, facts) {
       sfx('tick');
     },
     // Shows a discovery card and saves it for the end screen. Each id shows once.
-    discover(id) {
+    // { quiet: true }: only saved for the end screen (the same fact is already on screen another way).
+    discover(id, { quiet = false } = {}) {
       if (found.some((d) => d.id === id)) return;
       const card = discoveries[id];
       if (!card) { console.warn(`discovery "${id}" is missing from content/discoveries.json`); return; }
       const entry = { id, en: card.en, ar: card.ar, source: card.source };
       found.push(entry);
+      if (quiet) return;
       discoveryQueue.push(entry);
       nextDiscovery();
     },

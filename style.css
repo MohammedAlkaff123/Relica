@@ -598,7 +598,9 @@ h3.wall-heading { margin: 22px 0 12px; font-size: 18px; font-weight: 600; }
 .bars::before, .bars::after { content: ""; position: absolute; left: 0; right: 0; height: 11vh; background: #000; }
 .bars::before { top: 0; }
 .bars::after { bottom: 0; }
-.bars { position: absolute; inset: 0; }
+.bars { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* The cutscene bars stay behind what is said: dialogue and findings are drawn on top of them. */
+.dialogue, .finding { z-index: 3; }
 .years { position: absolute; left: 50%; bottom: 14vh; transform: translateX(-50%); font: 600 46px RelicaInter, sans-serif; letter-spacing: 0.08em; color: var(--paper); text-shadow: 0 2px 16px #000; direction: ltr; }
 .launch-eyes { position: absolute; left: 50%; top: 50%; display: flex; gap: 34px; transform: translate(-50%, -50%); }
 .launch-eyes span { display: block; width: 62px; height: 9px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 18px #e3bb7766; transition: height 0.6s; }
