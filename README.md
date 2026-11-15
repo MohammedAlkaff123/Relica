@@ -169,9 +169,9 @@ The code libraries are MIT (Three.js, lil-gui) and Apache-2.0 (Rapier). The font
 
 The team used AI tools (Claude Code, Codex, ChatGPT) as assistants for code and debugging, drafting and editing text, Arabic–English translation, checking NASA sources, and building the presentation. The idea, the story and the final choices are the team's own. There are no AI-generated images, video or audio in the game. Every use is logged with the person and the tool in **[AI_USE.md](AI_USE.md)**.
 
-## Scan to play, watch or browse
+## Scan to watch or play
 
-| Demo video | Live demo | GitHub |
-|:---:|:---:|:---:|
-| [![QR code for the demo video](docs/images/qr/demo-video.png)](https://youtu.be/ljCjr-8vD4M) | [![QR code for the live demo](docs/images/qr/live-demo.png)](https://relica-pi.vercel.app) | [![QR code for the GitHub repository](docs/images/qr/github.png)](https://github.com/MohammedAlkaff123/Relica) |
-| [youtu.be/ljCjr-8vD4M](https://youtu.be/ljCjr-8vD4M) | [relica-pi.vercel.app](https://relica-pi.vercel.app) | [github.com/MohammedAlkaff123/Relica](https://github.com/MohammedAlkaff123/Relica) |
+| Demo video | Live demo |
+|:---:|:---:|
+| <a href="https://youtu.be/ljCjr-8vD4M"><img src="docs/images/qr/demo-video.png" width="220" alt="QR code for the demo video"></a> | <a href="https://relica-pi.vercel.app"><img src="docs/images/qr/live-demo.png" width="220" alt="QR code for the live demo"></a> |
+| [youtu.be/ljCjr-8vD4M](https://youtu.be/ljCjr-8vD4M) | [relica-pi.vercel.app](https://relica-pi.vercel.app) |
