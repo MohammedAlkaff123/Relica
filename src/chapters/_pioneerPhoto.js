@@ -4,6 +4,7 @@ import { mission } from './_mission.js';
 import { revealPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
 import { createPhotoGuide } from './_photoGuide.js';
+import { spinScan, slowMessage } from './_pioneerGames.js';
 
 const CONE = 8 * Math.PI / 180;
 const difference = (target, yaw) => Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
@@ -104,13 +105,10 @@ export async function photographJupiter(s, ctx) {
   preview.classList.remove('hidden');
   imageNote.classList.remove('hidden');
   guide.hide();
-  let scanned = 0;
-  await s.until((dt) => {
-    scanned = Math.min(1, scanned + dt / 1.5);
-    preview.style.clipPath = `inset(0 0 ${(1 - scanned) * 100}% 0)`;
-    ctx.hud.setObjective(`Scanning image ${Math.round(scanned * 100)}% · جارٍ تسجيل الصورة`);
-    return scanned === 1;
-  });
+  // The spin-scan game: each good press adds one line to the picture.
+  preview.style.clipPath = 'inset(0 0 100% 0)';
+  ctx.hud.setObjective('');
+  await spinScan(s, ctx, { onRow: (n, total) => { preview.style.clipPath = `inset(0 0 ${(1 - n / total) * 100}% 0)`; } });
   m.done(1);
   s.hero.setEmotion('happy');
   state.phase = 'send';
@@ -126,10 +124,14 @@ export async function photographJupiter(s, ctx) {
     if (aligned) guide.hide();
     else { guide.show(); guide.update(offEarth > 0 ? 'KeyA' : 'KeyD', 1 - Math.min(1, Math.abs(offEarth) / 1.6), false); }
     held = aligned ? held + dt : 0;
-    ctx.hud.setObjective(aligned ? `Sending image ${Math.min(100, Math.floor(held * 50))}% · جارٍ إرسال الصورة` : 'A / D: turn toward Earth to send · اتجه نحو الأرض للإرسال');
-    return held >= 2;
+    ctx.hud.setObjective(aligned ? 'Pointing at Earth · متجه نحو الأرض' : 'A / D: turn toward Earth to send · اتجه نحو الأرض للإرسال');
+    return held >= 0.6;
   });
   guide.remove();
+  // The slow-message game: the picture travels home while the years pass.
+  s.lockControls();
+  ctx.hud.setObjective('');
+  await slowMessage(s, ctx);
   state.sent = true;
   state.phase = 'done';
   m.done(2);

@@ -93,6 +93,17 @@ export async function runSelfTest(ctx) {
     return (Math.acos(Math.max(-1, Math.min(1, upY))) * 180) / Math.PI;
   };
   const skipPrompts = async () => { if (prompting()) { setKeys([]); await tap('Enter'); await sleep(120); return true; } return false; };
+  // A mini-game on screen (s.game): play it with the keys a perfect player would use (its botKeys()).
+  // Games whose keys are presses (tap: true) get them on every other step, so each step is a new press.
+  let tapFlip = false;
+  const playGame = () => {
+    const game = ctx.stage?.game;
+    if (!game?.botKeys) return false;
+    let keys = game.botKeys();
+    if (game.tap) { tapFlip = !tapFlip; if (!tapFlip) keys = []; }
+    setKeys(keys);
+    return true;
+  };
   async function waitForControls(seconds = 30) {
     return until(() => { if (prompting()) tap('Enter'); return ctx.stage?.controls; }, seconds);
   }
@@ -387,7 +398,8 @@ export async function runSelfTest(ctx) {
       return calls.includes('repair');
     }, 200);
     setKeys([]);
-    await until(() => calls.filter((c) => c === null).length > 0, 10);
+    await until(() => { playGame(); return calls.filter((c) => c === null).length > 0; }, 60);
+    setKeys([]);
     check(figures.length === 2 && calls.includes('repair') && calls.includes(null),
       'Crew actions: the repair is asked for at stop 2, then back to idle',
       `${figures.length} figures, calls: ${calls.slice(0, 6).map(String).join(', ')}`);
@@ -405,11 +417,14 @@ export async function runSelfTest(ctx) {
       if (o.startsWith('A and D')) return ['KeyA'];
       return [];
     },
-    moon() {
+    moon(s, memo) {
       if (objective().includes('Hold E')) return ['KeyE'];
       if (objective().startsWith('Stop inside')) return [];
       const b = beam();
-      return b ? ['KeyW', ...steer(b.position.x, b.position.z)] : [];
+      // A hop every few seconds while driving, so the air-time record gets something to count.
+      const hop = s.controls && s.controller.grounded && ctx.clock - (memo.hop ?? 0) > 5;
+      if (hop) memo.hop = ctx.clock;
+      return b ? ['KeyW', ...steer(b.position.x, b.position.z), ...(hop ? ['Space'] : [])] : [];
     },
     mars(s, memo) {
       const o = objective();
@@ -493,6 +508,7 @@ export async function runSelfTest(ctx) {
         const now = done();
         if (now.length >= ticked.length) ticked = now;
         if (await skipPrompts()) continue;
+        if (playGame()) { await sleep(25); continue; }
         const keys = ctx.stage === s && s.alive ? bots[id](s, memo) : [];
         // E is only ever pressed when the game itself asks for it.
         if (keys.includes('KeyE') && !/Hold E|Press E/.test(objective())) usedEToFinish = true;

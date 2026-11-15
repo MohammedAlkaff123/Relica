@@ -28,6 +28,17 @@ and `standIn` otherwise. Without `has`, the stand-in always plays, so new sounds
 | `fold` | Opening: the workers fold the rover in half | `opening.js` | none | metal joints and hinges clicking into place |
 | `shutter` | Photo tasks: capturing an image (the three historic photos and Pioneer's Jupiter image) | `_historicPhoto.js`, `_pioneerPhoto.js` | `tick` | a camera shutter |
 
+## Sounds the mini-games use
+
+| Name | When it plays | Where in the code | Stand-in now | What it should sound like |
+|---|---|---|---|---|
+| `strap` | Moon fender puzzle: a map sheet or clamp clicks into place | `_moonGames.js` | `land` | a click and a soft thump |
+| `tick` | Pioneer spin-scan: each line added to the picture | `_pioneerGames.js` | (your tick) | fine as it is; a softer "scan" blip would be nicer |
+
+The games themselves (rotor gauge, grinder, camera, scan dial) are silent apart from these. If you want
+sounds for them, good candidates: a rising rotor whine for `rotorSpinUp`, a grinding loop for `grindRock`
+(level = pressure), a radio crackle for the liftoff camera's delayed commands.
+
 ## New loops (`audio.loop(name, on)` and `audio.loopLevel(name, 0..1)`)
 
 | Name | When it runs | Level (0 to 1) | What it should sound like |

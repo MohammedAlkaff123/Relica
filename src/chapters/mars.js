@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { makeProp } from './_props.js';
 import { mission, factNumber } from './_mission.js';
+import { grindRock } from './_marsGames.js';
 import { captureHistoricPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
 import { createCharacter } from '../characters/character.js';
@@ -86,8 +87,9 @@ export default makeChapter({
       startWhirlwinds(s, ctx);
       s.unlockControls();
       await s.goTo(ROCK[0], ROCK[1], 'Find the outcrop: test its minerals for a watery past', { radius: 4, park: true });
-      await investigate(s, ctx, 'Hold E: grind the crust, then analyze the exposed rock',
-        'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.');
+      await investigate(s, ctx, 'Grind the crust, then analyze the exposed rock',
+        'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.',
+        () => grindRock(s, ctx)); // the rock-grinder mini-game instead of holding E
       waterSign(); m.discover('jarosite_water');
 
       s.unlockControls();
@@ -343,7 +345,8 @@ async function radioCall(s, ctx) {
 }
 
 // Each observation needs a stopped rover and an instrument action; driving into a ring is not science.
-async function investigate(s, ctx, instruction, result, arabic) {
+// play: optional mini-game to run instead of "hold E" (the rock grinder).
+async function investigate(s, ctx, instruction, result, arabic, play) {
   s.lockControls();
   s.hero.setEmotion('curious');
   const target=s.hero.object.position.clone(); target.z+=1.8;
@@ -353,7 +356,8 @@ async function investigate(s, ctx, instruction, result, arabic) {
   const cleanup=()=>{stop();ring.parent?.remove(ring);ring.geometry.dispose();ring.material.dispose();};
   s.onDispose(cleanup);
   s.hero.lookAt?.(target);
-  await s.hold('KeyE',2.5,instruction);
+  if (play) { ctx.hud.setObjective(instruction); await play(); ctx.hud.setObjective(''); }
+  else await s.hold('KeyE',2.5,instruction);
   cleanup(); s.hero.lookAt?.(null);
   // The finding goes on a line at the bottom of the screen and the drive carries on: no card to dismiss.
   if (ctx.hud.note) ctx.hud.note(result, arabic); else await s.card(result, arabic);

@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { mission, factNumber } from './_mission.js';
 import { placesOf } from '../world/terrain.js';
+import { wrightFabric, rotorSpinUp } from './_skyGames.js';
 
 // Dates as short labels, each matching a verified fact: ingenuity_first_flight, ingenuity_total.
 const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
@@ -27,7 +28,7 @@ const DATES = { firstFlight: 'Apr 2021', lastFlight: 'Jan 2024' };
 // The places come from Set B's Jezero map (placesOf('jezero')): three dangers and the smooth sand.
 const START = [0, 0];
 const ROVER_START = [0, -7];
-const DEST = [-5, 90];                       // where the big rover wants to go
+const DEST = [-5, 70];                       // where the big rover wants to go
 // Which danger is marked on which flight. The rover's planned road runs through all three, in the
 // order cliff, sand trap, boulder field; marking one moves the road around it.
 const DANGERS = [
@@ -36,7 +37,8 @@ const DANGERS = [
   { place: 'boulders', name: 'the boulder field', flight: 3 },
 ];
 const ROAD_ORDER = ['cliff', 'sandTrap', 'boulders'];
-const PADS = { 2: [35, -2], 3: [25, 45] };  // where each scouting flight lands, clear of the dangers
+// Where each scouting flight lands, clear of the dangers. Flight 2 is about 87 m, flight 3 about 72 m.
+const PADS = { 2: [14, -8], 3: [10, 16] };
 
 export default makeChapter({
   id: 'sky',
@@ -80,9 +82,11 @@ export default makeChapter({
       showFlight();
       const band = s.prop('heightBand', START[0], START[1]);
       band.position.y += 3;
+      // Before the first flight: the Wright brothers' fabric, then spin the rotor up in thin air.
+      await wrightFabric(s, ctx);
+      await rotorSpinUp(s, ctx);
+      heli.spin = 1; // the rotor is at speed: lift starts as soon as Space is held
       s.unlockControls();
-      ctx.hud.setObjective('Hold Space to spin up the rotor');
-      await s.until(() => heli.spin >= 1);
       ctx.hud.setObjective('Keep holding Space: climb to 3 metres');
       await s.until(() => heli.altitude >= 2.7);
       s.hero.setEmotion('happy');

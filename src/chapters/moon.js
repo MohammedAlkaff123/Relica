@@ -16,6 +16,7 @@
 //   props lunarModule, astronaut, sampleBox, env.dust (Set B)
 import { makeChapter } from './_stage.js';
 import { mission } from './_mission.js';
+import { liftoffCamera, fenderRepair } from './_moonGames.js';
 
 const LM = [0, -4];
 const START = [7, 3, 0];
@@ -171,8 +172,12 @@ export default makeChapter({
     const q = s.hero.object.position;
     await Promise.all(crew.map((c, i) => s.moveTo(c, q.x + (i ? 1.2 : -1.2), q.z - 1.6, 1.2)));
     for (const c of crew) c.rotation.y = Math.atan2(q.x-c.position.x, q.z-c.position.z);
-    await perform(s, crew, 'repair', 2.5);
+    // The player does the repair: maps and clamps on the fender (the crew acts it out meanwhile).
+    act(crew, 'repair');
+    s.onDispose(() => act(crew, null));
     ctx.hud.setObjective('');
+    await fenderRepair(s, ctx);
+    act(crew, null);
     s.dust.shower(false);
     s.loop('dust_spray', false);
     s.controller.speedScale = 1;
@@ -221,11 +226,16 @@ export default makeChapter({
     // Lift-off. Only the top half goes. The rover watches it leave.
     const ascent = lm.getObjectByName('ascent') ?? lm;
     s.actors.ascent = ascent;
-    let up = 0;
-    s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
-    s.fx.liftoff?.(ascent);
-    s.sound('liftoff', 'rumble');
     s.hero.lookAt?.(ascent); // the rover's camera follows it up
+    // The player is the camera operator in Houston: the climb starts when the game's countdown ends.
+    await liftoffCamera(s, ctx, {
+      onLiftoff() {
+        let up = 0;
+        s.every((dt) => { up += dt; ascent.position.y = 0.5 * 2.2 * up * up; });
+        s.fx.liftoff?.(ascent);
+        s.sound('liftoff', 'rumble');
+      },
+    });
     s.hero.setEmotion('sad');
     await s.do(ctx.cinematics.conversation('moon_liftoff', 'ch1_left_behind', s.hero.object, { lrv: s.hero.object, ascent }, ctx.dialogue));
     s.mission.discover('rover_filmed');
