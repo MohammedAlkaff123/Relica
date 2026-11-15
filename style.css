@@ -719,3 +719,48 @@ body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
 .gauge-dot { width: 10px; height: 10px; margin-inline-start: -5px; border-width: 2px; }
 @media (max-height: 720px) { .hud { width: 200px; } .hud .row-label, .hud .row-value, .gauge-word { font-size: 11.5px; } }
 
+/* Screen layout (playtest): pause + settings top start corner, world card under them; mission card top end corner. */
+.hud-buttons { inset-inline-end: auto; inset-inline-start: 16px; }
+.hud { top: 72px; inset-inline-start: 16px; }
+.mission { top: 16px; inset-inline-end: 16px; width: 248px; padding: 10px 12px 6px; }
+.mission-label { font-size: 11px; }
+.mission h2 { margin: 1px 0 6px; font-size: 14.5px; line-height: 1.35; }
+.mission .tasks li { gap: 8px; padding: 5px 0; font-size: 12.5px; line-height: 1.4; }
+.mission .check { flex-basis: 15px; height: 15px; margin-top: 1px; }
+.mission .tasks li.done .check::after { left: 3.5px; top: 0.5px; width: 3.5px; height: 7px; }
+.mission .bonus { font-size: 12px; padding: 6px 10px; }
+@media (max-width: 960px) { .mission { width: min(230px, 40vw); } .hud { width: min(210px, 40vw); } }
+@media (max-width: 560px) { .mission { top: 16px; width: min(220px, 56vw); } }
+
+/* Dialogue: words in one column, the Skip / Continue button in its own column, so they never overlap. */
+.dialogue { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: end; }
+.dialogue .who, .dialogue .line-main, .dialogue .line-second { grid-column: 1; }
+.dialogue .line-main, .dialogue .line-second { padding-inline-end: 0; }
+.dialogue-foot { position: static; grid-column: 2; grid-row: 1 / span 3; align-self: end; margin: 0; }
+@media (max-width: 560px) { .dialogue { grid-template-columns: minmax(0, 1fr); } .dialogue-foot { grid-column: 1; grid-row: auto; justify-content: flex-end; margin-top: 4px; } }
+
+/* Chapter card as a game card: dark sheet, the planet and its name on one side, the machine's real NASA photo on the other. */
+.card.stage-card { background: radial-gradient(ellipse at 50% 50%, rgba(16, 24, 32, 0.55), rgba(8, 12, 18, 0.85)); }
+.card.stage-card .card-sheet { position: relative; width: min(820px, 94vw); padding: 30px 30px 24px; background: linear-gradient(160deg, #1A2733, var(--ink) 55%, #0B1117); color: var(--paper); border: 1px solid var(--line-dark); text-align: start; }
+.card.stage-card .next-btn { margin-top: 22px; background: var(--paper); border-color: var(--paper); color: var(--ink); }
+.stage { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 28px; align-items: center; }
+.stage-when { position: absolute; top: 18px; inset-inline-start: 22px; padding: 4px 12px; border-radius: var(--r-pill); background: rgba(255, 250, 240, 0.08); border: 1px solid var(--line-dark); font-size: 13px; font-weight: 600; color: var(--copper-light); }
+.stage-world { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 18px; }
+.stage-title { margin: 18px 0 0; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.15; font-weight: 600; }
+.stage-place { margin: 6px 0 0; font-size: 15px; color: var(--muted-light); }
+.planet { width: clamp(130px, 17vw, 180px); aspect-ratio: 1; border-radius: 50%; box-shadow: inset -18px -14px 36px rgba(0, 0, 0, 0.55), 0 0 60px rgba(255, 255, 255, 0.06); animation: planet-turn 40s linear infinite; background-size: 200% 100%; }
+.planet-moon { background-image: radial-gradient(circle at 30% 35%, #8E8C88 0 7%, transparent 8%), radial-gradient(circle at 62% 58%, #7C7A76 0 10%, transparent 11%), radial-gradient(circle at 45% 78%, #87857F 0 5%, transparent 6%), radial-gradient(circle at 72% 28%, #8A8884 0 4%, transparent 5%), linear-gradient(90deg, #C9C7C1, #B3B1AB, #C9C7C1); }
+.planet-mars { background-image: radial-gradient(circle at 40% 20%, rgba(255, 245, 235, 0.5) 0 6%, transparent 9%), radial-gradient(ellipse at 55% 55%, #8E3B22 0 16%, transparent 30%), radial-gradient(ellipse at 25% 70%, #9C4628 0 10%, transparent 22%), linear-gradient(90deg, #C1673D, #B25A33, #C9714A, #C1673D); }
+.planet-jupiter { background-image: radial-gradient(ellipse at 66% 62%, #B5583C 0 6%, transparent 9%), linear-gradient(180deg, #E7D3B4 0 14%, #C79A6E 14% 24%, #EAD9BD 24% 36%, #B88559 36% 46%, #E4CFAE 46% 58%, #C69A70 58% 70%, #EDDDC3 70% 84%, #C9A27A 84%); background-size: 100% 100%; }
+@keyframes planet-turn { from { background-position: 0 0; } to { background-position: 200% 0; } }
+.planet-jupiter { animation: none; }
+.stage-machine { position: relative; margin: 0; }
+.stage-machine img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--line-dark); filter: saturate(0.95) contrast(1.03); }
+.stage-credit { position: absolute; top: 8px; inset-inline-end: 8px; padding: 2px 8px; border-radius: var(--r-pill); background: rgba(8, 12, 18, 0.7); color: var(--muted-light); font-size: 10.5px; direction: ltr; }
+.stage-machine figcaption { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+.stage-machine figcaption strong { font-size: 20px; font-weight: 600; }
+.stage-machine figcaption span { font-size: 13.5px; color: var(--copper-light); }
+.stage-fact { margin: 10px 0 0; padding: 8px 12px; border-radius: var(--r-sm); background: rgba(255, 250, 240, 0.06); font-size: 13.5px; line-height: 1.55; color: #D8D2C5; }
+@media (max-width: 700px) { .stage { grid-template-columns: 1fr; gap: 16px; } .card.stage-card .card-sheet { padding: 24px 18px 18px; max-height: 92vh; overflow-y: auto; } .stage-machine img { aspect-ratio: 16 / 9; } }
+@media (prefers-reduced-motion: reduce) { .planet { animation: none; } }
+

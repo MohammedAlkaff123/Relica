@@ -21,13 +21,13 @@ const UI = {
   },
   'landing.github': { en: 'GitHub', ar: 'GitHub' },
   'landing.githubSub': { en: 'repository', ar: 'المستودع' },
-  'landing.start': { en: 'Start the game', ar: 'ابدأ اللعبة' },
+  'landing.start': { en: 'Start the experience', ar: 'ابدأ التجربة' },
   'landing.team': { en: 'Relica team', ar: 'فريق ريليكا' },
-  'landing.desktop': { en: 'Best played on a computer with a keyboard', ar: 'تُلعب بأفضل شكل على جهاز كمبيوتر بلوحة مفاتيح' },
+  'landing.desktop': { en: 'Best experienced on a computer with a keyboard', ar: 'أفضل تجربة على جهاز كمبيوتر بلوحة مفاتيح' },
 
   // Loader
   'load.title': { en: 'Preparing the expedition', ar: 'نجهّز الرحلة' },
-  'load.code': { en: 'Loading the game engine', ar: 'تحميل محرّك اللعبة' },
+  'load.code': { en: 'Loading the experience engine', ar: 'تحميل محرّك التجربة' },
   'load.models': { en: 'Loading the machines', ar: 'تحميل الآلات' },
   'load.photos': { en: 'Loading NASA photographs', ar: 'تحميل صور ناسا' },
   'load.data': { en: 'Loading missions and texts', ar: 'تحميل المهمات والنصوص' },
@@ -41,7 +41,7 @@ const UI = {
 
   // Main menu
   'menu.continue': { en: 'Continue', ar: 'متابعة' },
-  'menu.new': { en: 'New game', ar: 'لعبة جديدة' },
+  'menu.new': { en: 'New experience', ar: 'تجربة جديدة' },
   'menu.chapters': { en: 'Chapters', ar: 'الفصول' },
   'menu.settings': { en: 'Settings', ar: 'الإعدادات' },
   'menu.howto': { en: 'How to play', ar: 'طريقة اللعب' },
@@ -51,13 +51,13 @@ const UI = {
   'menu.resume': { en: 'Resume', ar: 'تابع اللعب' },
   'menu.restart': { en: 'Restart chapter', ar: 'أعد الفصل' },
   'menu.quit': { en: 'Main menu', ar: 'القائمة الرئيسية' },
-  'menu.paused': { en: 'Paused', ar: 'اللعبة متوقفة' },
+  'menu.paused': { en: 'Paused', ar: 'التجربة متوقفة' },
   'menu.newConfirm': { en: 'Start again from the beginning? Your saved progress will be replaced.', ar: 'تبدأ من البداية؟ سيُستبدل تقدّمك المحفوظ.' },
   'menu.yes': { en: 'Start again', ar: 'ابدأ من جديد' },
   'menu.no': { en: 'Keep my progress', ar: 'احتفظ بتقدّمي' },
   'save.chapter': { en: 'Chapter {n} · {name}', ar: 'الفصل {n} · {name}' },
   'save.when': { en: 'Saved {when}', ar: 'حُفظ {when}' },
-  'save.none': { en: 'No saved game yet', ar: 'لا توجد لعبة محفوظة بعد' },
+  'save.none': { en: 'No saved experience yet', ar: 'لا توجد تجربة محفوظة بعد' },
   'save.memories': { en: '{n} photos collected', ar: 'جمعت {n} صور' },
 
   // Chapter names for the menu and saves
@@ -126,7 +126,7 @@ const UI = {
   'cond.a.none': { en: 'No air', ar: 'لا هواء' },
   'cond.a.thin': { en: 'Too thin to breathe', ar: 'خفيف، لا يكفي للتنفس' },
   'cond.a.earth': { en: 'Like on Earth', ar: 'مثل الأرض' },
-  'update.ready': { en: 'A new version of the game is ready. Your progress is saved.', ar: 'نسخة جديدة من اللعبة جاهزة. تقدّمك محفوظ.' },
+  'update.ready': { en: 'A new version of the experience is ready. Your progress is saved.', ar: 'نسخة جديدة من التجربة جاهزة. تقدّمك محفوظ.' },
   'update.reload': { en: 'Update now', ar: 'حدّث الآن' },
   'controls.liftoff': { en: 'Hold to lift off', ar: 'اضغط باستمرار للإقلاع' },
   'controls.climb': { en: 'Hold to climb, let go to descend', ar: 'اضغطه للصعود واتركه للنزول' },
@@ -155,8 +155,8 @@ const UI = {
   'credits.photos': { en: 'NASA photographs (images.nasa.gov)', ar: 'صور ناسا (images.nasa.gov)' },
   'credits.again': { en: 'Play from the start', ar: 'العب من البداية' },
   'credits.menu': { en: 'Back to main menu', ar: 'العودة إلى القائمة الرئيسية' },
-  'credits.thanks': { en: 'Thanks for playing', ar: 'شكرًا لتجربة اللعبة' },
-  'credits.lede': { en: 'A game by five friends for NASA Space Apps Challenge 2026.', ar: 'لعبة صنعها خمسة أصدقاء لتحدي ناسا لتطبيقات الفضاء 2026.' },
+  'credits.thanks': { en: 'Thanks for playing', ar: 'شكرًا لخوضك التجربة' },
+  'credits.lede': { en: 'An experience by five friends for NASA Space Apps Challenge 2026.', ar: 'تجربة صنعها خمسة أصدقاء لتحدي ناسا لتطبيقات الفضاء 2026.' },
   'credits.sources': { en: 'Sources and tools', ar: 'المصادر والأدوات' },
   'credits.fin': { en: 'Still here.', ar: 'ما زلنا هنا.' },
 };
@@ -231,7 +231,7 @@ const DICT = new Map(Object.entries({
   // Photos and Pioneer
   'Space: capture this mission view': 'اضغط Space لالتقاط هذا المشهد',
   'Recreated camera view · A/D and W/S to frame · Space to photograph': 'مشهد معاد بناؤه · وجّه بالمفاتيح A و D و W و S ثم اضغط Space للتصوير',
-  'Jupiter captured in the game': 'صورة المشتري الملتقطة في اللعبة', 'Game image': 'صورة من اللعبة',
+  'Jupiter captured in the experience': 'صورة المشتري الملتقطة في التجربة', 'Image from the experience': 'صورة من التجربة',
   'Space: capture Jupiter': 'اضغط Space لتصوير المشتري', 'A / D: frame Jupiter': 'استخدم A و D لتضع المشتري داخل الإطار',
   'A / D: turn toward Earth to send': 'استخدم A و D لتتجه نحو الأرض وترسل الصورة', 'Image sent home': 'أُرسلت الصورة إلى الأرض',
   '21 months planned. More than 30 years.': 'مهمة مقررة لـ21 شهرًا امتدت أكثر من 30 سنة.',

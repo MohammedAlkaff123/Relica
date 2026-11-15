@@ -23,6 +23,8 @@ export function createCard(root, prompt) {
   const title = el('h1', '', sheet);
   const sub = el('p', 'card-sub', sheet);
   const facts = el('div', 'card-facts', sheet);
+  // Chapter card ("game card"): the planet drawn in code with its name, and a real NASA photo of the machine.
+  const stage = el('div', 'stage hidden', sheet);
   const next = continueButton(sheet);
 
   // The end screen: its own full page above everything, closed only by its two buttons.
@@ -98,9 +100,43 @@ export function createCard(root, prompt) {
   });
 
   let shownCard = null;
-  const show = (value) => (value && typeof value === 'object' ? pick(value) : translate(value ?? ''));
+  const show = (value) => translate(value && typeof value === 'object' ? pick(value) : value ?? ''); // translate also keeps digits Western
+  function drawStage(c) {
+    stage.textContent = '';
+    const art = STAGE_ART[c.id];
+    const when = show(c.dates);
+    if (when) {
+      const d = el('bdi', 'stage-when', stage, when);
+      d.dir = 'auto';
+    }
+    const world = el('div', 'stage-world', stage);
+    el('div', 'planet planet-' + art.planet, world).setAttribute('aria-hidden', 'true');
+    el('h1', 'stage-title', world, show(c.title));
+    const where = show(c.place);
+    if (where) el('p', 'stage-place', world, where);
+
+    const machine = el('figure', 'stage-machine', stage);
+    const img = el('img', '', machine);
+    img.src = art.photo;
+    img.alt = '';
+    el('span', 'stage-credit', machine, art.credit);
+    const cap = el('figcaption', '', machine);
+    // "Mars Exploration Rover · Opportunity": the last part is the machine, the rest is the mission.
+    const parts = show(c.mission).split(' · ');
+    el('strong', '', cap, parts.pop() ?? '');
+    if (parts.length) el('span', '', cap, parts.join(' · '));
+    const fact = show(c.sub);
+    if (fact) el('p', 'stage-fact', machine, fact);
+  }
   function fill(c) {
     shownCard = c;
+    const isStage = !!(c.id && STAGE_ART[c.id]);
+    stage.classList.toggle('hidden', !isStage);
+    if (isStage) {
+      drawStage(c);
+      for (const node of [mission, title, sub, facts]) node.classList.add('hidden');
+      return;
+    }
     title.textContent = show(c.title);
     mission.textContent = show(c.mission);
     sub.textContent = show(c.sub);
@@ -109,6 +145,7 @@ export function createCard(root, prompt) {
       const s = show(part);
       if (s) el('span', '', facts, s);
     }
+    title.classList.remove('hidden');
     for (const node of [mission, sub, facts]) node.classList.toggle('hidden', !node.textContent);
   }
   prefs.subscribe(() => {
@@ -199,7 +236,7 @@ export function createCard(root, prompt) {
     async chapter(id) {
       const c = (await chapters)[id];
       if (!c) { console.warn(`chapter "${id}" is missing from content/chapters.json`); return; }
-      await open({ title: c.title, mission: c.mission, place: c.place, dates: c.dates, sub: c.sub }, 'chapter-card');
+      await open({ id, title: c.title, mission: c.mission, place: c.place, dates: c.dates, sub: c.sub }, STAGE_ART[id] ? 'stage-card' : '');
     },
     // Title screen: the game's name and "Press Enter to wake up".
     async title() {
@@ -238,6 +275,16 @@ export function createCard(root, prompt) {
     hide() { box.classList.add('hidden'); closeEnd(); shownCard = null; },
   };
 }
+
+// Art for each chapter card: which planet to draw and a real NASA photo of the machine (no generated images).
+// Every photo here is also a memory photo, so it is already in the credits.
+const STAGE_ART = {
+  moon: { planet: 'moon', photo: 'public/nasa/apollo_lunar_roving_vehicle/as17-137-20979.jpg', credit: 'NASA/JSC' },
+  mars: { planet: 'mars', photo: 'public/nasa/opportunity_rover/PIA21708.jpg', credit: 'NASA/JPL/Cornell' },
+  sky: { planet: 'mars', photo: 'public/nasa/ingenuity_helicopter/PIA23882.jpg', credit: 'NASA/JPL' },
+  epilogue: { planet: 'jupiter', photo: 'public/nasa/pioneer_10_11/ARC-1972-AC72-2135.jpg', credit: 'NASA/ARC' },
+  epilogue_photo: { planet: 'jupiter', photo: 'public/nasa/pioneer_10_11/ARC-1972-AC72-2135.jpg', credit: 'NASA/ARC' },
+};
 
 // The NASA photos the game shows: rows of public/nasa/CREDITS.csv whose id is in content/memories.json.
 export async function usedPhotos() {

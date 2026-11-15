@@ -45,8 +45,8 @@ export async function photographJupiter(s, ctx) {
   const reticle = el('div', 'pioneer-reticle', overlay);
   const label = el('div', 'pioneer-target', reticle, 'Jupiter · المشتري');
   const preview = el('img', 'pioneer-preview hidden', overlay);
-  preview.alt = 'Jupiter captured in the game';
-  const imageNote = el('div', 'pioneer-image-note hidden', overlay, 'Game image · صورة من اللعبة');
+  preview.alt = 'Jupiter captured in the experience';
+  const imageNote = el('div', 'pioneer-image-note hidden', overlay, 'Image from the experience · صورة من التجربة');
   const originalFov = ctx.camera.fov;
   ctx.followCam.enabled = false;
   ctx.camera.fov = 50;
