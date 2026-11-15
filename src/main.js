@@ -158,6 +158,14 @@ export async function startGame({ onStep = () => {} } = {}) {
     chapters.stop();
     showMenu();
   }
+  // The end screen's two buttons. The story is finished, so the checkpoint starts over.
+  ctx.finishGame = (choice) => {
+    if (!deepLink) save.clear();
+    setTimeout(() => {
+      if (choice === 'again') { memory.collected.length = 0; found.length = 0; playing = true; shell.setInGame(true); chapters.go(0); }
+      else stopToMenu();
+    }, 0);
+  };
   function showMenu() {
     shell.showMain(() => createMenuScene(ctx));
   }

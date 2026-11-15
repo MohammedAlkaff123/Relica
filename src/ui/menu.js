@@ -368,6 +368,7 @@ export function createShell({ root, ctx, chapterIds, onPlay, onRestart, onQuit }
   window.addEventListener('keydown', (e) => {
     if (stack.length && e.key === 'Tab') trapFocus(e);
     if (e.code === 'Escape' && stack.length) { e.stopPropagation(); e.preventDefault(); closeTop(); return; }
+    if (document.body.classList.contains('end-open')) return; // the end screen handles its own keys
     if (e.code === 'KeyP' && inGame && !mainOpen) {
       e.stopPropagation();
       if (!e.repeat) api.pause(!pauseEntry);
@@ -426,7 +427,7 @@ export function createShell({ root, ctx, chapterIds, onPlay, onRestart, onQuit }
       corner.classList.toggle('hidden', !inGame);
     },
     pause(on) {
-      if (on && !pauseEntry && inGame) {
+      if (on && !pauseEntry && inGame && !document.body.classList.contains('end-open')) {
         pauseGame();
         pauseEntry = openSheet('menu.paused', pauseBody(), { small: true, className: 'pause-overlay', onClose: () => { pauseEntry = null; resumeGame(); } });
       } else if (!on && pauseEntry) {

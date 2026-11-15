@@ -5,7 +5,8 @@
 //   await card.chapter('moon')       the same, with the text from content/chapters.json
 //   await card.title()               title screen        (text in content/credits.json)
 //   await card.ending()              the final card: what is imagined and what is real
-//   await card.credits()             credits: the team, then sources, with only the NASA photos the game shows
+//   await card.credits()             the end screen: the team, sources and the NASA photos the game shows.
+//                                    Only its two buttons close it; resolves to 'menu' or 'again'.
 //
 // Text is shown in the player's language. Chapter code may pass English, or "English · عربي" pairs.
 import { el } from './dom.js';
@@ -13,6 +14,7 @@ import { loadJSON } from '../core/content.js';
 import { prefs, pick } from './prefs.js';
 import { t, translate, registerPairs } from './i18n.js';
 import { keycap } from './keys.js';
+import { icon } from './icons.js';
 
 export function createCard(root, prompt) {
   const box = el('div', 'card hidden', root);
@@ -23,10 +25,59 @@ export function createCard(root, prompt) {
   const facts = el('div', 'card-facts', sheet);
   const next = continueButton(sheet);
 
-  // Credits roll: its own scrolling page.
-  const rollBox = el('div', 'credits hidden', root);
-  const roll = el('div', 'roll', rollBox);
-  const rollNext = continueButton(rollBox);
+  // The end screen: its own full page above everything, closed only by its two buttons.
+  const rollBox = el('div', 'credits endscreen hidden', document.body);
+  rollBox.setAttribute('role', 'dialog');
+  rollBox.setAttribute('aria-modal', 'true');
+  el('div', 'end-stars', rollBox);
+  const rollScroll = el('div', 'end-scroll', rollBox);
+  const roll = el('div', 'roll', rollScroll);
+  const endBar = el('div', 'end-bar', rollBox);
+  const endButton = (cls, ic, key) => {
+    const btn = el('button', 'btn ' + cls, endBar);
+    btn.type = 'button';
+    btn.append(icon(ic));
+    const w = el('span', '', btn, t(key));
+    w.dataset.t = key;
+    return btn;
+  };
+  const homeBtn = endButton('btn-end-primary', 'home', 'credits.menu');
+  const againBtn = endButton('btn-end-secondary', 'restart', 'credits.again');
+  // While it is open, keys and clicks never reach the game or the pause menu.
+  const endIsOpen = () => !rollBox.classList.contains('hidden');
+  const inBar = (e) => e.target instanceof Element && e.target.closest('.end-bar');
+  for (const type of ['keydown', 'keyup']) {
+    window.addEventListener(type, (e) => {
+      if (!endIsOpen()) return;
+      if (type === 'keydown' && e.key === 'Tab') {
+        e.preventDefault();
+        const order = [homeBtn, againBtn];
+        const i = order.indexOf(document.activeElement);
+        order[i === -1 ? 0 : (i + 1) % 2].focus();
+      }
+      // The focused button's own Enter/Space still presses it (that is the browser default, not a listener).
+      e.stopPropagation();
+      if (!inBar(e) && /^(Enter|Space|Escape)$/.test(e.code)) e.preventDefault();
+    }, true);
+  }
+  window.addEventListener('pointerdown', (e) => { if (endIsOpen() && !inBar(e)) e.stopPropagation(); }, true);
+
+  // Slow automatic scroll, like film credits. A wheel, touch or drag gives control to the player for a while.
+  let autoScroll = 0, heldUntil = 0, lastT = 0, carry = 0;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  for (const type of ['wheel', 'touchstart', 'pointerdown']) rollScroll.addEventListener(type, () => { heldUntil = performance.now() + 5000; }, { passive: true });
+  function scrollStep(now) {
+    if (!endIsOpen()) { autoScroll = 0; return; }
+    const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
+    lastT = now;
+    if (now > heldUntil && !reduceMotion.matches) {
+      carry += 30 * dt;
+      const px = Math.floor(carry);
+      carry -= px;
+      if (px) rollScroll.scrollTop += px;
+    }
+    autoScroll = requestAnimationFrame(scrollStep);
+  }
 
   function continueButton(parent) {
     const b = el('button', 'next-btn', parent);
@@ -62,8 +113,8 @@ export function createCard(root, prompt) {
   }
   prefs.subscribe(() => {
     if (shownCard) fill(shownCard);
-    for (const n of root.querySelectorAll('.card [data-t], .credits [data-t]')) n.textContent = t(n.dataset.t);
-    if (!rollBox.classList.contains('hidden')) drawCredits();
+    for (const n of [...root.querySelectorAll('.card [data-t]'), ...rollBox.querySelectorAll('[data-t]')]) n.textContent = t(n.dataset.t);
+    if (endIsOpen()) drawCredits();
   });
 
   // Only the newest card may hide the box, so a card opened over another never hides the new one.
@@ -77,31 +128,56 @@ export function createCard(root, prompt) {
   }
 
   let creditsData = null;
+  let endChoice = null;
+  function closeEnd() {
+    rollBox.classList.add('hidden');
+    document.body.classList.remove('end-open');
+    cancelAnimationFrame(autoScroll);
+    const r = endChoice;
+    endChoice = null;
+    r?.(null);
+  }
   function drawCredits() {
     const { t: c, photos } = creditsData;
     roll.textContent = '';
-    const logo = el('img', 'credits-logo', roll);
+
+    const head = el('header', 'end-head', roll);
+    const logo = el('img', 'end-logo', head);
     logo.src = 'public/brand/logos/relica-lockup-ivory-1200.png';
     logo.alt = 'Relica';
-    el('h1', '', roll, t('credits.title'));
-    el('h2', '', roll, t('credits.team'));
-    const team = el('ul', 'credits-team', roll);
+    const name = el('p', 'end-name', head, 'RELICA: Still Here');
+    name.dir = 'ltr';
+    el('h1', 'end-thanks', head, t('credits.thanks'));
+    el('p', 'end-lede', head, t('credits.lede'));
+
+    const teamSec = el('section', 'end-section', roll);
+    el('h2', 'end-eyebrow', teamSec, t('credits.team'));
+    const team = el('ul', 'end-team', teamSec);
     for (const m of c.team ?? []) {
-      const li = el('li', '', team);
+      const li = el('li', 'end-member', team);
       el('strong', '', li, pick(m.name));
       el('span', '', li, pick(m.role));
     }
-    for (const block of c.credits ?? []) {
-      if (block.heading === 'Made by') continue;
-      el('h2', '', roll, pick(block.title ?? block.heading));
-      for (const line of block.lines) el('p', '', roll, pick(line));
+
+    const blocks = (c.credits ?? []).filter((block) => block.heading !== 'Made by');
+    if (blocks.length) {
+      const sec = el('section', 'end-section', roll);
+      el('h2', 'end-eyebrow', sec, t('credits.sources'));
+      const grid = el('div', 'end-grid', sec);
+      for (const block of blocks) {
+        const box2 = el('div', 'end-block', grid);
+        el('h3', '', box2, pick(block.title ?? block.heading));
+        for (const line of block.lines) el('p', '', box2, pick(line));
+      }
     }
     if (photos.length) {
-      el('h2', '', roll, t('credits.photos'));
+      const sec = el('section', 'end-section', roll);
+      el('h2', 'end-eyebrow', sec, t('credits.photos'));
+      const list = el('ul', 'end-photos', sec);
       for (const p of photos) {
-        const line = el('p', 'photo-credit', roll);
-        el('span', '', line, translate(p.title) + ' ');
-        const id = el('bdi', '', line, `NASA/${p.center} · ${p.nasa_id}`);
+        const li = el('li', '', list);
+        el('span', '', li, translate(p.title));
+        const id = el('bdi', '', li, `NASA/${p.center} · ${p.nasa_id}`);
         id.dir = 'ltr';
       }
     }
@@ -113,6 +189,7 @@ export function createCard(root, prompt) {
     const sa = el('img', 'space-apps', partners);
     sa.src = 'public/brand/partners/space-apps-white.svg';
     sa.alt = 'NASA Space Apps Challenge';
+    el('p', 'end-fin', roll, t('credits.fin'));
   }
 
   return {
@@ -136,18 +213,29 @@ export function createCard(root, prompt) {
       if (!e) return;
       await open({ title: e.title, sub: e.truth }, 'ending');
     },
-    // Credits: the team, libraries, fonts, sounds, and only the NASA photos the game shows.
+    // The end screen. Only its two buttons close it: 'menu' (main menu) or 'again' (play from the start).
     async credits() {
       const [c, photos] = await Promise.all([texts, usedPhotos()]);
-      const me = ++shown;
+      ++shown;
       creditsData = { t: c, photos };
       drawCredits();
       rollBox.classList.remove('hidden');
-      rollBox.scrollTop = 0;
-      await prompt.wait();
-      if (me === shown) rollBox.classList.add('hidden');
+      document.body.classList.add('end-open');
+      rollScroll.scrollTop = 0;
+      heldUntil = performance.now() + 2500;
+      lastT = 0;
+      cancelAnimationFrame(autoScroll);
+      autoScroll = requestAnimationFrame(scrollStep);
+      const choice = await new Promise((resolve) => {
+        endChoice = resolve;
+        homeBtn.onclick = () => { endChoice = null; resolve('menu'); };
+        againBtn.onclick = () => { endChoice = null; resolve('again'); };
+      });
+      closeEnd();
+      return choice;
     },
-    hide() { box.classList.add('hidden'); rollBox.classList.add('hidden'); shownCard = null; },
+    get endOpen() { return endIsOpen(); },
+    hide() { box.classList.add('hidden'); closeEnd(); shownCard = null; },
   };
 }
 

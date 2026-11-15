@@ -29,6 +29,8 @@ const state = load();
 // prompts, so it always runs in English.
 const params = new URLSearchParams(location.search);
 const forcedMute = params.has('mute');
+// The language kept in storage: a ?lang / ?test visit never overwrites it unless the player picks one.
+let storedLanguage = state.language;
 if (params.get('lang') === 'ar' || params.get('lang') === 'en') state.language = params.get('lang');
 if (params.has('test')) state.language = 'en';
 const listeners = new Set();
@@ -47,12 +49,12 @@ function snapshot() {
 export const prefs = {
   get: snapshot,
   set(patch = {}) {
-    if (patch.language === 'ar' || patch.language === 'en') state.language = patch.language;
+    if (patch.language === 'ar' || patch.language === 'en') state.language = storedLanguage = patch.language;
     if (typeof patch.secondary === 'boolean') state.secondary = patch.secondary;
     if (typeof patch.muted === 'boolean') state.muted = patch.muted;
     if (patch.volume) for (const k of Object.keys(state.volume)) state.volume[k] = clamp01(patch.volume[k], state.volume[k]);
     applyDocument();
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* storage blocked: keep for this visit */ }
+    try { localStorage.setItem(KEY, JSON.stringify({ ...state, language: storedLanguage })); } catch { /* storage blocked: keep for this visit */ }
     const now = snapshot();
     for (const fn of listeners) { try { fn(now); } catch (err) { console.warn(err); } }
   },

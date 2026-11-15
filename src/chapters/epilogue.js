@@ -82,8 +82,10 @@ export default makeChapter({
     fiction.remove();
     await s.do(ctx.card.ending());
     await s.do(ctx.memory.wall());
-    await s.do(ctx.card.credits());
-    ctx.hud.setObjective('The end. Press 1 to play again');
+    // The end screen stays until the player picks: back to the main menu, or play from the start.
+    ctx.hud.setObjective('The end');
+    const choice = await s.do(ctx.card.credits());
+    if (choice) ctx.finishGame?.(choice);
   },
 
   // A and D turn the dish, with a little drift so it feels like floating.

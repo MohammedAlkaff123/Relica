@@ -107,7 +107,7 @@ html[dir="rtl"] .btn-hero .icon[viewBox] { transform: scaleX(-1); }
 /* ---------- Keycaps ---------- */
 kbd.keycap {
   display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 0.45em; margin: 0 0.18em;
-  border-radius: 8px; vertical-align: -0.38em; direction: ltr;
+  border-radius: 8px; vertical-align: middle; position: relative; top: -0.12em; direction: ltr;
   font: 600 0.82em/1 RelicaInter, sans-serif; letter-spacing: 0;
   color: var(--ink); background: linear-gradient(#FFFDF7, #EDE5D5);
   border: 1px solid #BFB7A6; box-shadow: 0 3px 0 #A79F8E, 0 4px 8px rgba(0, 0, 0, 0.18);
@@ -116,6 +116,14 @@ kbd.keycap.wide { padding: 0 0.7em; }
 kbd.keycap.big { min-width: 52px; height: 52px; font-size: 20px; border-radius: 12px; box-shadow: 0 5px 0 #A79F8E, 0 7px 14px rgba(0, 0, 0, 0.22); vertical-align: middle; }
 kbd.keycap.big.wide { font-size: 16px; padding: 0 16px; }
 kbd.keycap.space { min-width: 190px; }
+/* Keys the game is asking for show themselves being pressed: a tap for a press, a long press for a hold. */
+@keyframes key-tap { 0%, 62%, 100% { transform: translateY(0); box-shadow: 0 3px 0 #A79F8E, 0 4px 8px rgba(0, 0, 0, 0.18); } 70%, 80% { transform: translateY(3px); box-shadow: 0 0 0 #A79F8E, 0 1px 2px rgba(0, 0, 0, 0.2); filter: brightness(0.94); } }
+@keyframes key-hold { 0%, 30%, 100% { transform: translateY(0); box-shadow: 0 5px 0 #A79F8E, 0 7px 14px rgba(0, 0, 0, 0.22); } 38%, 88% { transform: translateY(4px); box-shadow: 0 1px 0 #A79F8E, 0 2px 4px rgba(0, 0, 0, 0.2); filter: brightness(0.94); } }
+.objective kbd.keycap, .mission .tasks li:not(.done) kbd.keycap, .howto-key kbd.keycap { animation: key-tap 1.8s ease-in-out infinite; }
+.objective kbd.keycap + kbd.keycap, .mission .tasks li kbd.keycap + kbd.keycap { animation-delay: 0.9s; }
+.objective:not(.pressing) .hold-key kbd.keycap.big { animation: key-hold 2.4s ease-in-out infinite; }
+.objective.pressing .hold-key kbd.keycap.big { animation: none; }
+@media (prefers-reduced-motion: reduce) { kbd.keycap { animation: none !important; } }
 
 /* ================= LANDING PAGE ================= */
 #sky {
@@ -448,20 +456,65 @@ html[dir="rtl"] .card-sheet::after { background: linear-gradient(135deg, var(--c
 .card.title-screen .next-btn { background: var(--ink-2); color: var(--paper); border-color: var(--line-dark); }
 .card.ending .card-sub { color: var(--ink); }
 
-/* Credits roll at the end of the game */
-.credits { position: absolute; inset: 0; background: var(--ink); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 8vh 24px 6vh; pointer-events: auto; }
-.credits .roll { width: min(720px, 94vw); text-align: center; }
-.credits-logo { height: 48px; width: auto; }
-.credits h1 { font-size: 40px; margin: 22px 0 10px; font-weight: 600; }
-.credits h2 { font-size: 14px; font-weight: 600; color: var(--copper-light); margin: 30px 0 10px; }
-.credits p { margin: 4px 0; font-size: 15.5px; line-height: 1.7; color: #D8D2C5; }
-.credits .photo-credit { font-size: 13px; color: var(--muted-light); }
-.credits-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-.credits-team li { display: flex; flex-direction: column; }
-.credits-team strong { font-size: 26px; font-weight: 600; color: var(--paper); }
-.credits-team span { font-size: 14px; color: var(--muted-light); }
-.credits .credit-partners { border-color: var(--line-dark); }
-.credits > .next-btn { margin-top: 28px; }
+/* Keys bar: what each key does right now (bottom centre). */
+.controls-hint { position: absolute; bottom: 22px; left: 0; right: 0; margin: 0 auto; width: fit-content; display: flex; gap: 8px; flex-wrap: nowrap; white-space: nowrap; justify-content: center; max-width: calc(100vw - 32px); padding: 8px 10px; border-radius: var(--r-pill); background: rgba(16, 24, 32, 0.78); border: 1px solid var(--line-dark); color: var(--paper); font-size: 13.5px; backdrop-filter: blur(6px); animation: rise 0.35s ease-out both; }
+.controls-hint.hidden { display: none; }
+.controls-item { display: flex; align-items: center; gap: 8px; padding: 2px 10px; }
+.controls-item + .controls-item { border-inline-start: 1px solid var(--line-dark); }
+.controls-keys { display: inline-flex; gap: 2px; }
+.controls-keys kbd.keycap { top: 0; font-size: 12px; animation: key-tap 1.8s ease-in-out infinite; }
+.controls-keys kbd.keycap + kbd.keycap { animation-delay: 0.9s; }
+.controls-item.hold kbd.keycap { animation: key-hold-small 2.4s ease-in-out infinite; }
+@keyframes key-hold-small { 0%, 30%, 100% { transform: translateY(0); box-shadow: 0 3px 0 #A79F8E, 0 4px 8px rgba(0, 0, 0, 0.18); } 38%, 88% { transform: translateY(3px); box-shadow: 0 0 0 #A79F8E, 0 1px 2px rgba(0, 0, 0, 0.2); filter: brightness(0.94); } }
+body:has(.dialogue:not(.hidden)) .controls-hint, body:has(.card:not(.hidden)) .controls-hint, body:has(.memory:not(.hidden)) .controls-hint { display: none; }
+@media (max-width: 760px) { .controls-hint { flex-wrap: wrap; white-space: normal; border-radius: var(--r-md); font-size: 12px; } }
+
+/* End screen: the team and sources. Above everything; only its two buttons close it. */
+.endscreen { position: fixed; inset: 0; z-index: 60; background: radial-gradient(ellipse 80% 60% at 50% 0%, #1B2A38 0%, var(--ink) 60%, #0A1017 100%); color: var(--paper); pointer-events: auto; font-family: var(--font); animation: fade-in 0.8s ease both; }
+.endscreen.hidden { display: none; }
+body.end-open #ui, body.end-open #shell .hud-buttons { visibility: hidden; }
+.end-stars { position: absolute; inset: 0; pointer-events: none; opacity: 0.55;
+  background-image: radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 78% 12%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 32% 72%, #F2EBDD 50%, transparent 51%), radial-gradient(1px 1px at 88% 64%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 55% 38%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 6% 88%, #D08A5C 50%, transparent 51%), radial-gradient(1px 1px at 66% 90%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 42% 8%, #fff 50%, transparent 51%);
+  background-size: 420px 420px; }
+.end-scroll { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; padding: 14vh 24px 160px;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 12%, #000 80%, transparent 100%); mask-image: linear-gradient(transparent 0, #000 12%, #000 80%, transparent 100%); }
+.end-scroll::-webkit-scrollbar { display: none; }
+.endscreen .roll { width: min(860px, 100%); margin: 0 auto; text-align: center; }
+.end-head { display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 62vh; justify-content: center; }
+.end-logo { width: min(340px, 70vw); height: auto; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.45)); }
+.end-name { margin: 6px 0 0; font: 600 14px/1 RelicaInter, sans-serif; letter-spacing: 0.32em; text-transform: uppercase; color: var(--copper-light); }
+.end-thanks { margin: 26px 0 0; font-size: clamp(32px, 5vw, 52px); font-weight: 600; line-height: 1.2; }
+.end-lede { margin: 6px 0 0; max-width: 560px; font-size: 17px; line-height: 1.8; color: #CFC8BA; }
+.end-section { margin-top: 72px; }
+.end-eyebrow { display: inline-flex; align-items: center; gap: 12px; margin: 0 0 22px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--copper-light); }
+.end-eyebrow::before, .end-eyebrow::after { content: ""; width: 34px; height: 1px; background: var(--copper); opacity: 0.7; }
+.end-team { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.end-team > li { flex: 0 1 270px; }
+.end-member { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 22px 20px; border-radius: var(--r-lg); background: rgba(255, 250, 240, 0.04); border: 1px solid var(--line-dark); }
+.end-member::after { content: ""; position: absolute; inset-inline-end: 14px; top: 14px; width: 12px; height: 12px; border-top: 2px solid var(--copper); border-inline-end: 2px solid var(--copper); border-start-end-radius: 6px; }
+.end-member strong { font-size: 24px; font-weight: 600; color: var(--paper); }
+.end-member span { font-size: 14px; line-height: 1.6; color: var(--muted-light); }
+.end-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; text-align: start; }
+.end-grid > * { flex: 0 1 270px; }
+.end-block { padding: 18px 20px; border-radius: var(--r-md); background: rgba(255, 250, 240, 0.03); border: 1px solid var(--line-dark); }
+.end-block h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--copper-light); }
+.end-block p { margin: 3px 0; font-size: 14.5px; line-height: 1.7; color: #D8D2C5; overflow-wrap: anywhere; }
+.end-photos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; text-align: start; }
+.end-photos > li { flex: 0 1 280px; }
+.end-photos li { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: var(--r-sm); background: rgba(255, 250, 240, 0.03); }
+.end-photos li span { font-size: 14px; color: #D8D2C5; }
+.end-photos li bdi { font-size: 12px; color: var(--muted-light); }
+.endscreen .credit-partners { margin-top: 80px; border-color: var(--line-dark); }
+.end-fin { margin: 60px 0 0; font-size: 22px; font-weight: 600; color: var(--copper-light); }
+.end-bar { position: absolute; inset-inline: 0; bottom: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 22px 16px 26px; background: linear-gradient(transparent, rgba(10, 16, 23, 0.92) 40%); }
+.end-bar .btn { gap: 10px; min-width: 220px; justify-content: center; }
+.end-bar .btn svg { width: 20px; height: 20px; }
+.btn-end-primary { background: var(--paper); color: var(--ink); }
+.btn-end-primary:hover { background: var(--copper-light); color: var(--ink); }
+.btn-end-secondary { background: transparent; color: var(--paper); border-color: var(--line-dark); }
+.btn-end-secondary:hover { border-color: var(--paper); background: rgba(255, 250, 240, 0.08); }
+@media (max-width: 560px) { .end-team > li, .end-grid > *, .end-photos > li { flex-basis: 100%; } .end-bar .btn { min-width: 0; flex: 1 1 100%; } .end-scroll { padding-bottom: 220px; } .end-member strong { font-size: 21px; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Memory photo: a real NASA photo on paper */
 .memory { position: absolute; inset: 0; background: rgba(8, 12, 18, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
@@ -572,3 +625,4 @@ h3.wall-heading { margin: 22px 0 12px; font-size: 18px; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+.mission .tasks li.done kbd.keycap { opacity: 0.5; box-shadow: none; }

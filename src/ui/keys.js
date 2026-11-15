@@ -19,8 +19,8 @@ export function keycap(name, { size = '' } = {}) {
 
 export function fillWithKeys(node, text) {
   node.textContent = '';
-  // "(W)" or "(A, D)" next to a task: the keycaps speak for themselves, so the brackets and commas go.
-  const s = String(text ?? '').replace(/\s*\(\s*([WASDEPR](?:\s*[,،]\s*[WASDEPR])*)\s*\)/g, (m, keys) => ' ' + keys.replace(/\s*[,،]\s*/g, ' '));
+  // "(W)", "(Space)" or "(A, D)" next to a task: the keycaps speak for themselves, so the brackets and commas go.
+  const s = String(text ?? '').replace(/\s*\(\s*((?:Space|Enter|Esc|[WASDEPR])(?:\s*[,،]\s*(?:Space|Enter|Esc|[WASDEPR]))*)\s*\)/g, (m, keys) => ' ' + keys.replace(/\s*[,،]\s*/g, ' '));
   let last = 0;
   for (const m of s.matchAll(TOKEN)) {
     const word = m[0];

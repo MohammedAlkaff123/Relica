@@ -109,6 +109,13 @@ const UI = {
   'hud.settings': { en: 'Settings', ar: 'الإعدادات' },
   'hud.pause': { en: 'Pause', ar: 'إيقاف مؤقت' },
   'hud.hold': { en: 'Hold', ar: 'اضغط باستمرار' },
+  'controls.liftoff': { en: 'Hold to lift off', ar: 'اضغط باستمرار للإقلاع' },
+  'controls.climb': { en: 'Hold to climb, let go to descend', ar: 'اضغطه للصعود واتركه للنزول' },
+  'controls.fly': { en: 'Fly forward and back', ar: 'للطيران للأمام والخلف' },
+  'controls.turn': { en: 'Turn', ar: 'للالتفاف' },
+  'controls.drive': { en: 'Drive', ar: 'للقيادة' },
+  'controls.steer': { en: 'Steer', ar: 'للتوجيه' },
+  'controls.hop': { en: 'Hop', ar: 'للقفز' },
   'hud.unverified': { en: 'Not yet checked against a NASA source', ar: 'لم تُراجع المعلومة بعد مع مصدر ناسا' },
   'hud.discovery': { en: 'Discovery', ar: 'اكتشاف' },
   'hud.next': { en: 'Continue', ar: 'متابعة' },
@@ -127,7 +134,12 @@ const UI = {
   'credits.title': { en: 'Credits', ar: 'فريق العمل والمصادر' },
   'credits.team': { en: 'Made by', ar: 'صُنعت بأيدي' },
   'credits.photos': { en: 'NASA photographs (images.nasa.gov)', ar: 'صور ناسا (images.nasa.gov)' },
-  'credits.again': { en: 'Play again', ar: 'العب مرة أخرى' },
+  'credits.again': { en: 'Play from the start', ar: 'العب من البداية' },
+  'credits.menu': { en: 'Back to main menu', ar: 'العودة إلى القائمة الرئيسية' },
+  'credits.thanks': { en: 'Thank you for listening', ar: 'شكرًا لأنك أصغيت' },
+  'credits.lede': { en: 'They were left behind, but their signals still speak. A game by five friends for NASA Space Apps 2026.', ar: 'تُركت هناك، لكن إشاراتها ما زالت تتكلم. لعبة صنعها خمسة أصدقاء لتحدي ناسا لتطبيقات الفضاء 2026.' },
+  'credits.sources': { en: 'Sources and tools', ar: 'المصادر والأدوات' },
+  'credits.fin': { en: 'Still here.', ar: 'ما زلنا هنا.' },
 };
 
 // Chapter prompts written in English inside chapter code, and fixed HUD words.
@@ -141,11 +153,11 @@ const DICT = new Map(Object.entries({
   'about 20 °C, clean room': 'نحو 20 °C، غرفة نظيفة', '1 atmosphere (1,014 mbar)': 'ضغط جوي واحد (1,014 mbar)',
   'about +117 °C day, −178 °C night': 'نحو +117 °C نهارًا و−178 °C ليلًا', 'almost none (3 × 10⁻¹⁵ bar)': 'شبه معدوم (3 × 10⁻¹⁵ bar)',
   'about −59 °C on average': 'نحو −59 °C في المتوسط', 'about 6 mbar, under 1% of Earth': 'نحو 6 mbar، أقل من 1% من الأرض',
-  'about −270 °C (2.7 K)': 'نحو −270 °C (2.7 K)', vacuum: 'فراغ',
+  'about −270 °C (2.7 K)': 'نحو −270 °C (2.7 K)', vacuum: 'فراغ', 'm/s² (drifting)': 'm/s² (طفو حر)',
   'The Moon': 'القمر', Mars: 'المريخ', 'Deep space': 'الفضاء السحيق', Factory: 'غرفة التجهيز', Earth: 'الأرض',
   'Jupiter flyby': 'التحليق قرب المشتري', 'Pioneer 10': 'بايونير 10', 'Viking 1': 'فايكنغ 1',
   Opportunity: 'أوبورتيونيتي', Ingenuity: 'إنجينويتي', Jupiter: 'المشتري',
-  'December 1973': 'ديسمبر 1973', 'Dec 1972': 'ديسمبر 1972', 'Last signal: 2003': 'آخر إشارة: 2003',
+  'December 1973': 'ديسمبر 1973', 'Dec 1972': 'ديسمبر 1972', 'Last signal: 2003': 'آخر إشارة: 2003', planned: 'المخطط لها', 'imagined conversation': 'محادثة متخيّلة',
   'Chryse Planitia · August 1976': 'سهل كريس · أغسطس 1976',
   'Extended mission · compressed scouting route': 'المهمة الممتدة · مسار استطلاع مختصر',
   'Search for evidence of past liquid water': 'ابحث عن أدلة على مياه سائلة قديمة',
@@ -205,6 +217,7 @@ const DICT = new Map(Object.entries({
   // Epilogue
   'A and D: turn back toward the Sun': 'استخدم A و D لتعود باتجاه الشمس', 'Hold still…': 'ابقَ ثابتًا…',
   'The end. Press 1 to play again': 'النهاية. اضغط 1 لتلعب من جديد',
+  'The end': 'النهاية',
   // Memory photo titles (content/memories.json keeps one English title per photo)
   'A training rover, 1971': 'عربة تدريب، 1971', 'The fender repair, Apollo 17': 'إصلاح واقي العجلة، أبولو 17',
   'Grinding a rock': 'طحن صخرة', 'Frost on Opportunity': 'صقيع على أوبورتيونيتي', 'Orion crater': 'فوهة أوريون',
@@ -229,10 +242,15 @@ const PATTERNS = [
   [/^planned: (.+)$/, (m, n) => `المخطط ${n}`],
   [/^(\d{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})$/, (m, d, mo, y) => `${d} ${MONTHS[mo]} ${y}`],
   [/^(January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})$/, (m, mo, y) => `${MONTHS[mo]} ${y}`],
+  [/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, d, mo, y) => `${d} ${MONTHS[SHORT[mo]]} ${y}`],
+  [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, mo, y) => `${MONTHS[SHORT[mo]]} ${y}`],
+  [/^(\d{4}) → (\d{4})$/, (m, a, b) => `من ${a} إلى ${b}`],
+  [/^(\d+) months$/, (m, n) => `${n} شهرًا`],
   [/^sol ([\d,]+)$/, (m, n) => `اليوم المريخي ${n}`],
   [/^([\d.,]+) m$/, (m, n) => `${n} م`],
   [/^([\d.,]+) s$/, (m, n) => `${n} ث`],
 ];
+const SHORT = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December' };
 const MONTHS = { January: 'يناير', February: 'فبراير', March: 'مارس', April: 'أبريل', May: 'مايو', June: 'يونيو', July: 'يوليو', August: 'أغسطس', September: 'سبتمبر', October: 'أكتوبر', November: 'نوفمبر', December: 'ديسمبر' };
 
 const PHOTO_WORDS = { 'front hazard camera': 'كاميرا تفادي المخاطر الأمامية', 'Orion crater panorama': 'بانوراما فوهة أوريون', 'Camera 2': 'الكاميرا 2' };
@@ -251,7 +269,13 @@ const hasArabic = (s) => /[؀-ۿ]/.test(s);
 const hasLatinWords = (s) => /[A-Za-z]{3,}/.test(s);
 
 // Translate one English sentence from chapter code. Unknown sentences are shown as they are.
+// Arabic text uses the same Western digits as the rest of the game (some content was written with ٠-٩).
+const toLatinDigits = (x) => x.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660));
 export function translate(value, inner = false) {
+  const out = translateText(value, inner);
+  return prefs.language === 'ar' ? toLatinDigits(out) : out;
+}
+function translateText(value, inner = false) {
   let s = String(value ?? '').trim();
   if (!s) return '';
   const ar = prefs.language === 'ar';

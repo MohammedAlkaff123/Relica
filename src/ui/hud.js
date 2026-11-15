@@ -6,6 +6,7 @@
 //   hud.setObjective('Drive to the first science stop')   '' hides it
 //   hud.setBattery(0.75)            battery bar, 0..1 (null hides it)
 //   hud.setCounter('sol', 4712, 90) value with a small "planned 90" beside it
+//   hud.setControls('heli-air')      keys bar at the bottom: 'heli-ground', 'heli-air', 'rover' or null
 //   hud.setHold({ key: 'E', text: 'Hold E: secure the samples', progress: 0.4 })   the hold prompt; null hides it
 //
 // Mission list (top corner, STORY.md section 8):
@@ -133,7 +134,7 @@ export function createHud(root, facts) {
     if (s) s.row.remove();
     stats.delete(label);
   }
-  const factText = (fact) => fact.text ? isolateUnits(translate(fact.text)) : `${fact.value} ${fact.unit ?? ''}`.trim();
+  const factText = (fact) => fact.text ? isolateUnits(translate(fact.text)) : `${fact.value} ${translate(fact.unit ?? '')}`.trim();
 
   function drawWorld() {
     const name = given.world;
@@ -151,7 +152,7 @@ export function createHud(root, facts) {
       const r = el('div', 'row fact');
       el('span', 'row-label', r, translate(key));
       const v = el('span', 'row-value' + (fact.verified ? '' : ' unverified'), r);
-      if (fact.text) v.textContent = factText(fact); else ltr(v, factText(fact));
+      if (fact.text || prefs.language === 'ar') v.textContent = isolateUnits(factText(fact)); else ltr(v, factText(fact));
       if (!fact.verified) v.title = t('hud.unverified');
       rows.insertBefore(r, first);
     }
@@ -240,7 +241,27 @@ export function createHud(root, facts) {
     c.row.classList.toggle('passed', hasPlan && Number(c.value) > Number(c.planned));
   }
 
+  // Controls bar (bottom centre): which keys do what right now, drawn as keycaps.
+  const controlsBar = el('div', 'controls-hint hidden', root);
+  const CONTROLS = {
+    'heli-ground': [[['Space'], 'controls.liftoff', 'hold'], [['W', 'S'], 'controls.fly'], [['A', 'D'], 'controls.turn']],
+    'heli-air': [[['Space'], 'controls.climb', 'hold'], [['W', 'S'], 'controls.fly'], [['A', 'D'], 'controls.turn']],
+    rover: [[['W', 'S'], 'controls.drive'], [['A', 'D'], 'controls.steer'], [['Space'], 'controls.hop']],
+  };
+  function drawControls() {
+    const list = CONTROLS[given.controls];
+    controlsBar.classList.toggle('hidden', !list);
+    controlsBar.textContent = '';
+    for (const [keys, words, kind] of list ?? []) {
+      const item = el('div', 'controls-item' + (kind ? ' ' + kind : ''), controlsBar);
+      const caps = el('span', 'controls-keys', item);
+      for (const k of keys) caps.append(keycap(k));
+      el('span', 'controls-words', item, t(words));
+    }
+  }
+
   prefs.subscribe(() => {
+    drawControls();
     if (given.world) drawWorld();
     if (given.context) { title.textContent = translate(given.context[0]); place.textContent = translate(given.context[1]); }
     drawStats();
@@ -254,6 +275,12 @@ export function createHud(root, facts) {
   });
 
   const api = {
+    // hud.setControls('heli-ground' | 'heli-air' | 'rover' | null): the keys bar at the bottom.
+    setControls(kind) {
+      if ((kind || null) === (given.controls ?? null)) return;
+      given.controls = kind || null;
+      drawControls();
+    },
     setWorld(name) {
       given.world = name;
       given.context = null;

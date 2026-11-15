@@ -276,6 +276,11 @@ export function setupStage(ctx, cfg) {
       }
       const idle = stage.controls && (controller?.speed ?? 0) < 0.1 && !controller?.flying && !ctx.cinematics.playing;
       idleLookTime = idle ? idleLookTime + dt : 0;
+      // Set C: the keys bar. Always while flying the helicopter; for the rover, after a few seconds standing still.
+      const busy = !stage.controls || ctx.cinematics.playing || controller?.broken;
+      ctx.hud.setControls?.(busy || !controller ? null
+        : cfg.vehicle === 'heli' ? (controller.flying ? 'heli-air' : 'heli-ground')
+        : idleLookTime > 6 ? 'rover' : null);
       hero.lookBack?.(idleLookTime > 2, ctx.camera);
       hero.update(dt);
       if (cfg.character === 'lrv') ctx.followCam.setMotion({ airborne: controller && !controller.grounded });
@@ -286,6 +291,7 @@ export function setupStage(ctx, cfg) {
     },
     dispose() {
       stage.alive = false;
+      ctx.hud.setControls?.(null);
       for (const fn of cleanups) { try { fn(); } catch (err) { console.error(err); } }
       for (const entry of pending) entry.reject(new Gone());
       pending.clear();

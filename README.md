@@ -107,7 +107,7 @@ ctx.hud.discover('moon_gravity')         // discovery card from content/discover
 await ctx.card.chapter('mars')           // chapter card from content/chapters.json
 await ctx.card.title()                   // title screen
 await ctx.card.ending()                  // "The conversations are imagined..."
-await ctx.card.credits()                 // credits
+await ctx.card.credits()                 // end screen (team, sources); only its buttons close it: 'menu' or 'again'
 await ctx.dialogue.play('ch2_viking_call', { auto: true })  // lines advance on their own
 ctx.audio.setWorld('mars')               // background: factory | moon (silent) | mars | space
 ctx.audio.setWind(1)                     // the dust storm
@@ -118,6 +118,7 @@ ctx.audio.music('drive')                 // drive | storm | ending | null
 
 ```js
 ctx.hud.setHold({ key: 'E', text, progress, pressing })   // hold prompt: keycap + bar from green to red (stage.hold uses it)
+ctx.hud.setControls('heli-air')          // keys bar at the bottom: 'heli-ground', 'heli-air', 'rover' or null (the stage sets it)
 ctx.audio.speak('viking', line.en, 'sad')                // a voice with emotion: curious | happy | sad | sleepy | scared
 ctx.audio.has('strap')                                   // true if the sound exists (stage.sound stand-ins)
 ctx.audio.setVolumes({ master, music, voice, sfx }, muted) // the player's levels from Settings
