@@ -141,13 +141,15 @@ export function createHud(root, facts) {
   // World conditions for players of any age: an icon, a few words and a bar compared with Earth.
   // The exact NASA numbers stay in the tooltip (and in content/facts.json).
   const EARTH_G = 9.81, EARTH_MBAR = 1014;
+  // If a text is missing (an old cached i18n.js next to a new hud.js), never show the raw key.
+  const tx = (key, vars, fallback = '') => { const s = t(key, vars); return s === key ? fallback : s; };
   const num = (x) => Number(String(x).replace(/[−–]/g, '-').replace(/,/g, ''));
   function gravityLevel(fact) {
     const g = Number(fact.value);
-    if (!(g > 0.05)) return { fill: 0, word: t('cond.g.float') };
+    if (!(g > 0.05)) return { fill: 0, word: tx('cond.g.float') };
     const ratio = EARTH_G / g;
-    if (ratio < 1.3) return { fill: Math.min(1, g / EARTH_G), word: t('cond.g.earth') };
-    return { fill: g / EARTH_G, word: t('cond.g.lighter', { n: Math.round(ratio) }) };
+    if (ratio < 1.3) return { fill: Math.min(1, g / EARTH_G), word: tx('cond.g.earth') };
+    return { fill: g / EARTH_G, word: tx('cond.g.lighter', { n: Math.round(ratio) }) };
   }
   function tempWord(c) {
     return c < -150 ? 'cond.t.deep' : c < -20 ? 'cond.t.verycold' : c < 10 ? 'cond.t.cold' : c <= 35 ? 'cond.t.mild' : c <= 80 ? 'cond.t.hot' : 'cond.t.veryhot';
@@ -157,7 +159,7 @@ export function createHud(root, facts) {
     if (!temps.length) return null;
     const pos = (c) => Math.max(0.03, Math.min(0.97, (c + 273) / (150 + 273)));
     const lo = Math.min(...temps), hi = Math.max(...temps);
-    const word = temps.length > 1 && hi > 35 && lo < -20 ? t('cond.t.daynight') : t(tempWord(temps[0]));
+    const word = tx(temps.length > 1 && hi > 35 && lo < -20 ? 'cond.t.daynight' : tempWord(temps[0]));
     return { from: pos(lo), to: pos(hi), word };
   }
   function airLevel(fact) {
@@ -168,7 +170,7 @@ export function createHud(root, facts) {
     if (mbar === null && /atmosphere/i.test(text)) mbar = EARTH_MBAR;
     if (mbar === null) return null;
     const share = mbar / EARTH_MBAR;
-    const word = share <= 0 ? t('cond.a.none') : share < 0.05 ? t('cond.a.thin') : t('cond.a.earth');
+    const word = tx(share <= 0 ? 'cond.a.none' : share < 0.05 ? 'cond.a.thin' : 'cond.a.earth');
     return { fill: Math.sqrt(Math.min(1, share)), word };
   }
   const GAUGES = [['gravity', 'weight', gravityLevel], ['temperature', 'thermometer', tempLevel], ['pressure', 'wind', airLevel]];
@@ -190,8 +192,8 @@ export function createHud(root, facts) {
       el('span', 'gauge-icon', r).append(icon(ic));
       const body = el('div', 'gauge-body', r);
       const head = el('div', 'gauge-head', body);
-      el('span', 'gauge-label', head, t('cond.' + key));
-      el('span', 'gauge-word' + (fact.verified ? '' : ' unverified'), head, lv ? lv.word : factText(fact));
+      el('span', 'gauge-label', head, tx('cond.' + key, null, translate(key)));
+      el('span', 'gauge-word' + (fact.verified ? '' : ' unverified'), head, (lv && lv.word) || factText(fact));
       if (lv) {
         const track = el('div', 'gauge-track', body);
         if (key === 'temperature') {
@@ -204,7 +206,7 @@ export function createHud(root, facts) {
           }
         } else {
           el('span', 'gauge-fill', track).style.width = (lv.fill * 100).toFixed(1) + '%';
-          el('span', 'gauge-earth', track).title = t('cond.earth');
+          el('span', 'gauge-earth', track).title = tx('cond.earth', null, 'Earth');
         }
       }
       rows.insertBefore(r, first);

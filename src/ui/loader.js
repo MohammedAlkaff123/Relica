@@ -34,7 +34,7 @@ function installMemoryFetch() {
 
 // Reads a response body chunk by chunk so the bar moves while a big file arrives.
 async function download(url, onBytes) {
-  const res = await fetch(url, { cache: 'default' });
+  const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   if (!res.body || !res.body.getReader) {
     const buf = await res.arrayBuffer();
