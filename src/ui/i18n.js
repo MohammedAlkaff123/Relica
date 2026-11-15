@@ -187,7 +187,7 @@ const DICT = new Map(Object.entries({
   // Moon
   'Drive the crew to science stop 1': 'انقل الطاقم إلى المحطة العلمية الأولى', 'Drive on to science stop 2': 'تابع إلى المحطة العلمية الثانية',
   'Drive blind: follow the beeping marker': 'قُد دون رؤية: اتبع صوت العلامة', 'Carry the crew to the last geology site': 'انقل الطاقم إلى آخر موقع جيولوجي',
-  'The crew is collecting lunar geology samples': 'يجمع الطاقم عينات من صخور القمر', 'The crew is repairing the fender': 'يصلح الطاقم واقي العجلة',
+  'The crew is collecting lunar geology samples': 'يجمع الطاقم عينات من صخور القمر', 'The crew is repairing the dust guard': 'يصلح الطاقم واقي الغبار',
   'The last samples': 'العينات الأخيرة', 'Park where you can see the Lunar Module': 'توقّف في مكان ترى منه المركبة القمرية',
   'Hold E: secure the crew’s rock samples for the return trip': 'ثبّت عينات الطاقم لرحلة العودة',
   'Hold E: secure the second geology sample box': 'ثبّت صندوق العينات الثاني', 'Hold E: secure the last geology samples': 'ثبّت العينات الأخيرة',
@@ -240,7 +240,7 @@ const DICT = new Map(Object.entries({
   'The end. Press 1 to play again': 'النهاية. اضغط 1 لتلعب من جديد',
   'The end': 'النهاية',
   // Memory photo titles (content/memories.json keeps one English title per photo)
-  'A training rover, 1971': 'عربة تدريب، 1971', 'The fender repair, Apollo 17': 'إصلاح واقي العجلة، أبولو 17',
+  'A training rover, 1971': 'عربة تدريب، 1971', 'The dust guard repair, Apollo 17': 'إصلاح واقي الغبار، أبولو 17',
   'Grinding a rock': 'طحن صخرة', 'Frost on Opportunity': 'صقيع على أوبورتيونيتي', 'Orion crater': 'فوهة أوريون',
   'Ingenuity, ready to fly': 'إنجينويتي جاهزة للطيران', 'Its two cameras': 'الكاميرتان', 'Pioneer 10, being readied': 'تجهيز بايونير 10',
   'The Pioneer plaque': 'لوحة بايونير', "Beside Viking 1's footpad": 'بجوار قدم فايكنغ 1', 'Jupiter through Pioneer 10’s eyes': 'المشتري بعيني بايونير 10',
