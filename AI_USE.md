@@ -1,13 +1,33 @@
 # AI use log
 
-The challenge requires us to disclose every use of AI. Add a line whenever AI makes or changes something.
-The idea, the story and the explanation of the project are the team's own.
+NASA Space Apps asks every team to disclose its use of AI ("Super Intelligence"). This file is that disclosure.
+The idea, the story and the explanation of the project are the team's own; AI tools helped the team build them.
+
+## Summary
+
+| Area | Used AI? | How |
+|---|---|---|
+| Code and debugging | Yes | Claude Code and Codex wrote and fixed code with the team, who reviewed, tested and chose what shipped |
+| Writing and editing | Yes | Drafts of plans, dialogue lines, captions and documentation, chosen and edited by the team |
+| Translation | Yes | Arabic and English lines compared between Claude and ChatGPT drafts; final wording chosen by Abdullatif |
+| Research | Yes | Finding and checking NASA sources for facts, photos and models; every fact links to its NASA page |
+| Presentation and video | Yes | Help building the slide deck and the trailer tools; the trailer is captured from the game itself |
+| Logo | Yes | The Relica logo was designed as simple vector shapes with AI help (Codex); it is not a generated picture |
+| Images in the game | No | No AI-generated images. Photos are NASA's; scenes are rendered by the game |
+| Video | No AI-generated video | Footage is recorded from the game renderer |
+| Audio | No AI-generated audio | Every sound, voice and music cue is synthesized in code with the Web Audio API |
+
+No AI-generated content uses, contains or changes NASA branding. The NASA photos are shown unchanged (only cropped).
+
+## Log
+
+Add a line whenever AI makes or changes something.
 
 | When | Who | Tool | What it was used for |
 |---|---|---|---|
-| 14 Nov | (your name) | Claude Code | Reviewed the NASA data pack and drafted PLAN.md from the team's idea |
-| 14 Nov | (your name) | Claude Code | Drafted STORY.md (beat sheet, dialogue intents, shot list) and TASKS.md from the team's idea, for the directors to check and change |
-| 14 Nov | (your name) | Claude Code | Project skeleton: frame loop, physics wrapper, placeholder controllers, placeholder characters, interface stubs, README |
+| 14 Nov | Mohammed | Claude Code | Reviewed the NASA data pack and drafted PLAN.md from the team's idea |
+| 14 Nov | Mohammed | Claude Code | Drafted STORY.md (beat sheet, dialogue intents, shot list) and TASKS.md from the team's idea, for the directors to check and change |
+| 14 Nov | Mohammed | Claude Code | Project skeleton: frame loop, physics wrapper, placeholder controllers, placeholder characters, interface stubs, README |
 | 14 Nov | Abdullatif | Claude Code | C-2: drafted the final Arabic and English lines for the opening and chapter 1 from the intent table in STORY.md; reviewed and chosen by Abdullatif |
 | 14 Nov | Abdullatif | Claude Code | C-13: mission list on the HUD (setMission, completeTask, setBonus), content/missions.json from STORY.md section 8, tick sound |
 | 14 Nov | Abdullatif | Claude Code | C-1: checked the world numbers in facts.json against the NASA fact sheets and added the source links |
@@ -56,3 +76,6 @@ The idea, the story and the explanation of the project are the team's own.
 | 15 Nov | Abdulkarim | Claude | Look pass on Set B: soft Sun shadows that start at the feet and wheels and hold still while driving; one new low-poly suit for the Moon crew and the factory workers; wheel dust as soft puffs with a low haze and the Mars whirlwind as a soft leaning column (both chosen from sample pages in tools/, then doubled in size and strength); Perseverance rebuilt from simple shapes with rolling wheels (tools/models/build_perseverance.mjs); a larger Sun with a glow and a level streak; Mars findings shown on a bottom card while the player keeps driving; folding the Moon rover without squashing it. Searched for free astronaut models and dust assets; none were used. Checked by eye in the game by Abdulkarim; the full ?test run was not repeated |
 | 15 Nov | Abdulkarim | Claude | Second look pass: the Sun drawn low near the horizon so players see it; the Lunar Module rebuilt from simple shapes (tools/models/build_lm.mjs) with an engine flame and gold foil scraps at lift-off; Viking's old age shown with a long tin-foil beard, heavy brows and lids (chosen from tools/viking-samples.html); a painted-metal surface with light shine on all machines (src/world/surface.js), using Poly Haven's CC0 "Blue Metal Plate" texture, chosen from tools/metal-texture-samples.html. Checked by eye in the game by Abdulkarim; the full ?test run was not repeated |
 | 15 Nov | Abdulkarim | Claude Code | 30-second Arabic trailer from TRAILER_HANDOFF.md: frame-by-frame capture of the game (tools/trailer), the edit with Arabic titles, NASA photo cross-fades and logos, sound made in code, encoded to pitch/Relica-trailer-30s.mp4; checked by decoding the file |
+| Nov | Abdullatif | Codex | Relica logo and the "Field Archive" brand kit (colours, type, icons) designed as simple vector shapes with AI help, then chosen and approved by the team. No image generator was used for the logo |
+| 15 Nov | Abdullatif | Claude Code | Scripts that build and render the presentation deck from the team's text, NASA photos and logos; team photos had their backgrounds removed with the open u2netp segmentation model. All people shown are team members (adults) |
+| 15 Nov | Abdullatif | Claude Code | Submission preparation: README for judges, CREDITS.md, this summary, link checks of the NASA sources, moving the internal team notes to docs/team/, removing a copyrighted reference image. The game itself was not changed |

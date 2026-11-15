@@ -1,6 +1,6 @@
-# vendor/: the libraries, for playing without internet (TASKS.md A-13)
+# vendor/: the libraries, for playing without internet
 
-Exact copies of the files `index.html` loads from the CDN, same versions:
+Exact copies of the library files, so the game runs with no internet and no CDN. `index.html` loads them through its import map:
 
 | File | From |
 |---|---|
@@ -11,26 +11,9 @@ Exact copies of the files `index.html` loads from the CDN, same versions:
 
 Licences: Three.js MIT, Rapier Apache-2.0, lil-gui MIT.
 
-## Switching the game to these files
+## Adding a file
 
-`index.html` is not in Set A's folders, so it has not been changed yet. Once the team agrees, replace the
-import map in `index.html` with:
-
-```html
-<script type="importmap">
-{
-  "imports": {
-    "three": "./vendor/three.module.js",
-    "three/addons/": "./vendor/addons/",
-    "@dimforge/rapier3d-compat": "./vendor/rapier.es.js",
-    "lil-gui": "./vendor/lil-gui.esm.min.js"
-  }
-}
-</script>
-```
-
-If Set B uses another file from `three/addons/`, copy it from the same three@0.160.0 package into
+If someone uses another file from `three/addons/`, copy it from the same three@0.160.0 package into
 `vendor/addons/` with the same folder path.
 
-The fonts still come from Google Fonts. Without internet the page falls back to the system fonts, which
-looks different but works. Arabic still shows (any system Arabic font).
+The fonts are local too (`public/brand/fonts/`), so the game looks the same offline.

@@ -13,4 +13,4 @@ The one place AI is named is `AI_USE.md`. It is the team's own disclosure log, a
 
 ## Project
 
-Read `PLAN.md`, `STORY.md` and `TASKS.md` before changing anything. Stay inside the folders owned by the person you are working for (see the table at the top of `TASKS.md`).
+Read `docs/team/PLAN.md`, `docs/team/STORY.md` and `docs/team/TASKS.md` before changing anything. Stay inside the folders owned by the person you are working for (see the table at the top of `docs/team/TASKS.md`). Code layout and contracts: `docs/DEVELOPERS.md`.

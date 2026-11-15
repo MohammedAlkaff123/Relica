@@ -9,3 +9,14 @@ nasa_data/nasa_data/viking_landers/NHQ201707210014.jpg
 
 # Briefing transcript: contains names of other participants, keep it out of the public repo
 هاكاثون ناسا - المحتوى المنظم.md
+
+# Local junk
+*.log
+*.tmp
+*.bak
+*~
+.env
+.vscode/
+.idea/
+desktop.ini
+out/

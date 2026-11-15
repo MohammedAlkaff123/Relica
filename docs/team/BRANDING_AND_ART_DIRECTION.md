@@ -31,7 +31,7 @@ Acceptance: start in Arabic, reload, play a mission, open settings, switch to En
 
 The director supplied `outer_wilds_wallpapers.zip` after the initial A/B/C exploration. Use this collection as the reference direction, rather than treating A, B or C as selected. The descriptions below are the visual interpretation of the supplied images; review the first original RELICA slice with Moayad before extending it across every chapter.
 
-![User-supplied Outer Wilds visual references](docs/art-references/outer-wilds-contact-sheet.jpg)
+(The Outer Wilds reference contact sheet was removed from the public repository before submission because it is copyrighted game art.)
 
 Reference images: Outer Wilds; supplied by the director for art discussion. This contact sheet is documentation only and is not loaded by the game. Build original RELICA assets and branding.
 

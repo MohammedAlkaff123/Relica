@@ -1,6 +1,6 @@
 # Models
 
-Every file here except `lrv.glb` (see below) is adapted from NASA's open 3D models:
+Every file here except `lrv.glb`, `lunarModule.glb` and `perseverance.glb` (see below) is adapted from NASA's open 3D models:
 <https://github.com/nasa/NASA-3D-Resources> (also at <https://science.nasa.gov/3d-resources/>).
 NASA states these are free and without copyright, and asks to be acknowledged as the source.
 These belong in the **References** field of the upload form.
@@ -11,9 +11,11 @@ These belong in the **References** field of the upload form.
 | `ingenuity.glb` | Ingenuity Mars Helicopter | 9,124 → 4,791 | `body`, `blade_top` (with children `blade_tip_1` `blade_tip_2`), `blade_bottom` (with `blade_tip_3` `blade_tip_4`), markers `head` `antenna` |
 | `pioneer.glb` | Pioneer 10 | 8,189 → 4,805 | `body`, markers `head` `antenna` |
 | `viking.glb` | Viking Lander | 99,526 → 4,793 | `body`, markers `head` `antenna` |
-| `lunarModule.glb` | Apollo Lunar Module | 97,588 → 4,733 | `descent`, `ascent` |
 | `astronaut.glb` | Astronaut | 6,381 → 2,996 | `body`, `visor` |
-| `perseverance.glb` | Mars 2020 Perseverance Rover | 199,521 → 4,475 | `body`, `head` (turns about the mast) |
+
+## Built by the team
+
+`lunarModule.glb` and `perseverance.glb` started from NASA's models, but cut down to a few thousand triangles they lost their outline, so both are now built from simple shapes by `tools/models/build_lm.mjs` and `tools/models/build_perseverance.mjs`, shaped after NASA photographs.
 
 ## The Moon rover is ours
 

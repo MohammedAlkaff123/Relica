@@ -9,7 +9,7 @@ Owner: Mohammed. Updated 14 November 2026. Automated checks below used headless 
 
 ## Automated result
 
-`?test&speed=8`: **41 passed, 0 failed**, zero browser exceptions, zero missing game assets. Raw results: [tests/directors-selftest.json](tests/directors-selftest.json).
+`?test&speed=8`: **41 passed, 0 failed**, zero browser exceptions, zero missing game assets. Raw results: [tests/directors-selftest.json](../../tests/directors-selftest.json).
 
 All five chapters complete. Moon samples, all five Opportunity tasks, all three water clues, sunlight loss and stopped movement with W held, Ingenuity scouting/final crash, Pioneer capture-before-send and the ending pass. Twenty rapid chapter jumps leave no extra scene objects.
 
