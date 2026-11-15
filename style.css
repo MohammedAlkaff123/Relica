@@ -694,3 +694,6 @@ body.flashback #view { filter: sepia(0.75) contrast(1.12) brightness(1.04); }
 /* A machine's service record under its real photo (memory.show with tribute) */
 .memory .service-label { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc7b9; font: 500 11px var(--font); letter-spacing: 0.1em; text-transform: uppercase; color: #5b5b5b; }
 .memory .outside-pack { margin-top: 2px; font-style: italic; }
+/* A new deploy is on the site: a small card in the corner with an Update button (boot.js). */
+.update-toast { position: fixed; z-index: 80; bottom: 16px; inset-inline-start: 16px; display: flex; align-items: center; gap: 12px; max-width: min(460px, calc(100vw - 32px)); padding: 10px 10px 10px 16px; border-radius: var(--r-lg); background: var(--paper); color: var(--ink); font-family: var(--font); font-size: 14px; font-weight: 600; box-shadow: var(--shadow); animation: rise 0.35s ease-out both; }
+.update-toast .btn { min-height: 40px; padding: 6px 16px; flex: 0 0 auto; }

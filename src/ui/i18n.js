@@ -126,6 +126,8 @@ const UI = {
   'cond.a.none': { en: 'No air at all', ar: 'لا يوجد هواء' },
   'cond.a.thin': { en: 'Very thin air, not enough to breathe', ar: 'هواء خفيف جدًا، لا يكفي للتنفس' },
   'cond.a.earth': { en: 'Air like on Earth', ar: 'هواء مثل الأرض' },
+  'update.ready': { en: 'A new version of the game is ready. Your progress is saved.', ar: 'نسخة جديدة من اللعبة جاهزة. تقدّمك محفوظ.' },
+  'update.reload': { en: 'Update now', ar: 'حدّث الآن' },
   'controls.liftoff': { en: 'Hold to lift off', ar: 'اضغط باستمرار للإقلاع' },
   'controls.climb': { en: 'Hold to climb, let go to descend', ar: 'اضغطه للصعود واتركه للنزول' },
   'controls.fly': { en: 'Fly forward and back', ar: 'للطيران للأمام والخلف' },

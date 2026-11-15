@@ -1,5 +1,5 @@
 {
   "framework": null,
-  "buildCommand": null,
+  "buildCommand": "node tools/make-preload.mjs",
   "outputDirectory": "."
 }
