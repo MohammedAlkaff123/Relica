@@ -93,6 +93,17 @@ export async function runSelfTest(ctx) {
     return (Math.acos(Math.max(-1, Math.min(1, upY))) * 180) / Math.PI;
   };
   const skipPrompts = async () => { if (prompting()) { setKeys([]); await tap('Enter'); await sleep(120); return true; } return false; };
+  // A mini-game on screen (s.game): play it with the keys a perfect player would use (its botKeys()).
+  // Games whose keys are presses (tap: true) get them on every other step, so each step is a new press.
+  let tapFlip = false;
+  const playGame = () => {
+    const game = ctx.stage?.game;
+    if (!game?.botKeys) return false;
+    let keys = game.botKeys();
+    if (game.tap) { tapFlip = !tapFlip; if (!tapFlip) keys = []; }
+    setKeys(keys);
+    return true;
+  };
   async function waitForControls(seconds = 30) {
     return until(() => { if (prompting()) tap('Enter'); return ctx.stage?.controls; }, seconds);
   }
@@ -230,7 +241,7 @@ export async function runSelfTest(ctx) {
     let s = await press('Digit6');
     await waitForControls(10);
     const p = hero().position;
-    check(ctx.chapters.index === 1 && Math.hypot(p.x - 14, p.z - 62) < 8, 'A-11 key 6 jumps to the fender (Moon, after stop 1)', `chapter ${ctx.chapters.index}`);
+    check(ctx.chapters.index === 1 && Math.hypot(p.x - 10, p.z - 34) < 8, 'A-11 key 6 jumps to the fender (Moon, after stop 1)', `chapter ${ctx.chapters.index}`);
 
     s = await press('Digit7');
     const viking = await until(() => { if (prompting()) { skipPrompts(); } return ctx.characters.has('viking'); }, 8);
@@ -265,7 +276,8 @@ export async function runSelfTest(ctx) {
     const s = await go(4);
     await until(() => { if (prompting()) tap('Enter'); return s.photoState?.phase === 'frame' && s.controls; }, 30);
     const photo = s.photoState;
-    const yaw = (a) => { s.hero.object.rotation.y = a; s.spinRate = 0; };
+    // Aims left/right; the camera tilt (W/S) is set to the target's height too.
+    const yaw = (a) => { s.hero.object.rotation.y = a; s.spinRate = 0; if (photo.targetPitch != null) photo.pitch = photo.targetPitch; };
     // Pointing at Earth before anything is captured must not send.
     yaw(-0.65);
     await waitGame(2.5);
@@ -387,7 +399,8 @@ export async function runSelfTest(ctx) {
       return calls.includes('repair');
     }, 200);
     setKeys([]);
-    await until(() => calls.filter((c) => c === null).length > 0, 10);
+    await until(() => { playGame(); return calls.filter((c) => c === null).length > 0; }, 60);
+    setKeys([]);
     check(figures.length === 2 && calls.includes('repair') && calls.includes(null),
       'Crew actions: the repair is asked for at stop 2, then back to idle',
       `${figures.length} figures, calls: ${calls.slice(0, 6).map(String).join(', ')}`);
@@ -405,11 +418,14 @@ export async function runSelfTest(ctx) {
       if (o.startsWith('A and D')) return ['KeyA'];
       return [];
     },
-    moon() {
+    moon(s, memo) {
       if (objective().includes('Hold E')) return ['KeyE'];
       if (objective().startsWith('Stop inside')) return [];
       const b = beam();
-      return b ? ['KeyW', ...steer(b.position.x, b.position.z)] : [];
+      // A hop every few seconds while driving, so the air-time record gets something to count.
+      const hop = s.controls && s.controller.grounded && ctx.clock - (memo.hop ?? 0) > 5;
+      if (hop) memo.hop = ctx.clock;
+      return b ? ['KeyW', ...steer(b.position.x, b.position.z), ...(hop ? ['Space'] : [])] : [];
     },
     mars(s, memo) {
       const o = objective();
@@ -444,7 +460,8 @@ export async function runSelfTest(ctx) {
       };
       if (o.startsWith('Hold Space') || o.startsWith('Keep holding')) return ['Space'];
       if (o.startsWith('Hold it') || o.startsWith('Too low') || o.startsWith('Too high')) return h.altitude < 2.9 ? ['Space'] : [];
-      if (o.startsWith('Press E')) { memo.e = !memo.e; return [h.altitude < 3.5 ? 'Space' : null, memo.e ? 'KeyE' : null].filter(Boolean); }
+      // Hazards are marked from the air: "While flying, press E…" (or "Mark it from the air…" after landing).
+      if (o.startsWith('Press E') || /press E/i.test(o)) { memo.e = !memo.e; return [h.altitude < 3.5 ? 'Space' : null, memo.e ? 'KeyE' : null].filter(Boolean); }
       if (o.includes('pad') || o.startsWith('Not on the pad')) {
         const pad = ctx.scene.children.find((c) => c.userData?.pad && c.visible);
         if (!pad) return [];
@@ -463,6 +480,8 @@ export async function runSelfTest(ctx) {
         const angle = Math.atan2(Math.sin(delta), Math.cos(delta));
         if (photo.phase === 'scan') return [];
         if (Math.abs(angle) > 0.03) return [angle > 0 ? 'KeyA' : 'KeyD'];
+        const tilt = (photo.targetPitch ?? 0) - (photo.pitch ?? 0);
+        if (Math.abs(tilt) > 0.03) return [tilt > 0 ? 'KeyW' : 'KeyS'];
         return photo.phase === 'frame' ? ['Space'] : [];
       }
       if (!objective().includes('turn back')) return [];
@@ -475,7 +494,7 @@ export async function runSelfTest(ctx) {
   // [index, id, task, game-second limit, how many mission tasks must be ticked, story target in seconds]
   const plays = [
     [0, 'opening', 'A-6 Opening', 200, 2, 45],
-    [1, 'moon', 'A-4 + A-15 Moon (Carry the crew)', 600, 3, 180],
+    [1, 'moon', 'A-4 + A-15 Moon (Carry the crew)', 600, 2, 180],
     [2, 'mars', 'A-7 + A-16 Mars (Find evidence of ancient water)', 850, 5, 270],
     [3, 'sky', 'A-8 + A-17 Mars sky (Be the eyes)', 700, 2, 150],
     [4, 'epilogue', 'A-9 Epilogue (Photograph Jupiter, then listen)', 300, 2, 95],
@@ -493,9 +512,10 @@ export async function runSelfTest(ctx) {
         const now = done();
         if (now.length >= ticked.length) ticked = now;
         if (await skipPrompts()) continue;
+        if (playGame()) { await sleep(25); continue; }
         const keys = ctx.stage === s && s.alive ? bots[id](s, memo) : [];
         // E is only ever pressed when the game itself asks for it.
-        if (keys.includes('KeyE') && !/Hold E|Press E/.test(objective())) usedEToFinish = true;
+        if (keys.includes('KeyE') && !/Hold E|press E/i.test(objective())) usedEToFinish = true;
         setKeys(keys);
         await sleep(25);
       }

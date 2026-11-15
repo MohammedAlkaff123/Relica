@@ -40,8 +40,8 @@ export default makeChapter({
     const m = mission(ctx, 'epilogue'); // tasks: 0 find the Sun, 1 hold the signal
 
     s.hero.setEmotion('sleepy');
-    await s.do(ctx.card.chapter('epilogue'));
-    await s.say('ep_drift');
+    await s.chapterCard('epilogue');
+    await s.say('ep_drift', { auto: true });
 
     const fiction = el('div', 'fiction-label', document.getElementById('ui'));
     el('span', '', fiction, 'Imagined conversation');
@@ -83,8 +83,10 @@ export default makeChapter({
     fiction.remove();
     await s.do(ctx.card.ending());
     await s.do(ctx.memory.wall());
-    await s.do(ctx.card.credits());
-    ctx.hud.setObjective('The end. Press 1 to play again');
+    // The end screen stays until the player picks: back to the main menu, or play from the start.
+    ctx.hud.setObjective('The end');
+    const choice = await s.do(ctx.card.credits());
+    if (choice) ctx.finishGame?.(choice);
   },
 
   // A and D turn the dish, with a little drift so it feels like floating.

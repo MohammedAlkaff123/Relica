@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { makeChapter } from './_stage.js';
 import { makeProp } from './_props.js';
 import { mission, factNumber } from './_mission.js';
+import { grindRock } from './_marsGames.js';
 import { captureHistoricPhoto } from './_historicPhoto.js';
 import { counterJump } from './_timeJump.js';
 import { el } from '../ui/dom.js';
@@ -31,12 +32,13 @@ import { createCharacter } from '../characters/character.js';
 const DATES = { landed: 'Jan 2004', orion: 'Apr 2017', storm: 'Jun 2018' };
 
 const CRATER = [0, 0];
-const PEBBLES = [16, 26];
-const ROCK = [-20, 88];
-const VIEW = [-49, 106];   // on the rim of Set B's big crater ('rim' in cratersOf('mars'))
+// The three water signs, close together (each 20-25 m apart) so the search stays short.
+const PEBBLES = [10, 16];
+const ROCK = [-4, 36];
+const VIEW = [-18, 50];
 const VIKING_SPOT = [-150, -150];
 // Whirlwinds wander inside this box, around the long drive.
-const DEVIL_AREA = { x: [-45, 35], z: [15, 95] };
+const DEVIL_AREA = { x: [-30, 25], z: [5, 60] };
 const DEVILS = 4;
 
 export default makeChapter({
@@ -69,15 +71,14 @@ export default makeChapter({
     s.prop('layeredRock', VIEW[0] - 2, VIEW[1] + 2);
 
     if (!opts.jump) {
-      await s.do(ctx.card.chapter('mars'));
+      await s.chapterCard('mars');
       await landing(s, ctx);
       s.hero.setEmotion('curious');
       showSol();
-      await s.say('ch2_intro');
-
       ctx.hud.setStat('water evidence', '0 / 3');
       ctx.hud.setStat('mission', 'Search for evidence of past liquid water');
       s.unlockControls();
+      s.chat('ch2_intro'); // while the rover rolls out
       await s.goTo(PEBBLES[0], PEBBLES[1], 'Reach the hematite blueberries', { radius: 4, park: true });
       await investigate(s, ctx, 'Hold E: examine the blueberries with your instruments',
         'Hematite-rich spheres formed in water-altered rock.', 'كرات غنية بالهيماتيت تكوّنت في صخور غيّرها الماء.');
@@ -87,8 +88,9 @@ export default makeChapter({
       startWhirlwinds(s, ctx);
       s.unlockControls();
       await s.goTo(ROCK[0], ROCK[1], 'Find the outcrop: test its minerals for a watery past', { radius: 4, park: true });
-      await investigate(s, ctx, 'Hold E: grind the crust, then analyze the exposed rock',
-        'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.');
+      await investigate(s, ctx, 'Grind the crust, then analyze the exposed rock',
+        'Jarosite: a mineral that records contact with acidic water.', 'الجاروسيت معدن يسجّل تلامس الصخر مع ماء حمضي.',
+        () => grindRock(s, ctx)); // the rock-grinder mini-game instead of holding E
       waterSign(); m.discover('jarosite_water');
 
       s.unlockControls();
@@ -96,14 +98,13 @@ export default makeChapter({
       await investigate(s, ctx, 'Hold E: scan the tilted layers in the rock',
         'Cross-lamination: evidence of ripples made by flowing water.', 'طبقات متقاطعة: دليل على تموّجات صنعها ماء جارٍ.');
       waterSign(); m.discover('ripples_water');
-      await s.wait(4.5); // time to read the last finding before the rover speaks
-      await s.say('ch2_water');
+      await s.say('ch2_water', { auto: true });
       // Three different clues support ancient water, not a discovery of present-day drinking water.
       await timeSkip(s, SKIP[0], showSol);
-      await s.say('ch2_sol90');
+      await s.say('ch2_sol90', { auto: true });
       await timeSkip(s, SKIP[1], showSol);
       ctx.hud.setStat('date', '5 Jan 2016');
-      await s.card('Still investigating, twelve years later', 'بعد اثنتي عشرة سنة، ما زالت تفحص الصخور');
+      await s.card('Still investigating, twelve years later', 'بعد اثنتي عشرة سنة، ما زالت تفحص الصخور', { auto: 4.5 });
       await s.hold('KeyE', 2, 'Hold E: examine the Potts rock target');
       await captureHistoricPhoto(s, ctx, 'PIA20285');
 
@@ -112,7 +113,7 @@ export default makeChapter({
       await s.shot('mars_tracks');
       await captureHistoricPhoto(s, ctx, 'PIA21708');
       m.done(3);
-      await s.say('ch2_orion');
+      await s.say('ch2_orion', { auto: true });
       await s.hold('KeyE', 2, 'Hold E: transmit the science record to Earth');
       m.done(4);
       if (s.power.lowest > 0.1) m.bonus('Battery protected through the science traverse');
@@ -150,13 +151,13 @@ export default makeChapter({
       s.power.level = Math.min(s.power.level, 1 - level);
       s.controller.speedScale = Math.max(0, 1 - level * 1.1);
       if (level > 0.6) s.hero.setEmotion('sleepy');
-      if (level > 0.5 && !stormLine) stormLine = s.say('ch2_storm', { ambient: true });
+      if (level > 0.5 && !stormLine) stormLine = s.chat('ch2_storm');
       return level >= 1;
     });
     ctx.hud.setObjective('No sunlight reaches the panels. Last contact: 10 June 2018.');
     await s.wait(4); // 30 s in all
     // The battery dies in the middle of a word: the line is cut, and everything goes dark with it.
-    await s.say('ch2_storm_cut', { ambient: true });
+    await s.chat('ch2_storm_cut');
     s.sound('powerdown');
     s.lockControls();
     s.hero.setEmotion('sleepy');
@@ -358,13 +359,13 @@ async function vikingFlashback(s, ctx, viking) {
   ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
   viking.setEmotion('happy');
   await s.fade(false, 0.8);
-  await s.card('Viking 1 · Chryse Planitia · 1976', 'First successful U.S. Mars landing · أول هبوط أمريكي ناجح على المريخ');
+  await s.card('Viking 1 · Chryse Planitia · 1976', 'First successful U.S. Mars landing · أول هبوط أمريكي ناجح على المريخ', { auto: 4.5 });
   await captureHistoricPhoto(s, ctx, 'PIA10738');
   remembered.done(0);
   ctx.followCam.setTarget(viking.object, 1.1); ctx.followCam.snap();
   await s.hold('KeyE', 2, 'Hold E: deliver a soil sample to the biology experiments');
   remembered.done(1);
-  await s.card('A search for life, not a confirmed discovery', 'The experiments found no definitive evidence of life. · لم تؤكّد التجارب وجود حياة.');
+  await s.card('A search for life, not a confirmed discovery', 'The experiments found no definitive evidence of life. · لم تؤكّد التجارب وجود حياة.', { auto: 5.5 });
   s.mission.discover('viking_first');
   // Back to the present.
   s.sound('time_skip');
@@ -378,7 +379,8 @@ async function vikingFlashback(s, ctx, viking) {
 }
 
 // Each observation needs a stopped rover and an instrument action; driving into a ring is not science.
-async function investigate(s, ctx, instruction, result, arabic) {
+// play: optional mini-game to run instead of "hold E" (the rock grinder).
+async function investigate(s, ctx, instruction, result, arabic, play) {
   s.lockControls();
   s.hero.setEmotion('curious');
   const target=s.hero.object.position.clone(); target.z+=1.8;
@@ -388,22 +390,9 @@ async function investigate(s, ctx, instruction, result, arabic) {
   const cleanup=()=>{stop();ring.parent?.remove(ring);ring.geometry.dispose();ring.material.dispose();};
   s.onDispose(cleanup);
   s.hero.lookAt?.(target);
-  await s.hold('KeyE',2.5,instruction);
+  if (play) { ctx.hud.setObjective(instruction); await play(); ctx.hud.setObjective(''); }
+  else await s.hold('KeyE',2.5,instruction);
   cleanup(); s.hero.lookAt?.(null);
-  finding(s, result, arabic);
-}
-
-// What the instruments found: a small note in the corner that fades by itself. It never stops play.
-function finding(s, en, ar, seconds = 4.5) {
-  document.querySelector('.finding')?.remove(); // only the newest note shows
-  const box = el('div', 'finding', document.getElementById('ui'));
-  el('div', 'en', box, en);
-  const a = el('div', 'ar', box, ar); a.lang = 'ar'; a.dir = 'rtl';
-  let t = 0;
-  const stop = s.every((dt) => {
-    t += dt;
-    if (t > seconds - 0.5) box.classList.add('out');
-    if (t > seconds) { stop(); box.remove(); }
-  });
-  s.onDispose(() => box.remove());
+  // The finding goes on a line at the bottom of the screen and the drive carries on: no card to dismiss.
+  if (ctx.hud.note) ctx.hud.note(result, arabic); else await s.card(result, arabic);
 }

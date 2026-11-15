@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { loadJSON } from '../core/content.js';
 import { el } from '../ui/dom.js';
 import { buildPhotoSet } from '../world/photoSet.js';
+import { createPhotoGuide } from './_photoGuide.js';
 
 export async function revealPhoto(s, ctx, id, after = () => {}) {
   await s.do(ctx.memory.preload(id));
@@ -42,6 +43,7 @@ export async function captureHistoricPhoto(s, ctx, id) {
   const ar = el('div','ar',label,'مشهد معاد بناؤه · وجّه الكاميرا ثم اضغط Space لالتقاط الصورة');
   ar.lang='ar'; ar.dir='rtl';
   const state = s.captureState = { id, yaw: .15, pitch: .05, phase: 'frame', captured: false };
+  const guide = createPhotoGuide(); // arrow + key + closeness bar in the middle of the screen
   const basePosition = new THREE.Vector3(...profile.position), baseTarget = new THREE.Vector3(...profile.target);
   const direction = baseTarget.clone().sub(basePosition);
   const baseYaw = Math.atan2(direction.x, -direction.z), basePitch = Math.atan2(direction.y, Math.hypot(direction.x,direction.z));
@@ -56,7 +58,7 @@ export async function captureHistoricPhoto(s, ctx, id) {
   let cleaned = false;
   const cleanup = () => {
     if (cleaned) return; cleaned = true;
-    stop(); overlay.remove(); root.classList.remove('photo-mode'); ctx.scene.remove(set);
+    stop(); overlay.remove(); guide.remove(); root.classList.remove('photo-mode'); ctx.scene.remove(set);
     set.userData.dispose?.();
     const geometries = new Set(), materials = new Set();
     set.traverse((o) => { if(o.geometry)geometries.add(o.geometry); if(o.material)materials.add(o.material); if(o.isInstancedMesh)o.dispose(); });
@@ -73,10 +75,12 @@ export async function captureHistoricPhoto(s, ctx, id) {
       state.pitch = THREE.MathUtils.clamp(state.pitch + ((ctx.input.down('KeyW','ArrowUp')?1:0)-(ctx.input.down('KeyS','ArrowDown')?1:0))*dt*.25,-.2,.2);
       const aligned=Math.abs(state.yaw)<.035 && Math.abs(state.pitch)<.035;
       frame.classList.toggle('aligned',aligned);
+      const need = state.yaw>.035?'KeyA':state.yaw<-.035?'KeyD':state.pitch>.035?'KeyS':'KeyW';
+      guide.update(aligned ? null : need, 1 - Math.max(Math.abs(state.yaw)/.35, Math.abs(state.pitch)/.2), aligned);
       ctx.hud.setObjective(aligned ? 'Space: capture this mission view' : `Frame ${profile.subject}: ${state.yaw>.035?'A: left':state.yaw<-.035?'D: right':state.pitch>.035?'S: down':'W: up'}`);
       return aligned && ctx.input.pressed('Space');
     });
-    state.captured=true; state.phase='reveal'; s.sound('shutter', 'tick');
+    state.captured=true; state.phase='reveal'; s.sound('shutter', 'tick'); guide.remove();
     ctx.hud.setObjective(''); overlay.classList.add('hidden');
     await revealPhoto(s,ctx,id,cleanup);
     state.phase='done';

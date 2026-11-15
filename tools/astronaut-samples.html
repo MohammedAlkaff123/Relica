@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RELICA astronaut samples</title>
+<!-- A review page, not part of the game. Run `python serve.py`, then open
+     http://localhost:5173/tools/astronaut-samples.html
+     Six candidate looks for the crew. A is the figure the game has now (src/world/props.js
+     makeFigure). Every candidate is built on the same joints with the same names (hips, spine, head,
+     arm_L, elbow_L, hand_L, leg_L, knee_L, visor), so the walk, kneel, repair, pat and wave the game
+     already has keep working: only the shapes hung on the joints change. No face, no flag, no logo. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e9e6df; font: 13px/1.35 system-ui, sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto 1fr 1fr; gap: 3px; padding: 3px; box-sizing: border-box; }
+  #bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 4px 8px; background: #10141b; }
+  #bar b { color: #e3a23c; }
+  #bar .set { display: flex; gap: 4px; align-items: center; }
+  #bar button { font: inherit; color: inherit; background: #232a36; border: 1px solid #3a4454; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  #bar button.on { background: #e3a23c; color: #10141b; border-color: #e3a23c; }
+  #info { color: #9aa3b0; }
+  .cell { position: relative; border: 1px solid #2c3442; min-height: 0; }
+  .tag { position: absolute; left: 5px; top: 5px; right: 5px; background: #10141bd9; padding: 2px 7px; border-radius: 3px; }
+  .tag b { color: #e3a23c; }
+  .note { position: absolute; left: 5px; bottom: 5px; right: 5px; background: #10141bd9; padding: 3px 7px; border-radius: 3px; color: #b9c0cb; font-size: 12px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="grid">
+  <div id="bar">
+    <span><b>RELICA</b> astronauts</span>
+    <span class="set">Doing: <button data-pose="stand" class="on">Standing</button><button data-pose="walk">Walking</button><button data-pose="wave">Waving</button><button data-pose="kneel">Collecting</button></span>
+    <span class="set">View: <button data-view="front" class="on">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="turn">Turning</button></span>
+    <span class="set">Light: <button data-light="studio" class="on">Even</button><button data-light="moon">Moon</button><button data-light="mars">Mars</button></span>
+    <span id="info">The grey post is 1.8 m: the height of the astronaut the game has now.</span>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+const SIGNAL = 0xe3a23c; // the rovers' antenna colour
+// Sizes are metres. leg and arm: [upper, lower, thickness]. torso: [wide, tall, deep]. boot: [wide, tall, long].
+// shape: box (as now) | round (capsules and spheres) | facet (few flat faces, like the rocks) | puff (soft balls).
+const DESIGNS = [
+  { key: 'A', name: 'Now', note: 'The boxes the game has today.',
+    shape: 'box', head: 0.21, sink: 0.5, torso: [0.48, 0.52, 0.3], leg: [0.44, 0.42, 0.19], gap: 0.13, arm: [0.3, 0.28, 0.15], boot: [0.2, 0.1, 0.3],
+    visor: 'band', pack: [0.38, 0.52, 0.2], chest: true, belt: true,
+    color: { suit: 0xe8e6df, shade: 0xcfccc2, glove: 0xb9bec6, boot: 0x9aa3ae, visor: 0x1f2a38 } },
+  { key: 'B', name: 'Rounded', note: 'Same size and parts as now, with every corner rounded off. The smallest change.',
+    shape: 'round', head: 0.23, sink: 0.45, torso: [0.46, 0.52, 0.3], leg: [0.44, 0.42, 0.19], gap: 0.12, arm: [0.3, 0.28, 0.15], boot: [0.21, 0.11, 0.3],
+    visor: 'dome', glint: true, pack: [0.36, 0.48, 0.2], belt: true,
+    color: { suit: 0xe8e6df, shade: 0xcfccc2, glove: 0xb9bec6, boot: 0x9aa3ae, visor: 0x1f2a38 } },
+  { key: 'C', name: 'Big helmet', note: 'A large round helmet on a small body, like a toy. Shorter than the others.',
+    shape: 'round', head: 0.33, sink: 0.62, torso: [0.42, 0.36, 0.31], leg: [0.2, 0.19, 0.17], gap: 0.1, arm: [0.2, 0.18, 0.14], boot: [0.2, 0.11, 0.27],
+    visor: 'dome', glint: true, pack: [0.3, 0.3, 0.17], antenna: true,
+    color: { suit: 0xf0eee8, shade: 0xcfccc2, glove: 0xaab2bd, boot: 0x8d97a3, visor: 0x1b2433 } },
+  { key: 'D', name: 'Gold visor', note: 'Rounded, with the gold Apollo visor. Red bands mark the commander, as on Apollo 17, so the two can be told apart.',
+    shape: 'round', head: 0.26, sink: 0.5, torso: [0.47, 0.46, 0.31], leg: [0.36, 0.34, 0.19], gap: 0.12, arm: [0.27, 0.25, 0.15], boot: [0.21, 0.11, 0.3],
+    visor: 'dome', glint: true, pack: [0.36, 0.44, 0.2], stripes: 0xc8452f,
+    color: { suit: 0xecebe6, shade: 0xcfccc2, glove: 0x9aa3ae, boot: 0x87919d, visor: 0xd89a2b } },
+  { key: 'E', name: 'Low-poly', note: 'A few flat faces, cut like the rocks and the ground, so the crew belongs to the same world.',
+    shape: 'facet', head: 0.28, sink: 0.55, torso: [0.46, 0.42, 0.32], leg: [0.3, 0.28, 0.2], gap: 0.12, arm: [0.24, 0.22, 0.16], boot: [0.22, 0.12, 0.3],
+    visor: 'dome', pack: [0.34, 0.4, 0.18],
+    color: { suit: 0xe8e6df, shade: 0xc9c5ba, glove: 0xb9bec6, boot: 0x9aa3ae, visor: 0x1f2a38 } },
+  { key: 'F', name: 'Puffy', note: 'Soft padded suit made of balls, with mittens and big boots. The roundest and most childlike.',
+    shape: 'puff', head: 0.29, sink: 0.55, torso: [0.5, 0.44, 0.4], leg: [0.25, 0.23, 0.2], gap: 0.12, arm: [0.22, 0.2, 0.16], boot: [0.24, 0.13, 0.32],
+    visor: 'dome', glint: true, pack: [0.32, 0.34, 0.2], antenna: true,
+    color: { suit: 0xf3f1ea, shade: 0xd6d2c6, glove: 0xe3a23c, boot: 0x8d97a3, visor: 0x223150 } },
+];
+
+// One figure. The joints, their names and their order are the game's own.
+function makeFigure(d) {
+  const smooth = d.shape === 'round' || d.shape === 'puff';
+  const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, flatShading: !smooth, roughness: 0.9, ...extra });
+  const suit = mat(d.color.suit), shade = mat(d.color.shade), glove = mat(d.color.glove), boot = mat(d.color.boot);
+  const dark = mat(d.color.visor, { roughness: 0.35 });
+  const g = new THREE.Group(), rig = new THREE.Group(); g.add(rig);
+  const put = (parent, geo, x, y, z, m) => { const mesh = new THREE.Mesh(geo, m); mesh.position.set(x, y, z); mesh.castShadow = mesh.receiveShadow = true; parent.add(mesh); return mesh; };
+  const joint = (parent, name, x, y, z) => { const j = new THREE.Group(); j.name = name; j.position.set(x, y, z); parent.add(j); return j; };
+  // A block w wide, h tall, t deep, in this design's shape.
+  const block = (w, h, t) => {
+    if (d.shape === 'box') return new THREE.BoxGeometry(w, h, t);
+    if (d.shape === 'facet') { const geo = new THREE.CylinderGeometry(w * 0.47, w * 0.56, h, 6); geo.rotateY(Math.PI / 6); geo.scale(1, 1, t / w); return geo; }
+    if (d.shape === 'puff') { const geo = new THREE.SphereGeometry(0.5, 18, 14); geo.scale(w * 1.12, h * 1.18, t * 1.12); return geo; }
+    const r = Math.min(w, t, h) / 2, geo = new THREE.CapsuleGeometry(r, Math.max(0.001, h - 2 * r), 5, 14); geo.scale(w / (2 * r), 1, t / (2 * r)); return geo;
+  };
+  const limb = (len, thick) => d.shape === 'round' ? new THREE.CapsuleGeometry(thick / 2, Math.max(0.001, len - thick * 0.55), 5, 12) : block(thick, len, thick * 1.08);
+  const ball = (r) => smooth ? new THREE.SphereGeometry(r, 22, 16) : new THREE.IcosahedronGeometry(r, 1);
+
+  const [up, low, lt] = d.leg, [au, al, at] = d.arm, [tw, th, td] = d.torso, [bw, bh, bl] = d.boot, R = d.head;
+  const hips = joint(rig, 'hips', 0, up + low + bh, 0);
+  const spine = joint(hips, 'spine', 0, 0, 0);
+  const torso = put(spine, block(tw, th, td), 0, 0.04 + th / 2, 0, suit);
+  if (d.belt) put(spine, block(tw * 1.04, 0.07, td * 1.06), 0, 0.03, 0, shade);
+  if (d.pack) {
+    const [pw, ph, pd] = d.pack, py = 0.04 + th - ph / 2 + 0.04, pz = -(td / 2 + pd / 2 - 0.03);
+    put(spine, d.shape === 'puff' ? (() => { const geo = new THREE.SphereGeometry(0.5, 16, 12); geo.scale(pw, ph, pd * 1.3); return geo; })() : block(pw, ph, pd), 0, py, pz, shade);
+    if (d.antenna) { // a short aerial with an amber tip, like the rovers' own
+      put(spine, new THREE.CylinderGeometry(0.012, 0.012, 0.34, 6), pw * 0.3, py + ph / 2 + 0.15, pz, mat(0x8c8676));
+      put(spine, new THREE.SphereGeometry(0.04, 10, 8), pw * 0.3, py + ph / 2 + 0.33, pz, mat(SIGNAL));
+    }
+  }
+  if (d.chest) put(spine, new THREE.BoxGeometry(0.2, 0.15, 0.08), 0, 0.04 + th * 0.62, td / 2 + 0.03, shade);
+
+  const head = joint(spine, 'head', 0, 0.04 + th + R * d.sink, 0);
+  put(head, ball(R), 0, 0, 0, suit);
+  if (d.visor === 'band') put(head, new THREE.BoxGeometry(0.27, 0.2, 0.1), 0, 0, 0.15, dark).name = 'visor'; // mirror visor: no face
+  else {
+    const geo = ball(R * 0.86); geo.scale(1, 0.74, 0.78); // a dark dome standing a little proud of the helmet
+    put(head, geo, 0, -R * 0.02, R * 0.4, dark).name = 'visor';
+    if (d.glint) { const shine = new THREE.SphereGeometry(R * 0.11, 10, 8); shine.scale(1.5, 0.8, 0.4); put(head, shine, -R * 0.36, R * 0.27, R * 0.97, new THREE.MeshBasicMaterial({ color: 0xffffff })).rotation.z = 0.5; }
+  }
+  if (d.stripes) { const band = new THREE.TorusGeometry(R * 0.98, 0.022, 6, 28); put(head, band, 0, 0, -R * 0.1, mat(d.stripes)).rotation.y = Math.PI / 2; } // one band over the top of the helmet, front to back
+
+  const J = { hips, spine, head };
+  for (const [side, sx] of [['L', 1], ['R', -1]]) {
+    const arm = joint(spine, 'arm_' + side, sx * (tw / 2 + at * (d.shape === 'box' ? 0.5 : 0.3)), 0.04 + th - (d.shape === 'box' ? 0.06 : at * 0.55), 0);
+    put(arm, limb(au, at), 0, -au / 2, 0, suit);
+    const elbow = joint(arm, 'elbow_' + side, 0, -au, 0);
+    put(elbow, limb(al, at * 0.94), 0, -al / 2, 0, suit);
+    put(elbow, d.shape === 'box' ? new THREE.BoxGeometry(at * 1.02, 0.12, at * 1.08) : ball(at * 0.62), 0, -al - (d.shape === 'box' ? 0.05 : at * 0.2), 0, glove).name = 'hand_' + side;
+    const leg = joint(hips, 'leg_' + side, sx * d.gap, 0, 0);
+    put(leg, limb(up, lt), 0, -up / 2, 0, suit);
+    const knee = joint(leg, 'knee_' + side, 0, -up, 0);
+    put(knee, limb(low, lt * 0.95), 0, -low / 2, 0, suit);
+    if (d.shape === 'box' || d.shape === 'facet') put(knee, new THREE.BoxGeometry(bw, bh, bl), 0, -low - bh / 2, 0.05, boot);
+    else { const geo = new THREE.SphereGeometry(0.5, 16, 12); geo.scale(bw * 1.1, bh * 2.2, bl * 1.05); put(knee, geo, 0, -low - bh * 0.2, 0.04, boot); }
+    if (d.stripes) {
+      const ring = (r) => new THREE.CylinderGeometry(r, r, 0.055, 14);
+      put(arm, ring(at * 0.56), 0, -au * 0.55, 0, mat(d.stripes)); put(leg, ring(lt * 0.56), 0, -up * 0.6, 0, mat(d.stripes));
+    }
+    J['arm' + side] = arm; J['elbow' + side] = elbow; J['leg' + side] = leg; J['knee' + side] = knee;
+  }
+  g.userData = { J, rig, torso, legs: up + low };
+  return g;
+}
+
+// The game's own poses (src/world/props.js animate), so what you see here is what the game will do.
+function pose(fig, name, t) {
+  const { J, rig, torso, legs } = fig.userData, k = legs / 0.86; // shorter legs sink and bob less
+  const p = { legL: 0, legR: 0, kneeL: 0, kneeR: 0, armL: Math.sin(t * 0.8) * 0.02, armR: -Math.sin(t * 0.8) * 0.02, sideR: 0, elbowL: -0.15, elbowR: -0.15, lean: 0, drop: 0, head: 0 };
+  let walk = 0, swing = 0;
+  if (name === 'walk') {
+    const phase = t * 5.2; walk = 1; swing = Math.sin(phase);
+    Object.assign(p, { legL: -swing * 0.5, legR: swing * 0.5, kneeL: Math.max(0, Math.cos(phase)) * 0.75, kneeR: Math.max(0, -Math.cos(phase)) * 0.75,
+      armL: swing * 0.4, armR: -swing * 0.4, elbowL: -0.35, elbowR: -0.35, lean: 0.05 });
+  }
+  if (name === 'wave') Object.assign(p, { armR: -2.4, elbowR: -0.6, sideR: -0.35 + Math.sin(t * 4) * 0.18, head: -0.08 });
+  if (name === 'kneel') Object.assign(p, { legL: -1.25, kneeL: 1.65, legR: -0.3, kneeR: 1.1, drop: -0.38, lean: 0.42, armL: -0.45, armR: -0.75 + Math.sin(t * 3) * 0.12, elbowL: -0.5, elbowR: -0.35, head: 0.4 });
+  const breath = Math.sin(t * 1.5), still = 1 - walk;
+  J.legL.rotation.x = p.legL; J.legR.rotation.x = p.legR; J.kneeL.rotation.x = p.kneeL; J.kneeR.rotation.x = p.kneeR;
+  J.armL.rotation.x = p.armL; J.armR.rotation.x = p.armR; J.armR.rotation.z = p.sideR;
+  J.elbowL.rotation.x = p.elbowL; J.elbowR.rotation.x = p.elbowR;
+  J.spine.rotation.x = p.lean;
+  J.hips.rotation.y = swing * 0.06 * walk; J.hips.rotation.z = Math.sin(t * 0.4) * 0.02 * still;
+  torso.scale.set(1 + 0.015 * breath, 1 + 0.01 * breath, 1 + 0.045 * breath);
+  J.head.rotation.y = Math.sin(t * 0.31) * 0.16 * still; J.head.rotation.x = p.head + Math.sin(t * 0.23 + 1) * 0.04;
+  rig.position.y = (p.drop + Math.abs(swing) * 0.035 * walk) * k;
+}
+
+// Even: a plain soft light to judge the shape. Moon and Mars: the game's own (LOOKS in world.js).
+const LIGHTS = {
+  studio: { sky: 0x2b3442, ground: 0x7d8590, sun: [0xfff6ea, 2.2, [-0.5, 0.75, 0.75]], fill: [0xdfe8f5, 0x6c7480, 1.25] },
+  moon:   { sky: 0x000000, ground: 0x8b8d92, sun: [0xfff4e6, 3.2, [-0.78, 0.4, 0.48]], fill: [0x8fa3c8, 0x3a3b40, 0.3] },
+  mars:   { sky: 0xd8a878, ground: 0xb0623a, sun: [0xffdcb0, 2.6, [-0.45, 0.3, 0.85]], fill: [0xc8ccd6, 0x8a5a40, 0.95] },
+};
+
+const canvas = document.getElementById('gl'), grid = document.getElementById('grid');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setScissorTest(true);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const state = { pose: 'stand', view: 'front', light: 'studio' };
+
+const tiles = DESIGNS.map((d) => {
+  const cell = document.createElement('div'); cell.className = 'cell'; cell.innerHTML = '<div class="tag"></div><div class="note"></div>'; grid.appendChild(cell);
+  const scene = new THREE.Scene();
+  const sun = new THREE.DirectionalLight(), fill = new THREE.HemisphereLight();
+  sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 40 }); sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ roughness: 1 }));
+  ground.receiveShadow = true;
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.8, 0.03), new THREE.MeshBasicMaterial({ color: 0x8a93a0 }));
+  post.position.set(-0.72, 0.9, -0.3);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.03), post.material); cap.position.set(-0.72, 1.8, -0.3);
+  const fig = makeFigure(d);
+  scene.add(sun, sun.target, fill, ground, post, cap, fig);
+  pose(fig, 'stand', 0); fig.updateMatrixWorld(true);
+  const tall = new THREE.Box3().setFromObject(fig).max.y;
+  cell.querySelector('.tag').innerHTML = `<b>${d.key}</b> · ${d.name} · ${tall.toFixed(2)} m`;
+  cell.querySelector('.note').textContent = d.note;
+  return { cell, scene, sun, fill, ground, fig };
+});
+
+function relight() {
+  const l = LIGHTS[state.light];
+  for (const t of tiles) {
+    t.scene.background = new THREE.Color(l.sky);
+    t.sun.color.set(l.sun[0]); t.sun.intensity = l.sun[1]; t.sun.position.set(...l.sun[2]).normalize().multiplyScalar(20); t.sun.position.y += 0.9; t.sun.target.position.set(0, 0.9, 0); t.sun.target.updateMatrixWorld();
+    t.fill.color.set(l.fill[0]); t.fill.groundColor.set(l.fill[1]); t.fill.intensity = l.fill[2];
+    t.ground.material.color.set(l.ground);
+  }
+}
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+const YAW = { front: 0.5, side: Math.PI / 2, back: Math.PI - 0.5 };
+function draw(ms) {
+  const time = ms / 1000, W = innerWidth, H = innerHeight;
+  renderer.setSize(W, H, false);
+  renderer.setScissor(0, 0, W, H); renderer.setViewport(0, 0, W, H); renderer.setClearColor(0x10141b); renderer.clear();
+  for (const t of tiles) {
+    const r = t.cell.getBoundingClientRect();
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height); renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    pose(t.fig, state.pose, time);
+    t.fig.rotation.y = state.view === 'turn' ? time * 0.7 : YAW[state.view];
+    // Far enough back that a 1.9 m figure fits the tile, whatever its shape.
+    camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    const fit = Math.max(1.22 / Math.tan(THREE.MathUtils.degToRad(15)), 1.0 / (Math.tan(THREE.MathUtils.degToRad(15)) * camera.aspect));
+    camera.position.set(0, 1.25, fit); camera.lookAt(0, 0.8, 0);
+    renderer.render(t.scene, camera);
+  }
+  requestAnimationFrame(draw);
+}
+document.querySelectorAll('#bar button').forEach((btn) => btn.addEventListener('click', () => {
+  const key = Object.keys(btn.dataset)[0];
+  document.querySelectorAll(`#bar button[data-${key}]`).forEach((b) => b.classList.toggle('on', b === btn));
+  state[key] = btn.dataset[key];
+  if (key === 'light') relight();
+}));
+relight();
+requestAnimationFrame(draw);
+window.samples = { state, DESIGNS, tiles };
+</script>
+</body>
+</html>

@@ -17,7 +17,6 @@ and `standIn` otherwise. Without `has`, the stand-in always plays, so new sounds
 
 | Name | When it plays | Where in the code | Stand-in now | What it should sound like |
 |---|---|---|---|---|
-| `marker_beep` | Moon, driving blind in the dust: repeats faster as the rover nears stop 2 | `moon.js` | `park` | short, clean beacon ping; plays many times in a row, so short and not tiring |
 | `strap` | Moon: a sample box is strapped onto the rover (3 times) | `moon.js` `addSampleBox` | `land` | a strap pulled tight, or a click and a soft thump |
 | `liftoff` | Moon: the top half of the Lunar Module lifts off (with the dust burst) | `moon.js` | `rumble` | engine ignition and a roar that fades as it rises. No air on the Moon, so muffled, felt through the ground |
 | `panels_clean` | Mars: driving through a whirlwind sweeps the solar panels clean, the battery jumps | `mars.js` `updateWhirlwinds` | `park` | a whoosh of wind, then a rising "power back" tone |
@@ -28,6 +27,17 @@ and `standIn` otherwise. Without `has`, the stand-in always plays, so new sounds
 | `rotor_twitch` | Ingenuity after the crash: each Space press, the broken rotor twitches for half a second | `sky.js` (`heli.onTwitch`) | none | a weak motor spin-up that dies at once. The saddest sound in the chapter |
 | `fold` | Opening: the workers fold the rover in half | `opening.js` | none | metal joints and hinges clicking into place |
 | `shutter` | Photo tasks: capturing an image (the three historic photos and Pioneer's Jupiter image) | `_historicPhoto.js`, `_pioneerPhoto.js` | `tick` | a camera shutter |
+
+## Sounds the mini-games use
+
+| Name | When it plays | Where in the code | Stand-in now | What it should sound like |
+|---|---|---|---|---|
+| `strap` | Moon fender puzzle: a map sheet or clamp clicks into place | `_moonGames.js` | `land` | a click and a soft thump |
+| `tick` | Pioneer spin-scan: each line added to the picture | `_pioneerGames.js` | (your tick) | fine as it is; a softer "scan" blip would be nicer |
+
+The games themselves (rotor gauge, grinder, camera, scan dial) are silent apart from these. If you want
+sounds for them, good candidates: a rising rotor whine for `rotorSpinUp`, a grinding loop for `grindRock`
+(level = pressure), a radio crackle for the liftoff camera's delayed commands.
 
 ## New loops (`audio.loop(name, on)` and `audio.loopLevel(name, 0..1)`)
 

@@ -28,7 +28,7 @@ export default makeChapter({
     await s.do(ctx.card.title());
     await s.shot('opening_wake');
     s.hero.setEmotion('curious');
-    await s.say('ch0_wake');
+    await s.say('ch0_wake', { auto: true });
 
     // The tutorial: the player learns W/S and A/D without reading anything long.
     s.hero.setEmotion('happy');
@@ -37,7 +37,7 @@ export default makeChapter({
     await s.until(() => s.tutorial.spun > 1.2);
     m.done(0);
     // It only notices its wheels once it has watched them turn. A passing remark: the tutorial goes on.
-    s.say('ch0_wheels', { ambient: true });
+    s.chat('ch0_wheels');
     ctx.hud.setObjective('A and D: try your steering');
     await s.until(() => s.tutorial.steered > 1.2);
     m.done(1);
@@ -50,15 +50,12 @@ export default makeChapter({
     const workers = s.env.workers?.length ? s.env.workers : [s.prop('worker', -3.4, 1.6), s.prop('worker', 3.5, -0.4)];
     await Promise.all(workers.map((w, i) => s.moveTo(w, i ? 1.5 : -1.5, 0.2, 2)));
     // The people speak first ("let's go"); only then does the rover ask where. Then it is folded.
-    await s.say('ch0_fold');
+    await s.say('ch0_fold', { auto: true });
     s.hero.setEmotion('scared');
     s.sound('fold');
-    await s.until((dt) => {
-      const sc = s.hero.object.scale;
-      const k = 1 - Math.exp(-3 * dt);
-      sc.y += (0.35 - sc.y) * k; sc.z += (0.5 - sc.z) * k;
-      return sc.y - 0.35 < 0.01;
-    });
+    // Folding: the wheels draw in, the camera post and the antenna lie back (character.folded).
+    let shut = 0;
+    await s.until((dt) => { shut = Math.min(1, shut + dt / 1.6); s.hero.folded = shut * shut * (3 - 2 * shut); return shut >= 1; });
     // From inside the box, through the closing gap: a worker rests a hand on the rover. Then dark.
     workers[0]?.userData.act?.('reassure');
     s.onDispose(() => workers.forEach((w) => w.userData.act?.(null)));

@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { mission } from './_mission.js';
 import { revealPhoto } from './_historicPhoto.js';
 import { el } from '../ui/dom.js';
+import { createPhotoGuide } from './_photoGuide.js';
+import { spinScan, slowMessage } from './_pioneerGames.js';
 
-import { counterJump } from './_timeJump.js';
 
 const CONE = 8 * Math.PI / 180;
 const difference = (target, yaw) => Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
@@ -15,7 +16,7 @@ export async function photographJupiter(s, ctx) {
   ctx.hud.setContext('Pioneer 10', 'Jupiter flyby');
   ctx.hud.setStat('date', 'December 1973');
   ctx.hud.setStat('planned', '21 months');
-  await s.do(ctx.card.chapter('epilogue_photo'));
+  await s.chapterCard('epilogue_photo');
   s.hero.setEmotion('curious');
   // Jupiter sits a little above the horizon and Earth a little below, so both A/D and W/S are needed.
   const state = s.photoState = { phase: 'frame', targetYaw: 0.42, targetPitch: 0.16, pitch: 0, captured: false, sent: false };
@@ -67,12 +68,22 @@ export async function photographJupiter(s, ctx) {
     state.pitch = THREE.MathUtils.clamp(state.pitch + v * 0.5 * dt, -TILT, TILT);
   };
   const stopCamera = s.every((dt) => { tilt(dt); aim(); });
+  const guide = createPhotoGuide();
+  // The guide shows the key that helps most: A/D while the turn is further off, W/S once it is close.
+  // offYaw > 0: turn with A (rotation grows), < 0: D. offPitch > 0: tilt up with W, < 0: S.
+  const guideKey = (offYaw, offPitch) => (Math.abs(offYaw) >= Math.abs(offPitch)
+    ? (offYaw > 0 ? 'KeyA' : 'KeyD') : (offPitch > 0 ? 'KeyW' : 'KeyS'));
+  const steerTo = (yaw, pitch, aligned) => {
+    const offYaw = difference(yaw, s.hero.object.rotation.y), offPitch = pitch - state.pitch;
+    guide.update(aligned ? null : guideKey(offYaw, offPitch), 1 - Math.min(1, Math.hypot(offYaw, offPitch) / 1.6), aligned);
+  };
   let cleaned = false;
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
     stopCamera();
     overlay.remove();
+    guide.remove();
     ctx.scene.remove(objects);
     objects.traverse((o) => o.geometry?.dispose());
     for (const material of materials) material.dispose();
@@ -88,6 +99,7 @@ export async function photographJupiter(s, ctx) {
   await s.until(() => {
     const aligned = offBy(state.targetYaw, state.targetPitch) < CONE;
     reticle.classList.toggle('aligned', aligned);
+    steerTo(state.targetYaw, state.targetPitch, aligned);
     if (aligned) m.done(0);
     ctx.hud.setObjective(aligned ? 'Space: capture Jupiter · التقط صورة للمشتري' : 'A / D and W / S: frame Jupiter · ضع المشتري داخل الإطار');
     if (!aligned || !ctx.input.pressed('Space')) return false;
@@ -109,27 +121,34 @@ export async function photographJupiter(s, ctx) {
   preview.src = canvas.toDataURL('image/jpeg', 0.8);
   preview.classList.remove('hidden');
   imageNote.classList.remove('hidden');
-  let scanned = 0;
-  await s.until((dt) => {
-    scanned = Math.min(1, scanned + dt / 1.5);
-    preview.style.clipPath = `inset(0 0 ${(1 - scanned) * 100}% 0)`;
-    ctx.hud.setObjective(`Scanning image ${Math.round(scanned * 100)}% · جارٍ تسجيل الصورة`);
-    return scanned === 1;
-  });
+  guide.hide();
+  // The spin-scan game: each good press adds one line to the picture.
+  preview.style.clipPath = 'inset(0 0 100% 0)';
+  ctx.hud.setObjective('');
+  await spinScan(s, ctx, { onRow: (n, total) => { preview.style.clipPath = `inset(0 0 ${(1 - n / total) * 100}% 0)`; } });
   m.done(1);
   s.hero.setEmotion('happy');
   state.phase = 'send';
   state.targetYaw = earthYaw;
+  state.targetPitch = earthPitch;
   label.textContent = 'Earth · الأرض';
   s.unlockControls();
   let held = 0;
   await s.until((dt) => {
     const aligned = offBy(earthYaw, earthPitch) < CONE;
     reticle.classList.toggle('aligned', aligned);
+    // Pointing at Earth the image sends on its own (progress on the objective line): no guide needed.
+    if (aligned) guide.hide();
+    else { guide.show(); steerTo(earthYaw, earthPitch, false); }
     held = aligned ? held + dt : 0;
-    ctx.hud.setObjective(aligned ? `Sending image ${Math.min(100, Math.floor(held * 50))}% · جارٍ إرسال الصورة` : 'A / D and W / S: turn toward Earth to send · اتجه نحو الأرض للإرسال');
-    return held >= 2;
+    ctx.hud.setObjective(aligned ? 'Pointing at Earth · متجه نحو الأرض' : 'A / D and W / S: turn toward Earth to send · اتجه نحو الأرض للإرسال');
+    return held >= 0.6;
   });
+  guide.remove();
+  // The slow-message game: the picture travels home while the years pass.
+  s.lockControls();
+  ctx.hud.setObjective('');
+  await slowMessage(s, ctx);
   state.sent = true;
   state.phase = 'done';
   m.done(2);
@@ -143,8 +162,7 @@ export async function photographJupiter(s, ctx) {
   await s.fade(true, 0.5);
   cleanup();
   ctx.hud.setObjective('');
-  // The years pass on the counter. How long Pioneer lasted is told only in its service record at the end.
-  await counterJump(s, { en: 'Year', ar: 'السنة', from: 1973, to: 2003, plain: true, onValue: (v) => ctx.hud.setStat('date', String(Math.round(v))) });
+  ctx.hud.setStat('date', '1973 → 2003');
   ctx.hud.setWorld('space');
   await s.fade(false, 0.5);
 }

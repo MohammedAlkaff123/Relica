@@ -23,7 +23,7 @@
 //   await stage.hold('KeyE', 2, 'Hold E to study the pebbles')
 //   await stage.until(() => condition)        checked every frame
 //   await stage.card(title, sub) / say(dialogueId) / photo(nasaId) / shot(shotId, anchor)
-//   stage.say(dialogueId, { ambient: true })  a passing remark while the player keeps driving
+//   stage.chat(dialogueId)                    a passing remark while the player keeps driving
 //   await stage.tribute(nasaId)               the machine's real photo and service record
 //   stage.every((dt) => {...})                per-frame task, removed with the chapter; returns remove()
 //   stage.onDispose(() => {...})              runs when the chapter is left (stop a sound loop...)
@@ -65,7 +65,7 @@ export function setupStage(ctx, cfg) {
   const factsWorld = cfg.factsWorld ?? world;
   const gravity = ctx.facts.worlds[factsWorld].gravity.value;
   physics.resetWorld(gravity);
-  fadeTo(cfg.startBlack ? 1 : 0, 0);
+  fadeTo(1, 0); // black until the world is built and the camera is in place; start() fades in
 
   const env = buildWorld(world, scene, { quality: ctx.quality?.get() });
   const hero = createCharacter(cfg.character);
@@ -120,6 +120,21 @@ export function setupStage(ctx, cfg) {
     p.catch(() => {}); // never an "unhandled rejection" warning when a chapter is left
     return p;
   }
+  // Open something that waits on the prompt (a card), and press "continue" for the player after
+  // `seconds` unless they already did. Only that same prompt is continued, never a later one.
+  async function autoClose(open, seconds) {
+    const prompt = ctx.prompt;
+    if (!prompt) return after(open());
+    const before = prompt.id;
+    let settled = false;
+    const p = open();
+    p.then(() => { settled = true; }, () => { settled = true; });
+    await stage.until(() => settled || prompt.id !== before);
+    const mine = prompt.id;
+    if (!settled) stage.wait(seconds).then(() => prompt.advance(mine), () => {});
+    return after(p);
+  }
+
   // After awaiting someone else's promise: stop here if the chapter was left meanwhile.
   async function after(promise) {
     const v = await promise;
@@ -149,6 +164,7 @@ export function setupStage(ctx, cfg) {
       });
     },
     fade(toBlack, seconds = 1) {
+      stage.fadeOwned = true; // the script controls the fade from here on
       fadeTo(toBlack ? 1 : 0, seconds);
       return stage.wait(seconds);
     },
@@ -162,30 +178,52 @@ export function setupStage(ctx, cfg) {
       return guarded((done) => { objectives.goTo(x, z, text, opts).then(done); });
     },
     // Hold a key for `seconds` (in total; letting go pauses it). Shows a progress bar on the objective line.
+    // Set C draws it as a keycap and one bar that fills from green to red (hud.setHold). A hold never asks
+    // for more than 2 seconds: long enough to be a choice, short enough not to feel stuck.
     hold(code, seconds, text) {
       let held = 0, shown = '';
+      const need = Math.min(seconds, 2);
+      const key = code.replace(/^Key/, '');
       return guarded((done) => {
         const task = (dt) => {
-          if (ctx.input.down(code)) held += dt;
-          const n = Math.min(10, Math.floor((held / seconds) * 10));
-          const label = `${text}  ${'▮'.repeat(n)}${'▯'.repeat(10 - n)}`;
-          if (label !== shown) { ctx.hud.setObjective(label); shown = label; }
-          if (held >= seconds) { tasks.delete(task); ctx.hud.setObjective(''); done(); }
+          const pressing = ctx.input.down(code);
+          if (pressing) held += dt;
+          const progress = Math.min(1, held / need);
+          if (ctx.hud.setHold) {
+            const label = `${progress.toFixed(2)}${pressing}`;
+            if (label !== shown) { ctx.hud.setHold({ key, text, progress, pressing }); shown = label; }
+          } else {
+            const n = Math.min(10, Math.floor(progress * 10));
+            const label = `${text}  ${'▮'.repeat(n)}${'▯'.repeat(10 - n)}`;
+            if (label !== shown) { ctx.hud.setObjective(label); shown = label; }
+          }
+          if (held >= need) { tasks.delete(task); ctx.hud.setObjective(''); if (ctx.hud.setHold) ctx.hud.setHold({ key, text, progress: 1, confirmed: true }); done(); }
         };
         tasks.add(task);
+        stage.onDispose(() => ctx.hud.setHold?.(null));
       });
     },
 
     // ---- other people's systems, wrapped so a chapter switch stops the script ----
     do: after,
-    card: (title, sub) => after(ctx.card.show(title, sub)),
-    // ambient: a passing remark in the small caption; the player keeps control and no key is needed.
-    async say(id, { keepControls = false, ambient = false } = {}) {
-      if (ambient) keepControls = true;
+    // Cards: card(title, sub) waits for Enter / Space. card(title, sub, { auto: 5 }) also closes on its
+    // own after 5 seconds; chapterCard(id) is the content/chapters.json card, closing after 4.5 s.
+    card: (title, sub, { auto } = {}) => (auto ? autoClose(() => ctx.card.show(title, sub), auto) : after(ctx.card.show(title, sub))),
+    chapterCard: (id, { auto = 4.5 } = {}) => autoClose(() => ctx.card.chapter(id), auto),
+    // say(id): the player continues each line (important moments). say(id, { auto: true }): the lines
+    // move on by themselves; Enter / Space still skips. Both stop the game while they play.
+    async say(id, { keepControls = false, auto = false } = {}) {
       const resume=stage.controls;
       if (!keepControls) stage.lockControls();
-      try { return await after(ctx.dialogue.play(id, { ambient })); }
+      try { return await after(ctx.dialogue.play(id, { auto })); }
       finally { if (stage.alive && !keepControls) stage.controls=resume; }
+    },
+    // chat(id): minor lines that play on their own while the game carries on (no camera move, no lock).
+    // Not awaited by the script; a card or a blocking line that starts later simply replaces it.
+    chat(id) {
+      const p = ctx.dialogue.play(id, { auto: true, camera: false });
+      p.catch(() => {});
+      return p;
     },
     photo: (id) => after(ctx.memory.show(id)),
     // The end of a machine's chapter: its real NASA photo with its service record (memories.json "tribute").
@@ -270,6 +308,11 @@ export function setupStage(ctx, cfg) {
       }
       const idle = stage.controls && (controller?.speed ?? 0) < 0.1 && !controller?.flying && !ctx.cinematics.playing;
       idleLookTime = idle ? idleLookTime + dt : 0;
+      // Set C: the keys bar. Always while flying the helicopter; for the rover, after a few seconds standing still.
+      const busy = !stage.controls || ctx.cinematics.playing || controller?.broken;
+      ctx.hud.setControls?.(busy || !controller ? null
+        : cfg.vehicle === 'heli' ? (controller.flying ? 'heli-air' : 'heli-ground')
+        : idleLookTime > 6 ? 'rover' : null);
       hero.lookBack?.(idleLookTime > 2, ctx.camera);
       hero.update(dt);
       if (cfg.character === 'lrv') ctx.followCam.setMotion({ airborne: controller && !controller.grounded });
@@ -280,6 +323,7 @@ export function setupStage(ctx, cfg) {
     },
     dispose() {
       stage.alive = false;
+      ctx.hud.setControls?.(null);
       for (const fn of cleanups) { try { fn(); } catch (err) { console.error(err); } }
       for (const entry of pending) entry.reject(new Gone());
       pending.clear();
@@ -313,7 +357,18 @@ export function makeChapter(cfg) {
     async start(ctx, opts = {}) {
       const s = stage = setupStage(ctx, cfg);
       ctx.stage = s; // for the browser console: relica.stage.controller, relica.stage.hero ...
-      await ctx.quality?.attach(s); // the new world starts in the chosen graphics mode
+      // The new world starts in the chosen graphics mode. That waits for the world's textures: a texture
+      // that stalls or fails to download must not leave the screen black, so wait at most 4 seconds
+      // and carry on (the quality still applies when the textures arrive).
+      const graphics = Promise.resolve(ctx.quality?.attach(s)).catch((err) => console.warn('graphics quality not applied', err));
+      await Promise.race([graphics, new Promise((r) => setTimeout(r, 4000))]);
+      // Chapter changes: the camera snaps behind the new hero (no swoop from the last shot), the first
+      // frame of the new world is drawn under black, then it fades in. A script that fades on its own
+      // (or a chapter with startBlack) keeps control of the fade.
+      ctx.followCam.snap?.();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (s.alive && !s.fadeOwned && !cfg.startBlack) fadeTo(0, 0.8);
+      }));
       if (!s.alive) return;
       startMotorHum(s);
       try {
